@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <!-- USB MIDI Standard -->
+    <usb-device class="1" subclass="3" />
+    <!-- YAMAHA -->
+    <usb-device vendor-id="1177" />
+    <!-- Roland -->
+    <usb-device vendor-id="1410" />
+    <!-- MOTU -->
+    <usb-device vendor-id="2045" />
+</resources>
