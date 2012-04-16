@@ -1,5 +1,3 @@
-http://github-preview.herokuapp.com/
-
 Android USB MIDI Driver
 ====
 
