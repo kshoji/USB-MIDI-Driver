@@ -81,7 +81,7 @@ public class MidiInputDevice {
 					continue;
 				}
 				
-				int length = deviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 100);
+				int length = deviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
 				if (length > 0) {
 					byte[] read = new byte[length];
 					System.arraycopy(readBuffer, 0, read, 0, length);

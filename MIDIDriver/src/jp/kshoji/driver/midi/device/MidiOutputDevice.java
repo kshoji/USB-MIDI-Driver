@@ -50,7 +50,8 @@ public class MidiOutputDevice implements OnMidiEventListener {
 	 * @param byte3
 	 */
 	private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
-		byte[] writeBuffer = new byte[64];
+		byte[] writeBuffer = new byte[outputEndpoint.getMaxPacketSize()];
+
 		writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
 		writeBuffer[1] = (byte) byte1;
 		writeBuffer[2] = (byte) byte2;
