@@ -22,15 +22,12 @@ public class UsbDeviceUtils {
 			UsbEndpoint midiInputEndpoint = null;
 			UsbEndpoint midiOutputEndpoint = null;
 			
-			if (usbInterface.getEndpointCount() >= 2) {
-				// has more than 2 endpoints
+			if (usbInterface.getEndpointCount() >= 1) {
+				// has more than 1 endpoint
 
 				for (int endpointIndex = 0; endpointIndex < usbInterface.getEndpointCount(); endpointIndex++) {
 					UsbEndpoint endpoint = usbInterface.getEndpoint(endpointIndex);
-					if (endpoint.getMaxPacketSize() == 64 && //
-							endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-						// buffer size == 64
-						// bulk transfer
+					if ((endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT)) {
 						if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
 							midiInputEndpoint = midiInputEndpoint == null ? endpoint : midiInputEndpoint;
 						} else {

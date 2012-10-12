@@ -25,7 +25,7 @@ public class MidiOutputDevice implements OnMidiEventListener {
 
 		for (int i = 0; i < intf.getEndpointCount(); i++) {
 			UsbEndpoint endpoint = intf.getEndpoint(i);
-			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
 				if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT) {
 					outputEndpoint = endpoint;
 				}

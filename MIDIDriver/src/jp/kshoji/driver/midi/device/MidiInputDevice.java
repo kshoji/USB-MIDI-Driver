@@ -33,7 +33,7 @@ public class MidiInputDevice {
 		for (int i = 0; i < intf.getEndpointCount(); i++) {
 			UsbEndpoint endpoint = intf.getEndpoint(i);
 			Log.d(Constants.TAG, "found endpoint: " + endpoint + ", type: " + endpoint.getType() + ", direction: " + endpoint.getDirection());
-			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
 				if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
 					inputEndpoint = endpoint;
 				}
