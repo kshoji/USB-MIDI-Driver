@@ -68,6 +68,40 @@ MIDI イベントの送信
 - `MIDIOutputDevice`のインスタンスを取得するために、AbstractMidiActivity の`getMidiOutputDevice()`メソッドを呼びます。
  - そのインスタンスの`"onMidi..."` という名前のメソッドを呼ぶとMIDIイベントが送信できます。
 
+Mavenで使う
+----
+maven-android-pluginを使うには、Maven 3.0.4以降が必要です。
+AndroidアプリをMavenを使ってビルドする方法について、詳しくは「maven-android-plugin」プロジェクトのwikiを参照してください。 http://code.google.com/p/maven-android-plugin/wiki/GettingStarted
+
+- Eclipseから新規Mavenプロジェクトを作成します。
+- 「Android 3.1」の依存性をmavenからインストールします。こちらのツールを使ってください。 https://github.com/mosabua/maven-android-sdk-deployer
+- 作成したプロジェクトの `pom.xml` ファイルを以下のように編集します。(サンプルプロジェクトの `pom.xml` も参考にしてみてください)。
+
+    
+    <repositories>
+        <repository>
+            <id>midi-driver-snapshots</id>
+            <url>http://github.com/kshoji/USB-MIDI-Driver/raw/master/snapshots</url>
+        </repository>
+    </repositories>
+    
+    <dependencies>
+        <dependency>
+            <groupId>jp.kshoji</groupId>
+            <artifactId>midi-driver</artifactId>
+            <version>${project.version}</version>
+            <type>apklib</type>
+        </dependency>
+        
+        <dependency>
+            <groupId>android</groupId>
+            <artifactId>android</artifactId>
+            <version>3.1_r3</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+
 ライセンス
 ----
 [Apache License, Version 2.0][Apache]
