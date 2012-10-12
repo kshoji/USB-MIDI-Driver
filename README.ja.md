@@ -19,7 +19,9 @@ Android USBホストAPIを使った、USB MIDIのドライバです。
 
 デバイスの接続
 ----
-    Android [USB Aポート]------[USB Bポート] USB MIDI デバイス
+```
+Android [USB Aポート]------[USB Bポート] USB MIDI デバイス
+```
 
 プロジェクト
 ----
@@ -40,8 +42,8 @@ Android USBホストAPIを使った、USB MIDIのドライバです。
 - AndroidManifest.xml ファイルの activity タグを変更します。
  - **intent-filter** android.hardware.usb.action.USB_DEVICE_ATTACHED と **meta-data** を オーバーライドした Activity に対して追加します。
  - Activityの **launchMode** を "singleTask" にします。
-- 
 
+```xml
         <activity
             android:name=".MyMidiMainActivity"
             android:label="@string/app_name"
@@ -57,7 +59,7 @@ Android USBホストAPIを使った、USB MIDIのドライバです。
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
         </activity>
-
+```
 
 MIDI イベントの受信
 
@@ -76,8 +78,8 @@ AndroidアプリをMavenを使ってビルドする方法について、詳しくは「maven-android-plug
 - Eclipseから新規Mavenプロジェクトを作成します。
 - 「Android 3.1」の依存性をmavenからインストールします。こちらのツールを使ってください。 https://github.com/mosabua/maven-android-sdk-deployer
 - 作成したプロジェクトの `pom.xml` ファイルを以下のように編集します。(サンプルプロジェクトの `pom.xml` も参考にしてみてください)。
--
-    
+
+```xml
     <repositories>
         <repository>
             <id>midi-driver-snapshots</id>
@@ -100,7 +102,7 @@ AndroidアプリをMavenを使ってビルドする方法について、詳しくは「maven-android-plug
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
+```
 
 ライセンス
 ----
