@@ -35,6 +35,8 @@ public class MidiOutputDevice implements OnMidiEventListener {
 		if (outputEndpoint == null) {
 			throw new IllegalArgumentException("Output endpoint was not found.");
 		}
+
+		deviceConnection.claimInterface(intf, true);
 	}
 
 	/**

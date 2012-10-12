@@ -43,6 +43,8 @@ public class MidiInputDevice {
 		if (inputEndpoint == null) {
 			throw new IllegalArgumentException("Input endpoint was not found.");
 		}
+
+		deviceConnection.claimInterface(intf, true);
 	}
 
 	public void start() {
@@ -79,7 +81,7 @@ public class MidiInputDevice {
 					continue;
 				}
 				
-				int length = deviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
+				int length = deviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 100);
 				if (length > 0) {
 					byte[] read = new byte[length];
 					System.arraycopy(readBuffer, 0, read, 0, length);
