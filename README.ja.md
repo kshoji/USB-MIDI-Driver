@@ -76,7 +76,7 @@ AndroidアプリをMavenを使ってビルドする方法について、詳しくは「maven-android-plug
 - Eclipseから新規Mavenプロジェクトを作成します。
 - 「Android 3.1」の依存性をmavenからインストールします。こちらのツールを使ってください。 https://github.com/mosabua/maven-android-sdk-deployer
 - 作成したプロジェクトの `pom.xml` ファイルを以下のように編集します。(サンプルプロジェクトの `pom.xml` も参考にしてみてください)。
-
+-
     
     <repositories>
         <repository>

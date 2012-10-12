@@ -40,8 +40,8 @@ Project setup
 - Modify the AndroidManifest.xml file's activity tag.
  - Add **intent-filter** android.hardware.usb.action.USB_DEVICE_ATTACHED and **meta-data** to the overridden Activity.
  - Activity's **launchMode** must be "singleTask".
+- 
 
-        
         <activity
             android:name=".MyMidiMainActivity"
             android:label="@string/app_name"
@@ -76,7 +76,7 @@ More infomation to build Android application with Maven, See the 'maven-android-
 - Create new Maven project with Eclipse
 - Install "Android 3.1" dependency with maven, using this tool: https://github.com/mosabua/maven-android-sdk-deployer
 - Edit `pom.xml` file for the created project, like below. (See also Sample Project's `pom.xml` file).
-
+-
     
     <repositories>
         <repository>
