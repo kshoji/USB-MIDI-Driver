@@ -41,7 +41,7 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	private ArrayAdapter<String> midiInputEventAdapter;
 	ArrayAdapter<String> midiOutputEventAdapter;
 	private ToggleButton thruToggleButton;
-	private Spinner cableIdSpinner;
+	Spinner cableIdSpinner;
 
 	// Play sounds
 	AudioTrack audioTrack;
@@ -51,7 +51,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	final Set<Tone> tones = new HashSet<Tone>();
 	int currentProgram = 0;
 
-	/** Called when the activity is first created. */
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.activity.AbstractMidiActivity#onCreate(android.os.Bundle)
+	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -85,6 +88,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 		OnTouchListener onToneButtonTouchListener = new OnTouchListener() {
 
+			/*
+			 * (non-Javadoc)
+			 * @see android.view.View.OnTouchListener#onTouch(android.view.View, android.view.MotionEvent)
+			 */
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				MidiOutputDevice midiOutputDevice = getMidiOutputDevice();
@@ -151,6 +158,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		audioTrack = prepareAudioTrack(soundMaker.getSamplingRate());
 		timer = new Timer();
 		timerTask = new TimerTask() {
+			/*
+			 * (non-Javadoc)
+			 * @see java.util.TimerTask#run()
+			 */
 			@Override
 			public void run() {
 				if (soundMaker != null) {
@@ -173,6 +184,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.activity.AbstractMidiActivity#onDestroy()
+	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -199,6 +214,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/**
+	 * @param samplingRate
+	 * @return
+	 */
 	private AudioTrack prepareAudioTrack(int samplingRate) {
 		AudioTrack result = new AudioTrack(AudioManager.STREAM_MUSIC, samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT, AudioTrack.getMinBufferSize(samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT), AudioTrack.MODE_STREAM);
 		result.setStereoVolume(1f, 1f);
@@ -206,17 +225,29 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.activity.AbstractMidiActivity#onDeviceAttached()
+	 */
 	@Override
 	protected void onDeviceAttached() {
 		Toast.makeText(this, "USB MIDI Device has been attached.", Toast.LENGTH_LONG).show();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.activity.AbstractMidiActivity#onDeviceDetached()
+	 */
 	@Override
 	protected void onDeviceDetached() {
 		Toast.makeText(this, "USB MIDI Device has been detached.", Toast.LENGTH_LONG).show();
 		finish();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOff(int, int, int, int)
+	 */
 	@Override
 	public void onMidiNoteOff(int cable, int channel, int note, int velocity) {
 		if (midiInputEventAdapter != null) {
@@ -241,6 +272,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOn(int, int, int, int)
+	 */
 	@Override
 	public void onMidiNoteOn(int cable, int channel, int note, int velocity) {
 		if (midiInputEventAdapter != null) {
@@ -269,6 +304,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPolyphonicAftertouch(int, int, int, int)
+	 */
 	@Override
 	public void onMidiPolyphonicAftertouch(int cable, int channel, int note, int pressure) {
 		if (midiInputEventAdapter != null) {
@@ -283,6 +322,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiControlChange(int, int, int, int)
+	 */
 	@Override
 	public void onMidiControlChange(int cable, int channel, int function, int value) {
 		if (midiInputEventAdapter != null) {
@@ -297,6 +340,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiProgramChange(int, int, int)
+	 */
 	@Override
 	public void onMidiProgramChange(int cable, int channel, int program) {
 		if (midiInputEventAdapter != null) {
@@ -318,6 +365,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiChannelAftertouch(int, int, int)
+	 */
 	@Override
 	public void onMidiChannelAftertouch(int cable, int channel, int pressure) {
 		if (midiInputEventAdapter != null) {
@@ -332,6 +383,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPitchWheel(int, int, int)
+	 */
 	@Override
 	public void onMidiPitchWheel(int cable, int channel, int amount) {
 		if (midiInputEventAdapter != null) {
@@ -346,6 +401,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemExclusive(int, byte[])
+	 */
 	@Override
 	public void onMidiSystemExclusive(int cable, byte[] systemExclusive) {
 		if (midiInputEventAdapter != null) {
@@ -360,6 +419,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemCommonMessage(int, byte[])
+	 */
 	@Override
 	public void onMidiSystemCommonMessage(int cable, byte[] bytes) {
 		if (midiInputEventAdapter != null) {
@@ -374,6 +437,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSingleByte(int, int)
+	 */
 	@Override
 	public void onMidiSingleByte(int cable, int byte1) {
 		if (midiInputEventAdapter != null) {
@@ -388,6 +455,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiMiscellaneousFunctionCodes(int, int, int, int)
+	 */
 	@Override
 	public void onMidiMiscellaneousFunctionCodes(int cable, int byte1, int byte2, int byte3) {
 		if (midiInputEventAdapter != null) {
@@ -402,6 +473,10 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiCableEvents(int, int, int, int)
+	 */
 	@Override
 	public void onMidiCableEvents(int cable, int byte1, int byte2, int byte3) {
 		if (midiInputEventAdapter != null) {

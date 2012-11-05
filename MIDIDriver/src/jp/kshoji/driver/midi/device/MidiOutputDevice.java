@@ -20,6 +20,10 @@ public class MidiOutputDevice implements OnMidiEventListener {
 	private final UsbDeviceConnection deviceConnection;
 	private UsbEndpoint outputEndpoint;
 
+	/**
+	 * @param connection
+	 * @param intf
+	 */
 	public MidiOutputDevice(UsbDeviceConnection connection, UsbInterface intf) {
 		deviceConnection = connection;
 
@@ -40,7 +44,7 @@ public class MidiOutputDevice implements OnMidiEventListener {
 	}
 
 	/**
-	 * Sends Midi message to output device.<br />
+	 * Sends MIDI message to output device.<br />
 	 * TODO do this method with another thread
 	 * 
 	 * @param codeIndexNumber
@@ -62,16 +66,28 @@ public class MidiOutputDevice implements OnMidiEventListener {
 		Log.d(Constants.TAG, "Output:" + Arrays.toString(writeBuffer));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiMiscellaneousFunctionCodes(int, int, int, int)
+	 */
 	@Override
 	public void onMidiMiscellaneousFunctionCodes(int cable, int byte1, int byte2, int byte3) {
 		sendMidiMessage(0x0, cable, byte1, byte2, byte3);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiCableEvents(int, int, int, int)
+	 */
 	@Override
 	public void onMidiCableEvents(int cable, int byte1, int byte2, int byte3) {
 		sendMidiMessage(0x1, cable, byte1, byte2, byte3);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemCommonMessage(int, byte[])
+	 */
 	@Override
 	public void onMidiSystemCommonMessage(int cable, byte bytes[]) {
 		if (bytes == null) {
@@ -96,6 +112,10 @@ public class MidiOutputDevice implements OnMidiEventListener {
 	private static final int PARAM_BUFFER_SIZE = 64;
 	private static final int PARAM_BUFFER_SIZE_FOR_RAW_SYSEX = PARAM_BUFFER_SIZE * 3 / 4;
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemExclusive(int, byte[])
+	 */
 	@Override
 	public void onMidiSystemExclusive(int cable, byte[] systemExclusive) {
 
@@ -151,41 +171,73 @@ public class MidiOutputDevice implements OnMidiEventListener {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOff(int, int, int, int)
+	 */
 	@Override
 	public void onMidiNoteOff(int cable, int channel, int note, int velocity) {
 		sendMidiMessage(0x8, cable, 0x80 | (channel & 0xf), note, velocity);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOn(int, int, int, int)
+	 */
 	@Override
 	public void onMidiNoteOn(int cable, int channel, int note, int velocity) {
 		sendMidiMessage(0x9, cable, 0x90 | (channel & 0xf), note, velocity);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPolyphonicAftertouch(int, int, int, int)
+	 */
 	@Override
 	public void onMidiPolyphonicAftertouch(int cable, int channel, int note, int pressure) {
 		sendMidiMessage(0xa, cable, 0xa0 | (channel & 0xf), note, pressure);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiControlChange(int, int, int, int)
+	 */
 	@Override
 	public void onMidiControlChange(int cable, int channel, int function, int value) {
 		sendMidiMessage(0xb, cable, 0xb0 | (channel & 0xf), function, value);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiProgramChange(int, int, int)
+	 */
 	@Override
 	public void onMidiProgramChange(int cable, int channel, int program) {
 		sendMidiMessage(0xc, cable, 0xc0 | (channel & 0xf), program, 0);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiChannelAftertouch(int, int, int)
+	 */
 	@Override
 	public void onMidiChannelAftertouch(int cable, int channel, int pressure) {
 		sendMidiMessage(0xd, cable, 0xd0 | (channel & 0xf), pressure, 0);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPitchWheel(int, int, int)
+	 */
 	@Override
 	public void onMidiPitchWheel(int cable, int channel, int amount) {
 		sendMidiMessage(0xe, cable, 0xe0 | (channel & 0xf), amount & 0xff, (amount >> 8) & 0xff);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSingleByte(int, int)
+	 */
 	@Override
 	public void onMidiSingleByte(int cable, int byte1) {
 		sendMidiMessage(0xf, cable, byte1, 0, 0);

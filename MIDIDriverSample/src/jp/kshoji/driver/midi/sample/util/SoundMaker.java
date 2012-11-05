@@ -19,6 +19,9 @@ public class SoundMaker {
 
 	private static final int samplingRate = 44100 / 2;
 
+	/**
+	 * Initializes wave table
+	 */
 	static {
 		for (int i = 0; i < 1024; i++) {
 			sawTable[i] = (i / 512.0) - 1.0;

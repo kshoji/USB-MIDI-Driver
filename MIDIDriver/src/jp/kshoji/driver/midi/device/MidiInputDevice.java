@@ -24,6 +24,12 @@ public class MidiInputDevice {
 	UsbEndpoint inputEndpoint;
 	private final WaiterThread waiterThread;
 
+	/**
+	 * @param connection
+	 * @param intf
+	 * @param midiEventListener
+	 * @throws IllegalArgumentException
+	 */
 	public MidiInputDevice(UsbDeviceConnection connection, UsbInterface intf, OnMidiEventListener midiEventListener) throws IllegalArgumentException {
 		deviceConnection = connection;
 
@@ -57,6 +63,12 @@ public class MidiInputDevice {
 		}
 	}
 
+	/**
+	 * Polling thread for input data.
+	 * Loops infinitely while stopFlag == false.
+	 * 
+	 * @author K.Shoji
+	 */
 	private class WaiterThread extends Thread {
 		private byte[] readBuffer = new byte[64];
 
@@ -64,11 +76,20 @@ public class MidiInputDevice {
 		
 		private Handler receiveHandler;
 
+		/**
+		 * Constructor
+		 * 
+		 * @param handler
+		 */
 		public WaiterThread(Handler handler) {
 			stopFlag = false;
 			this.receiveHandler = handler;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Thread#run()
+		 */
 		@Override
 		public void run() {
 			while (true) {

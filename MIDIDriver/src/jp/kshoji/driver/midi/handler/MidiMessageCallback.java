@@ -15,12 +15,19 @@ public class MidiMessageCallback implements Callback {
 
 	private final OnMidiEventListener midiEventListener;
 
+	/**
+	 * @param midiEventListener
+	 */
 	public MidiMessageCallback(OnMidiEventListener midiEventListener) {
 		this.midiEventListener = midiEventListener;
 	}
 
 	private ByteArrayOutputStream systemExclusive = null;
 
+	/*
+	 * (non-Javadoc)
+	 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
+	 */
 	@Override
 	public boolean handleMessage(Message msg) {
 		if (midiEventListener == null) {

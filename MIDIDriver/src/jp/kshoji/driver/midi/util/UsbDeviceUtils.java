@@ -11,6 +11,10 @@ import android.hardware.usb.UsbInterface;
  * @author K.Shoji
  */
 public class UsbDeviceUtils {
+	/**
+	 * @param device
+	 * @return
+	 */
 	public static UsbInterface findMidiInterface(UsbDevice device) {
 		int count = device.getInterfaceCount();
 		for (int i = 0; i < count; i++) {

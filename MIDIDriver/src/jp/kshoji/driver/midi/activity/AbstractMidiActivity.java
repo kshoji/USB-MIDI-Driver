@@ -29,6 +29,10 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	private MidiInputDevice midiInputDevice = null;
 	private MidiOutputDevice midiOutputDevice = null;
 
+	/*
+	 * (non-Javadoc)
+	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -45,6 +49,10 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		registerReceiver(usbReceiver, filter);
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see android.app.Activity#onResume()
+	 */
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -63,6 +71,10 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		}
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see android.app.Activity#onDestroy()
+	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -82,8 +94,6 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		
 		deviceConnection = usbManager.openDevice(attachedDevice);
 
-		// deviceConnection.claimInterface(usbInterface, true); // XXX forceClaim <- false OK?
-
 		try {
 			midiInputDevice = new MidiInputDevice(deviceConnection, usbInterface, this);
 			midiInputDevice.start();
@@ -100,10 +110,17 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		onDeviceAttached();
 	}
 	
+	/**
+	 * Will be called when device has been attached.
+	 */
 	protected void onDeviceAttached() {
 		// do nothing. must be override
 	}
 	
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
+	 */
 	@Override
 	public final void onDeviceDetached(UsbDevice detachedDevice) {
 		if (midiInputDevice != null) {
@@ -125,6 +142,10 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		onDeviceDetached();
 	}
 	
+	/**
+	 * Will be called when device has been detached.
+	 * The activity must be finished in this method.
+	 */
 	protected void onDeviceDetached() {
 		// do nothing. must be override
 	}
