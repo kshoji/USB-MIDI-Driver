@@ -9,10 +9,38 @@
 	<name>Android USB MIDI Driver sample</name>
 	<description>Android USB MIDI Driver's sample application</description>
 
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/kshoji/USB-MIDI-Driver/issues</url>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<url>https://github.com/kshoji/USB-MIDI-Driver</url>
+		<connection>scm:git:git://github.com/kshoji/USB-MIDI-Driver.git</connection>
+		<developerConnection>scm:git:git@github.com:kshoji/USB-MIDI-Driver.git</developerConnection>
+	</scm>
+
+	<developers>
+		<developer>
+			<email>0x0badc0de@gmail.com</email>
+			<name>Kaoru Shoji</name>
+			<url>https://github.com/kshoji</url>
+			<id>kshoji</id>
+		</developer>
+	</developers>
+
 	<repositories>
 		<repository>
 			<id>midi-driver-snapshots</id>
-			<url>http://github.com/kshoji/USB-MIDI-Driver/raw/master/snapshots</url>
+			<url>https://github.com/kshoji/USB-MIDI-Driver/raw/master/MIDIDriver/snapshots</url>
 		</repository>
 	</repositories>
 
