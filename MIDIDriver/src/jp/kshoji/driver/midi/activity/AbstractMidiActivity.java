@@ -20,6 +20,7 @@ import android.util.Log;
 
 /**
  * base Activity for using USB MIDI interface.
+ * launchMode must be "singleTask" or "singleInstance".
  * 
  * @author K.Shoji
  */
@@ -78,6 +79,14 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		
+		if (midiInputDevice != null) {
+			midiInputDevice.stop();
+		}
+		
+		midiInputDevice = null;
+		midiOutputDevice = null;
+		
 		if (usbReceiver != null) {
 			unregisterReceiver(usbReceiver);
 		}
@@ -89,20 +98,24 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	 * @param attachedDevice
 	 * @param usbInterface
 	 */
-	private final void onDeviceAttached(UsbDevice attachedDevice, UsbInterface usbInterface) {
+	private synchronized final void onDeviceAttached(UsbDevice attachedDevice, UsbInterface usbInterface) {
 		UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		
 		deviceConnection = usbManager.openDevice(attachedDevice);
 
 		try {
-			midiInputDevice = new MidiInputDevice(deviceConnection, usbInterface, this);
-			midiInputDevice.start();
+			if (midiInputDevice == null) {
+				midiInputDevice = new MidiInputDevice(deviceConnection, usbInterface, this);
+				midiInputDevice.start();
+			}
 		} catch (IllegalArgumentException iae) {
 			Log.i(Constants.TAG, "This device didn't have any input endpoints.", iae);
 		}
 		
 		try {
-			midiOutputDevice = new MidiOutputDevice(deviceConnection, usbInterface);
+			if (midiOutputDevice == null) {
+				midiOutputDevice = new MidiOutputDevice(deviceConnection, usbInterface);
+			}
 		} catch (IllegalArgumentException iae) {
 			Log.i(Constants.TAG, "This device didn't have any output endpoints.", iae);
 		}
@@ -123,10 +136,6 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	 */
 	@Override
 	public final void onDeviceDetached(UsbDevice detachedDevice) {
-		if (midiInputDevice != null) {
-			midiInputDevice.stop();
-		}
-
 		if (deviceConnection != null) {
 			UsbInterface midiInterface = UsbDeviceUtils.findMidiInterface(detachedDevice);
 			if (midiInterface != null) {
@@ -134,9 +143,6 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			}
 			deviceConnection.close();
 		}
-		
-		midiInputDevice = null;
-		midiOutputDevice = null;
 		
 		Log.d(Constants.TAG, "Device has been detached. The activity must be finished.");
 		onDeviceDetached();

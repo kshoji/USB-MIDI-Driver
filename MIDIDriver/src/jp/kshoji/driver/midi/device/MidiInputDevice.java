@@ -50,7 +50,9 @@ public class MidiInputDevice {
 			throw new IllegalArgumentException("Input endpoint was not found.");
 		}
 
-		deviceConnection.claimInterface(intf, true);
+		if (deviceConnection != null) {
+			deviceConnection.claimInterface(intf, true);
+		}
 	}
 
 	public void start() {
