@@ -11,7 +11,7 @@ public interface OnMidiDeviceDetachedListener {
 	/**
 	 * device has been detached
 	 * 
-	 * @param device
+	 * @param usbDevice
 	 */
-	void onDeviceDetached(UsbDevice device);
+	void onDeviceDetached(UsbDevice usbDevice);
 }

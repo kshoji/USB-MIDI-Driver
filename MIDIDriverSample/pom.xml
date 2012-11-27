@@ -40,7 +40,7 @@
 	<repositories>
 		<repository>
 			<id>midi-driver-snapshots</id>
-			<url>https://github.com/kshoji/USB-MIDI-Driver/raw/master/MIDIDriver/snapshots</url>
+			<url>https://github.com/kshoji/USB-MIDI-Driver/raw/addMultipleDeviceSupport/MIDIDriver/snapshots</url>
 		</repository>
 	</repositories>
 
