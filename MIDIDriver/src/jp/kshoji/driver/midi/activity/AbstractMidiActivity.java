@@ -20,6 +20,9 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Handler.Callback;
+import android.os.Message;
 import android.util.Log;
 
 /**
@@ -33,6 +36,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	Map<UsbDevice, MidiInputDevice> midiInputDevices = null;
 	Map<UsbDevice, MidiOutputDevice> midiOutputDevices = null;
 	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+	Handler deviceDetachedHandler = null;
 
 	private OnMidiDeviceAttachedListener deviceAttachedListener = new OnMidiDeviceAttachedListener() {
 		/*
@@ -96,6 +100,10 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			}
 			
 			Log.d(Constants.TAG, "Device " + detachedDevice.getDeviceName() + " has been detached.");
+			
+			Message message = new Message();
+			message.obj = detachedDevice;
+			deviceDetachedHandler.sendMessage(message);
 		}
 	};
 
@@ -110,6 +118,18 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
 		midiInputDevices = new HashMap<UsbDevice, MidiInputDevice>();
 		midiOutputDevices = new HashMap<UsbDevice, MidiOutputDevice>();
+		deviceDetachedHandler = new Handler(new Callback() {
+			/*
+			 * (non-Javadoc)
+			 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
+			 */
+			@Override
+			public boolean handleMessage(Message msg) {
+				UsbDevice usbDevice = (UsbDevice) msg.obj;
+				onDeviceDetached(usbDevice);
+				return true;
+			}
+		});
 
 		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), deviceAttachedListener, deviceDetachedListener);
 		deviceConnectionWatcher.start();

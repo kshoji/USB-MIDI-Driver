@@ -12,13 +12,13 @@ import android.hardware.usb.UsbManager;
  * 
  * @author K.Shoji
  */
-public class UsbMidiBroadcastReceiver extends BroadcastReceiver {
+public class UsbMidiDetachedReceiver extends BroadcastReceiver {
 	private OnMidiDeviceDetachedListener onDeviceDetachedListener;
 
 	/**
 	 * @param onMidiDeviceDetachedListener
 	 */
-	public UsbMidiBroadcastReceiver(OnMidiDeviceDetachedListener onMidiDeviceDetachedListener) {
+	public UsbMidiDetachedReceiver(OnMidiDeviceDetachedListener onMidiDeviceDetachedListener) {
 		onDeviceDetachedListener = onMidiDeviceDetachedListener;
 	}
 

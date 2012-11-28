@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.sample;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -86,7 +87,7 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		cableIdSpinner = (Spinner) findViewById(R.id.cableIdSpinner);
 		deviceSpinner = (Spinner) findViewById(R.id.deviceNameSpinner);
 		
-		connectedDevicesAdapter = new ArrayAdapter<UsbDevice>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, android.R.id.text1, getConnectedUsbDevices().toArray(new UsbDevice[]{}));
+		connectedDevicesAdapter = new ArrayAdapter<UsbDevice>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, android.R.id.text1, new ArrayList<UsbDevice>());
 		deviceSpinner.setAdapter(connectedDevicesAdapter);
 
 		OnTouchListener onToneButtonTouchListener = new OnTouchListener() {
