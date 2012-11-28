@@ -42,6 +42,7 @@ public class MidiInputDevice {
 			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
 				if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
 					inputEndpoint = endpoint;
+					break;
 				}
 			}
 		}
