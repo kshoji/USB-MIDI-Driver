@@ -44,7 +44,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice, android.hardware.usb.UsbInterface)
 		 */
 		@Override
-		public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
+		public synchronized void onDeviceAttached(final UsbDevice attachedDevice) {
 			UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
 			
 			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);
@@ -52,7 +52,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			
 			UsbInterface usbInterface = UsbDeviceUtils.findMidiInterface(attachedDevice);
 			try {
-				MidiInputDevice midiInputDevice = new MidiInputDevice(deviceConnection, usbInterface, AbstractMidiActivity.this);
+				MidiInputDevice midiInputDevice = new MidiInputDevice(attachedDevice, deviceConnection, usbInterface, AbstractMidiActivity.this);
 				midiInputDevice.start();
 				midiInputDevices.put(attachedDevice, midiInputDevice);
 			} catch (IllegalArgumentException iae) {
@@ -78,7 +78,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
 		 */
 		@Override
-		public void onDeviceDetached(UsbDevice detachedDevice) {
+		public void onDeviceDetached(final UsbDevice detachedDevice) {
 			UsbDeviceConnection deviceConnection = null;
 			if (deviceConnections != null) {
 				deviceConnection = deviceConnections.get(detachedDevice);
@@ -112,7 +112,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
@@ -163,13 +163,12 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			midiOutputDevices.clear();
 		}
 		midiOutputDevices = null;
-		
 	}
 	
 	/**
 	 * get connected USB MIDI devices.
 	 * 
-	 * @return
+	 * @return connected UsbDevice set, null if not available
 	 */
 	public final Set<UsbDevice> getConnectedUsbDevices() {
 		if (deviceConnectionWatcher != null) {
@@ -186,9 +185,9 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	 * get MIDI output device, if available.
 	 * 
 	 * @param usbDevice
-	 * @return
+	 * @return MidiOutputDevice, null if not available
 	 */
-	public final MidiOutputDevice getMidiOutputDevice(UsbDevice usbDevice) {
+	public final MidiOutputDevice getMidiOutputDevice(final UsbDevice usbDevice) {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}

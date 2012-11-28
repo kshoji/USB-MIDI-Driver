@@ -6,6 +6,7 @@ import jp.kshoji.driver.midi.handler.MidiMessageCallback;
 import jp.kshoji.driver.midi.listener.OnMidiEventListener;
 import jp.kshoji.driver.midi.util.Constants;
 import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
@@ -18,22 +19,23 @@ import android.util.Log;
  * 
  * @author K.Shoji
  */
-public class MidiInputDevice {
+public final class MidiInputDevice {
 
 	final UsbDeviceConnection deviceConnection;
 	UsbEndpoint inputEndpoint;
 	private final WaiterThread waiterThread;
 
 	/**
+	 * @param device
 	 * @param connection
 	 * @param intf
 	 * @param midiEventListener
 	 * @throws IllegalArgumentException
 	 */
-	public MidiInputDevice(UsbDeviceConnection connection, UsbInterface intf, OnMidiEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface intf, final OnMidiEventListener midiEventListener) throws IllegalArgumentException {
 		deviceConnection = connection;
 
-		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(midiEventListener)));
+		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(device, midiEventListener)));
 
 		// look for our bulk endpoints
 		for (int i = 0; i < intf.getEndpointCount(); i++) {
@@ -42,6 +44,7 @@ public class MidiInputDevice {
 			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
 				if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
 					inputEndpoint = endpoint;
+					break;
 				}
 			}
 		}
@@ -83,7 +86,7 @@ public class MidiInputDevice {
 		 * 
 		 * @param handler
 		 */
-		public WaiterThread(Handler handler) {
+		public WaiterThread(final Handler handler) {
 			stopFlag = false;
 			this.receiveHandler = handler;
 		}

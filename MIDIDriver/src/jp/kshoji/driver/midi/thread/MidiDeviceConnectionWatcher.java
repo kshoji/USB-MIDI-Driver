@@ -22,7 +22,7 @@ import android.util.Log;
  * 
  * @author K.Shoji
  */
-public class MidiDeviceConnectionWatcher {
+public final class MidiDeviceConnectionWatcher {
 	private MidiDeviceConnectionWatchThread thread;
 	HashMap<String, UsbDevice> grantedDeviceMap;
 
@@ -33,20 +33,26 @@ public class MidiDeviceConnectionWatcher {
 	 * @param deviceAttachedListener
 	 * @param deviceDetachedListener
 	 */
-	public MidiDeviceConnectionWatcher(Context context, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
+	public MidiDeviceConnectionWatcher(final Context context, final OnMidiDeviceAttachedListener deviceAttachedListener, final OnMidiDeviceDetachedListener deviceDetachedListener) {
 		grantedDeviceMap = new HashMap<String, UsbDevice>();
 		thread = new MidiDeviceConnectionWatchThread(context, deviceAttachedListener, deviceDetachedListener);
 	}
 	
-	public final void checkConnectedDevicesImmediately() {
+	public void checkConnectedDevicesImmediately() {
 		thread.checkConnectedDevices();
 	}
 
-	public final void start() {
+	/**
+	 * starts the watching thread
+	 */
+	public void start() {
 		thread.start();
 	}
 	
-	public final void stop() {
+	/**
+	 * stops the watching thread
+	 */
+	public void stop() {
 		thread.stopFlag = true;
 	}
 	
@@ -55,7 +61,7 @@ public class MidiDeviceConnectionWatcher {
 	 * 
 	 * @author K.Shoji
 	 */
-	class UsbMidiGrantedReceiver extends BroadcastReceiver {
+	final class UsbMidiGrantedReceiver extends BroadcastReceiver {
 		public static final String USB_PERMISSION_GRANTED_ACTION = "jp.kshoji.driver.midi.USB_PERMISSION_GRANTED_ACTION";
 		
 		private String deviceName;
@@ -66,7 +72,7 @@ public class MidiDeviceConnectionWatcher {
 		 * @param device
 		 * @param onMidiDeviceAttachedListener
 		 */
-		public UsbMidiGrantedReceiver(String deviceName, UsbDevice device, OnMidiDeviceAttachedListener onMidiDeviceAttachedListener) {
+		public UsbMidiGrantedReceiver(final String deviceName, final UsbDevice device, final OnMidiDeviceAttachedListener onMidiDeviceAttachedListener) {
 			this.deviceName = deviceName;
 			this.device = device;
 			onDeviceAttachedListener = onMidiDeviceAttachedListener;
@@ -77,7 +83,7 @@ public class MidiDeviceConnectionWatcher {
 		 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
 		 */
 		@Override
-		public void onReceive(Context context, Intent intent) {
+		public void onReceive(final Context context, final Intent intent) {
 			String action = intent.getAction();
 			if (USB_PERMISSION_GRANTED_ACTION.equals(action)) {
 				boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
@@ -96,7 +102,7 @@ public class MidiDeviceConnectionWatcher {
 	 * 
 	 * @author K.Shoji
 	 */
-	class MidiDeviceConnectionWatchThread extends Thread {
+	final class MidiDeviceConnectionWatchThread extends Thread {
 		private Context context;
 		private UsbManager usbManager;
 		private OnMidiDeviceAttachedListener deviceAttachedListener;
@@ -104,7 +110,7 @@ public class MidiDeviceConnectionWatcher {
 		private HashSet<String> deviceNameSet;
 		boolean stopFlag;
 		
-		MidiDeviceConnectionWatchThread(Context context, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
+		MidiDeviceConnectionWatchThread(final Context context, final OnMidiDeviceAttachedListener deviceAttachedListener, final OnMidiDeviceDetachedListener deviceDetachedListener) {
 			this.context = context;
 			usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 			this.deviceAttachedListener = deviceAttachedListener;

@@ -106,13 +106,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 				int note = 60 + Integer.parseInt((String) v.getTag());
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
-					midiOutputDevice.onMidiNoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
+						midiOutputDevice.sendMidiNoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
 					if (midiOutputEventAdapter != null) {
 						midiOutputEventAdapter.add("NoteOn cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
 					}
 					break;
 				case MotionEvent.ACTION_UP:
-					midiOutputDevice.onMidiNoteOff(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
+						midiOutputDevice.sendMidiNoteOff(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
 					if (midiOutputEventAdapter != null) {
 						midiOutputEventAdapter.add("NoteOff cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
 					}
@@ -257,16 +257,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOff(int, int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOff(android.hardware.usb.UsbDevice, int, int, int, int)
 	 */
 	@Override
-	public void onMidiNoteOff(int cable, int channel, int note, int velocity) {
+	public void onMidiNoteOff(UsbDevice sender, int cable, int channel, int note, int velocity) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("NoteOff cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiNoteOff(cable, channel, note, velocity);
+			getMidiOutputDeviceFromSpinner().sendMidiNoteOff(cable, channel, note, velocity);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("NoteOff cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 			}
@@ -285,16 +285,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOn(int, int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOn(android.hardware.usb.UsbDevice, int, int, int, int)
 	 */
 	@Override
-	public void onMidiNoteOn(int cable, int channel, int note, int velocity) {
+	public void onMidiNoteOn(UsbDevice sender, int cable, int channel, int note, int velocity) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("NoteOn cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiNoteOn(cable, channel, note, velocity);
+			getMidiOutputDeviceFromSpinner().sendMidiNoteOn(cable, channel, note, velocity);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("NoteOn cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 			}
@@ -317,16 +317,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPolyphonicAftertouch(int, int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPolyphonicAftertouch(android.hardware.usb.UsbDevice, int, int, int, int)
 	 */
 	@Override
-	public void onMidiPolyphonicAftertouch(int cable, int channel, int note, int pressure) {
+	public void onMidiPolyphonicAftertouch(UsbDevice sender, int cable, int channel, int note, int pressure) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("PolyphonicAftertouch cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiPolyphonicAftertouch(cable, channel, note, pressure);
+			getMidiOutputDeviceFromSpinner().sendMidiPolyphonicAftertouch(cable, channel, note, pressure);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("PolyphonicAftertouch cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure);
 			}
@@ -335,16 +335,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiControlChange(int, int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiControlChange(android.hardware.usb.UsbDevice, int, int, int, int)
 	 */
 	@Override
-	public void onMidiControlChange(int cable, int channel, int function, int value) {
+	public void onMidiControlChange(UsbDevice sender, int cable, int channel, int function, int value) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("ControlChange cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiControlChange(cable, channel, function, value);
+			getMidiOutputDeviceFromSpinner().sendMidiControlChange(cable, channel, function, value);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("ControlChange cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
 			}
@@ -353,16 +353,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiProgramChange(int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiProgramChange(android.hardware.usb.UsbDevice, int, int, int)
 	 */
 	@Override
-	public void onMidiProgramChange(int cable, int channel, int program) {
+	public void onMidiProgramChange(UsbDevice sender, int cable, int channel, int program) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("ProgramChange cable: " + cable + ", channel: " + channel + ", program: " + program);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiProgramChange(cable, channel, program);
+			getMidiOutputDeviceFromSpinner().sendMidiProgramChange(cable, channel, program);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("ProgramChange cable: " + cable + ", channel: " + channel + ", program: " + program);
 			}
@@ -378,16 +378,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiChannelAftertouch(int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiChannelAftertouch(android.hardware.usb.UsbDevice, int, int, int)
 	 */
 	@Override
-	public void onMidiChannelAftertouch(int cable, int channel, int pressure) {
+	public void onMidiChannelAftertouch(UsbDevice sender, int cable, int channel, int pressure) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("ChannelAftertouch cable: " + cable + ", channel: " + channel + ", pressure: " + pressure);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiChannelAftertouch(cable, channel, pressure);
+			getMidiOutputDeviceFromSpinner().sendMidiChannelAftertouch(cable, channel, pressure);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("ChannelAftertouch cable: " + cable + ", channel: " + channel + ", pressure: " + pressure);
 			}
@@ -396,16 +396,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPitchWheel(int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPitchWheel(android.hardware.usb.UsbDevice, int, int, int)
 	 */
 	@Override
-	public void onMidiPitchWheel(int cable, int channel, int amount) {
+	public void onMidiPitchWheel(UsbDevice sender, int cable, int channel, int amount) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("PitchWheel cable: " + cable + ", channel: " + channel + ", amount: " + amount);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiPitchWheel(cable, channel, amount);
+			getMidiOutputDeviceFromSpinner().sendMidiPitchWheel(cable, channel, amount);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("PitchWheel cable: " + cable + ", channel: " + channel + ", amount: " + amount);
 			}
@@ -414,16 +414,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemExclusive(int, byte[])
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemExclusive(android.hardware.usb.UsbDevice, int, byte[])
 	 */
 	@Override
-	public void onMidiSystemExclusive(int cable, byte[] systemExclusive) {
+	public void onMidiSystemExclusive(UsbDevice sender, int cable, byte[] systemExclusive) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("SystemExclusive cable: " + cable + ", data:" + Arrays.toString(systemExclusive));
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiSystemExclusive(cable, systemExclusive);
+			getMidiOutputDeviceFromSpinner().sendMidiSystemExclusive(cable, systemExclusive);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("SystemExclusive cable: " + cable + ", data:" + Arrays.toString(systemExclusive));
 			}
@@ -432,16 +432,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemCommonMessage(int, byte[])
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemCommonMessage(android.hardware.usb.UsbDevice, int, byte[])
 	 */
 	@Override
-	public void onMidiSystemCommonMessage(int cable, byte[] bytes) {
+	public void onMidiSystemCommonMessage(UsbDevice sender, int cable, byte[] bytes) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("SystemCommonMessage cable: " + cable + ", bytes: " + Arrays.toString(bytes));
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiSystemCommonMessage(cable, bytes);
+			getMidiOutputDeviceFromSpinner().sendMidiSystemCommonMessage(cable, bytes);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("SystemCommonMessage cable: " + cable + ", bytes: " + Arrays.toString(bytes));
 			}
@@ -450,16 +450,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSingleByte(int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSingleByte(android.hardware.usb.UsbDevice, int, int)
 	 */
 	@Override
-	public void onMidiSingleByte(int cable, int byte1) {
+	public void onMidiSingleByte(UsbDevice sender, int cable, int byte1) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("SingleByte cable: " + cable + ", data: " + byte1);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiSingleByte(cable, byte1);
+			getMidiOutputDeviceFromSpinner().sendMidiSingleByte(cable, byte1);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("SingleByte cable: " + cable + ", data: " + byte1);
 			}
@@ -468,16 +468,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiMiscellaneousFunctionCodes(int, int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiMiscellaneousFunctionCodes(android.hardware.usb.UsbDevice, int, int, int, int)
 	 */
 	@Override
-	public void onMidiMiscellaneousFunctionCodes(int cable, int byte1, int byte2, int byte3) {
+	public void onMidiMiscellaneousFunctionCodes(UsbDevice sender, int cable, int byte1, int byte2, int byte3) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("MiscellaneousFunctionCodes cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiMiscellaneousFunctionCodes(cable, byte1, byte2, byte3);
+			getMidiOutputDeviceFromSpinner().sendMidiMiscellaneousFunctionCodes(cable, byte1, byte2, byte3);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("MiscellaneousFunctionCodes cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 			}
@@ -486,16 +486,16 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiCableEvents(int, int, int, int)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiCableEvents(android.hardware.usb.UsbDevice, int, int, int, int)
 	 */
 	@Override
-	public void onMidiCableEvents(int cable, int byte1, int byte2, int byte3) {
+	public void onMidiCableEvents(UsbDevice sender, int cable, int byte1, int byte2, int byte3) {
 		if (midiInputEventAdapter != null) {
 			midiInputEventAdapter.add("CableEvents cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
-			getMidiOutputDeviceFromSpinner().onMidiCableEvents(cable, byte1, byte2, byte3);
+			getMidiOutputDeviceFromSpinner().sendMidiCableEvents(cable, byte1, byte2, byte3);
 			if (midiOutputEventAdapter != null) {
 				midiOutputEventAdapter.add("CableEvents cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 			}
