@@ -1,7 +1,9 @@
 package jp.kshoji.driver.midi.thread;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
@@ -160,9 +162,10 @@ public final class MidiDeviceConnectionWatcher {
 			}
 			
 			// check detached device
+			List<String> removeDeviceNames = new ArrayList<String>();
 			for (String deviceName : deviceNameSet) {
 				if (!deviceMap.containsKey(deviceName)) {
-					deviceNameSet.remove(deviceName);
+					removeDeviceNames.add(deviceName);
 					UsbDevice device = grantedDeviceMap.get(deviceName);
 					grantedDeviceMap.remove(deviceName);
 
@@ -171,6 +174,10 @@ public final class MidiDeviceConnectionWatcher {
 						deviceDetachedListener.onDeviceDetached(device);
 					}
 				}
+			}
+			
+			for (String deviceName : removeDeviceNames) {
+				deviceNameSet.remove(deviceName);
 			}
 		}
 	}
