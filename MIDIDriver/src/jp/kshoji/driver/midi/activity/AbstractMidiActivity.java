@@ -9,7 +9,7 @@ import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
-import jp.kshoji.driver.midi.listener.OnMidiEventListener;
+import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbDeviceUtils;
@@ -32,7 +32,7 @@ import android.util.Log;
  * 
  * @author K.Shoji
  */
-public abstract class AbstractMidiActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiEventListener {
+public abstract class AbstractMidiActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
 	Map<UsbDevice, UsbDeviceConnection> deviceConnections = null;
 	Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = null;
 	Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = null;

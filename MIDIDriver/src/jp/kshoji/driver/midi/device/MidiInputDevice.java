@@ -3,7 +3,7 @@ package jp.kshoji.driver.midi.device;
 import java.util.Arrays;
 
 import jp.kshoji.driver.midi.handler.MidiMessageCallback;
-import jp.kshoji.driver.midi.listener.OnMidiEventListener;
+import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbDeviceUtils;
 import android.hardware.usb.UsbConstants;
@@ -26,6 +26,8 @@ public final class MidiInputDevice {
 	final UsbDeviceConnection deviceConnection;
 	UsbEndpoint inputEndpoint;
 	private final WaiterThread waiterThread;
+	private UsbDevice usbDevice;
+	private UsbInterface usbInterface;
 
 	/**
 	 * @param device
@@ -34,10 +36,12 @@ public final class MidiInputDevice {
 	 * @param midiEventListener
 	 * @throws IllegalArgumentException
 	 */
-	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final OnMidiEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
 		deviceConnection = connection;
+		usbDevice = device;
+		this.usbInterface = usbInterface;
 
-		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(device, midiEventListener)));
+		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(this, midiEventListener)));
 
 		inputEndpoint = UsbDeviceUtils.findMidiEndpoint(usbInterface, UsbConstants.USB_DIR_IN);
 		if (inputEndpoint == null) {
@@ -57,6 +61,27 @@ public final class MidiInputDevice {
 		}
 	}
 
+	/**
+	 * @return the usbDevice
+	 */
+	public UsbDevice getUsbDevice() {
+		return usbDevice;
+	}
+
+	/**
+	 * @return the usbInterface
+	 */
+	public UsbInterface getUsbInterface() {
+		return usbInterface;
+	}
+
+	/**
+	 * @return the usbEndpoint
+	 */
+	public UsbEndpoint getUsbEndpoint() {
+		return inputEndpoint;
+	}
+	
 	/**
 	 * Polling thread for input data.
 	 * Loops infinitely while stopFlag == false.
@@ -106,6 +131,13 @@ public final class MidiInputDevice {
 					message.obj = read;
 					receiveHandler.sendMessage(message);
 				}
+				
+				// XXX uncomment below if high CPU usage with many devices. (But, this sleep makes latency).
+				// try {
+				// sleep(10);
+				// } catch (InterruptedException e) {
+				// // do nothing
+				// }
 			}
 		}
 	}

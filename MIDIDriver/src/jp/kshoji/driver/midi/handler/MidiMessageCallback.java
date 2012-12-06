@@ -2,8 +2,8 @@ package jp.kshoji.driver.midi.handler;
 
 import java.io.ByteArrayOutputStream;
 
-import jp.kshoji.driver.midi.listener.OnMidiEventListener;
-import android.hardware.usb.UsbDevice;
+import jp.kshoji.driver.midi.device.MidiInputDevice;
+import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import android.os.Handler.Callback;
 import android.os.Message;
 
@@ -14,14 +14,15 @@ import android.os.Message;
  */
 public final class MidiMessageCallback implements Callback {
 
-	private final OnMidiEventListener midiEventListener;
-	private final UsbDevice sender;
+	private final OnMidiInputEventListener midiEventListener;
+	private final MidiInputDevice sender;
 	private ByteArrayOutputStream systemExclusive = null;
 
 	/**
+	 * @param device
 	 * @param midiEventListener
 	 */
-	public MidiMessageCallback(final UsbDevice device, final OnMidiEventListener midiEventListener) {
+	public MidiMessageCallback(final MidiInputDevice device, final OnMidiInputEventListener midiEventListener) {
 		this.midiEventListener = midiEventListener;
 		sender = device;
 	}
