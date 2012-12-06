@@ -15,6 +15,7 @@ import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbDeviceUtils;
 import android.app.Activity;
 import android.content.Context;
+import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
@@ -33,8 +34,8 @@ import android.util.Log;
  */
 public abstract class AbstractMidiActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiEventListener {
 	Map<UsbDevice, UsbDeviceConnection> deviceConnections = null;
-	Map<UsbDevice, MidiInputDevice> midiInputDevices = null;
-	Map<UsbDevice, MidiOutputDevice> midiOutputDevices = null;
+	Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = null;
+	Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = null;
 	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 	Handler deviceDetachedHandler = null;
 
@@ -50,20 +51,34 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);
 			deviceConnections.put(attachedDevice, deviceConnection);
 			
-			UsbInterface usbInterface = UsbDeviceUtils.findMidiInterface(attachedDevice);
-			try {
-				MidiInputDevice midiInputDevice = new MidiInputDevice(attachedDevice, deviceConnection, usbInterface, AbstractMidiActivity.this);
-				midiInputDevice.start();
-				midiInputDevices.put(attachedDevice, midiInputDevice);
-			} catch (IllegalArgumentException iae) {
-				Log.i(Constants.TAG, "This device didn't have any input endpoints.", iae);
+			Set<UsbInterface> inputInterfaces = UsbDeviceUtils.findMidiInterfaces(attachedDevice, UsbConstants.USB_DIR_IN);
+			for (UsbInterface usbInterface : inputInterfaces) {
+				try {
+					MidiInputDevice midiInputDevice = new MidiInputDevice(attachedDevice, deviceConnection, usbInterface, AbstractMidiActivity.this);
+					Set<MidiInputDevice> inputDevices = midiInputDevices.get(attachedDevice);
+					if (inputDevices == null) {
+						inputDevices = new HashSet<MidiInputDevice>();
+					}
+					inputDevices.add(midiInputDevice);
+					midiInputDevices.put(attachedDevice, inputDevices);
+				} catch (IllegalArgumentException iae) {
+					Log.i(Constants.TAG, "This device didn't have any input endpoints.", iae);
+				}
 			}
 			
-			try {
-				MidiOutputDevice midiOutputDevice = new MidiOutputDevice(deviceConnection, usbInterface);
-				midiOutputDevices.put(attachedDevice, midiOutputDevice);
-			} catch (IllegalArgumentException iae) {
-				Log.i(Constants.TAG, "This device didn't have any output endpoints.", iae);
+			Set<UsbInterface> outputInterfaces = UsbDeviceUtils.findMidiInterfaces(attachedDevice, UsbConstants.USB_DIR_OUT);
+			for (UsbInterface usbInterface : outputInterfaces) {
+				try {
+					MidiOutputDevice midiOutputDevice = new MidiOutputDevice(deviceConnection, usbInterface);
+					Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(attachedDevice);
+					if (outputDevices == null) {
+						outputDevices = new HashSet<MidiOutputDevice>();
+					}
+					outputDevices.add(midiOutputDevice);
+					midiOutputDevices.put(attachedDevice, outputDevices);
+				} catch (IllegalArgumentException iae) {
+					Log.i(Constants.TAG, "This device didn't have any output endpoints.", iae);
+				}
 			}
 			
 			Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
@@ -85,17 +100,30 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			}
 			
 			if (deviceConnection != null) {
-				UsbInterface midiInterface = UsbDeviceUtils.findMidiInterface(detachedDevice);
-				if (midiInterface != null) {
-					deviceConnection.releaseInterface(midiInterface);
+				Set<UsbInterface> inputInterfaces = UsbDeviceUtils.findMidiInterfaces(detachedDevice, UsbConstants.USB_DIR_IN);
+				Set<UsbInterface> outputInterfaces = UsbDeviceUtils.findMidiInterfaces(detachedDevice, UsbConstants.USB_DIR_OUT);
+				
+				Set<UsbInterface> allInterfaces = new HashSet<UsbInterface>();
+				allInterfaces.addAll(inputInterfaces);
+				allInterfaces.addAll(outputInterfaces);
+				
+				for (UsbInterface usbInterface : allInterfaces) {
+					if (usbInterface != null) {
+						deviceConnection.releaseInterface(usbInterface);
+					}
 				}
+				
 				deviceConnection.close();
 			}
 			
-			// close input device
-			MidiInputDevice midiInputDevice = midiInputDevices.get(detachedDevice);
-			if (midiInputDevice != null) {
-				midiInputDevice.stop();
+			// Stop input device's thread.
+			Set<MidiInputDevice> inputDevices = midiInputDevices.get(detachedDevice);
+			if (inputDevices != null && inputDevices.size() > 0) {
+				for (MidiInputDevice inputDevice : inputDevices) {
+					if (inputDevice != null) {
+						inputDevice.stop();
+					}
+				}
 				midiInputDevices.remove(detachedDevice);
 			}
 			
@@ -116,8 +144,8 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		super.onCreate(savedInstanceState);
 		
 		deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
-		midiInputDevices = new HashMap<UsbDevice, MidiInputDevice>();
-		midiOutputDevices = new HashMap<UsbDevice, MidiOutputDevice>();
+		midiInputDevices = new HashMap<UsbDevice, Set<MidiInputDevice>>();
+		midiOutputDevices = new HashMap<UsbDevice, Set<MidiOutputDevice>>();
 		deviceDetachedHandler = new Handler(new Callback() {
 			/*
 			 * (non-Javadoc)
@@ -149,9 +177,13 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 		deviceConnectionWatcher = null;
 		
 		if (midiInputDevices != null) {
-			for (MidiInputDevice midiInputDevice : midiInputDevices.values()) {
-				if (midiInputDevice != null) {
-					midiInputDevice.stop();
+			for (Set<MidiInputDevice> inputDevices : midiInputDevices.values()) {
+				if (inputDevices != null) {
+					for (MidiInputDevice inputDevice : inputDevices) {
+						if (inputDevice != null) {
+							inputDevice.stop();
+						}
+					}
 				}
 			}
 			
@@ -187,7 +219,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 	 * @param usbDevice
 	 * @return MidiOutputDevice, null if not available
 	 */
-	public final MidiOutputDevice getMidiOutputDevice(final UsbDevice usbDevice) {
+	public final Set<MidiOutputDevice> getMidiOutputDevices(final UsbDevice usbDevice) {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}

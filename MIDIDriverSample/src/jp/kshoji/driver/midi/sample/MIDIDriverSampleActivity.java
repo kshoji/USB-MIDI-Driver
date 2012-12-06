@@ -60,7 +60,12 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 		if (deviceSpinner != null && connectedDevicesAdapter != null && !connectedDevicesAdapter.isEmpty()) {
 			UsbDevice device = connectedDevicesAdapter.getItem(deviceSpinner.getSelectedItemPosition());
 			if (device != null) {
-				return getMidiOutputDevice(device);
+				Set<MidiOutputDevice> midiOutputDevices = getMidiOutputDevices(device);
+				
+				if (midiOutputDevices.size() > 0) {
+					// returns the first one.
+					return (MidiOutputDevice) midiOutputDevices.toArray()[0];
+				}
 			}
 		}
 		return null;

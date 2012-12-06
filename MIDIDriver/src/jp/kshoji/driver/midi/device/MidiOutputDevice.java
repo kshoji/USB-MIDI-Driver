@@ -3,6 +3,7 @@ package jp.kshoji.driver.midi.device;
 import java.util.Arrays;
 
 import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.driver.midi.util.UsbDeviceUtils;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
@@ -21,25 +22,17 @@ public final class MidiOutputDevice {
 
 	/**
 	 * @param connection
-	 * @param intf
+	 * @param usbInterface
 	 */
-	public MidiOutputDevice(final UsbDeviceConnection connection, final UsbInterface intf) {
+	public MidiOutputDevice(final UsbDeviceConnection connection, final UsbInterface usbInterface) {
 		deviceConnection = connection;
 
-		for (int i = 0; i < intf.getEndpointCount(); i++) {
-			UsbEndpoint endpoint = intf.getEndpoint(i);
-			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
-				if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT) {
-					outputEndpoint = endpoint;
-				}
-			}
-		}
-
+		outputEndpoint = UsbDeviceUtils.findMidiEndpoint(usbInterface, UsbConstants.USB_DIR_OUT);
 		if (outputEndpoint == null) {
 			throw new IllegalArgumentException("Output endpoint was not found.");
 		}
 
-		deviceConnection.claimInterface(intf, true);
+		deviceConnection.claimInterface(usbInterface, true);
 	}
 
 	/**

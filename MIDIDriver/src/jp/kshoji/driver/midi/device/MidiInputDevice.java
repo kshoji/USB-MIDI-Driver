@@ -5,6 +5,7 @@ import java.util.Arrays;
 import jp.kshoji.driver.midi.handler.MidiMessageCallback;
 import jp.kshoji.driver.midi.listener.OnMidiEventListener;
 import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.driver.midi.util.UsbDeviceUtils;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -16,6 +17,7 @@ import android.util.Log;
 
 /**
  * MIDI Input Device
+ * stop() method must be called when the application will be destroyed.
  * 
  * @author K.Shoji
  */
@@ -28,37 +30,24 @@ public final class MidiInputDevice {
 	/**
 	 * @param device
 	 * @param connection
-	 * @param intf
+	 * @param usbInterface
 	 * @param midiEventListener
 	 * @throws IllegalArgumentException
 	 */
-	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface intf, final OnMidiEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final OnMidiEventListener midiEventListener) throws IllegalArgumentException {
 		deviceConnection = connection;
 
 		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(device, midiEventListener)));
 
-		// look for our bulk endpoints
-		for (int i = 0; i < intf.getEndpointCount(); i++) {
-			UsbEndpoint endpoint = intf.getEndpoint(i);
-			Log.d(Constants.TAG, "found endpoint: " + endpoint + ", type: " + endpoint.getType() + ", direction: " + endpoint.getDirection());
-			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
-				if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
-					inputEndpoint = endpoint;
-					break;
-				}
-			}
-		}
-		
+		inputEndpoint = UsbDeviceUtils.findMidiEndpoint(usbInterface, UsbConstants.USB_DIR_IN);
 		if (inputEndpoint == null) {
 			throw new IllegalArgumentException("Input endpoint was not found.");
 		}
 
 		if (deviceConnection != null) {
-			deviceConnection.claimInterface(intf, true);
+			deviceConnection.claimInterface(usbInterface, true);
 		}
-	}
-
-	public void start() {
+		
 		waiterThread.start();
 	}
 
