@@ -5,6 +5,7 @@ import java.util.Arrays;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbDeviceUtils;
 import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
@@ -17,14 +18,19 @@ import android.util.Log;
  */
 public final class MidiOutputDevice {
 
+	private final UsbDevice usbDevice;
+	private final UsbInterface usbInterface;
 	private final UsbDeviceConnection deviceConnection;
 	private UsbEndpoint outputEndpoint;
 
 	/**
+	 * @param device
 	 * @param connection
 	 * @param usbInterface
 	 */
-	public MidiOutputDevice(final UsbDeviceConnection connection, final UsbInterface usbInterface) {
+	public MidiOutputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface) {
+		usbDevice = device;
+		this.usbInterface = usbInterface;
 		deviceConnection = connection;
 
 		outputEndpoint = UsbDeviceUtils.findMidiEndpoint(usbInterface, UsbConstants.USB_DIR_OUT);
@@ -35,6 +41,27 @@ public final class MidiOutputDevice {
 		deviceConnection.claimInterface(usbInterface, true);
 	}
 
+	/**
+	 * @return the usbDevice
+	 */
+	public UsbDevice getUsbDevice() {
+		return usbDevice;
+	}
+	
+	/**
+	 * @return the usbInterface
+	 */
+	public UsbInterface getUsbInterface() {
+		return usbInterface;
+	}
+	
+	/**
+	 * @return the usbEndpoint
+	 */
+	public UsbEndpoint getUsbEndpoint() {
+		return outputEndpoint;
+	}
+	
 	/**
 	 * Sends MIDI message to output device.<br />
 	 * TODO do this method with another thread

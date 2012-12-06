@@ -69,7 +69,7 @@ public abstract class AbstractMidiActivity extends Activity implements OnMidiDev
 			Set<UsbInterface> outputInterfaces = UsbDeviceUtils.findMidiInterfaces(attachedDevice, UsbConstants.USB_DIR_OUT);
 			for (UsbInterface usbInterface : outputInterfaces) {
 				try {
-					MidiOutputDevice midiOutputDevice = new MidiOutputDevice(deviceConnection, usbInterface);
+					MidiOutputDevice midiOutputDevice = new MidiOutputDevice(attachedDevice, deviceConnection, usbInterface);
 					Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(attachedDevice);
 					if (outputDevices == null) {
 						outputDevices = new HashSet<MidiOutputDevice>();

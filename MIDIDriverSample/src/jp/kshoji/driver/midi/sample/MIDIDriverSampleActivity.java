@@ -114,13 +114,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 				case MotionEvent.ACTION_DOWN:
 						midiOutputDevice.sendMidiNoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
 					if (midiOutputEventAdapter != null) {
-						midiOutputEventAdapter.add("NoteOn cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
+							midiOutputEventAdapter.add("NoteOn to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
 					}
 					break;
 				case MotionEvent.ACTION_UP:
 						midiOutputDevice.sendMidiNoteOff(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
 					if (midiOutputEventAdapter != null) {
-						midiOutputEventAdapter.add("NoteOff cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
+							midiOutputEventAdapter.add("NoteOff to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
 					}
 					break;
 				default:
@@ -268,13 +268,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("NoteOff cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity);
+			midiInputEventAdapter.add("NoteOff from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiNoteOff(cable, channel, note, velocity);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("NoteOff cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity);
+				midiOutputEventAdapter.add("NoteOff from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 			}
 		}
 
@@ -296,13 +296,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("NoteOn cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity);
+			midiInputEventAdapter.add("NoteOn from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiNoteOn(cable, channel, note, velocity);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("NoteOn cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity);
+				midiOutputEventAdapter.add("NoteOn from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity);
 			}
 		}
 
@@ -328,13 +328,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("PolyphonicAftertouch cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure);
+			midiInputEventAdapter.add("PolyphonicAftertouch from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiPolyphonicAftertouch(cable, channel, note, pressure);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("PolyphonicAftertouch cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure);
+				midiOutputEventAdapter.add("PolyphonicAftertouch from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure);
 			}
 		}
 	}
@@ -346,13 +346,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("ControlChange cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
+			midiInputEventAdapter.add("ControlChange from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiControlChange(cable, channel, function, value);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("ControlChange cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
+				midiOutputEventAdapter.add("ControlChange from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
 			}
 		}
 	}
@@ -364,13 +364,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("ProgramChange cable: " + cable + ", channel: " + channel + ", program: " + program);
+			midiInputEventAdapter.add("ProgramChange from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", program: " + program);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiProgramChange(cable, channel, program);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("ProgramChange cable: " + cable + ", channel: " + channel + ", program: " + program);
+				midiOutputEventAdapter.add("ProgramChange from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", program: " + program);
 			}
 		}
 
@@ -389,13 +389,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("ChannelAftertouch cable: " + cable + ", channel: " + channel + ", pressure: " + pressure);
+			midiInputEventAdapter.add("ChannelAftertouch from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", pressure: " + pressure);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiChannelAftertouch(cable, channel, pressure);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("ChannelAftertouch cable: " + cable + ", channel: " + channel + ", pressure: " + pressure);
+				midiOutputEventAdapter.add("ChannelAftertouch from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", pressure: " + pressure);
 			}
 		}
 	}
@@ -407,13 +407,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("PitchWheel cable: " + cable + ", channel: " + channel + ", amount: " + amount);
+			midiInputEventAdapter.add("PitchWheel from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", amount: " + amount);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiPitchWheel(cable, channel, amount);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("PitchWheel cable: " + cable + ", channel: " + channel + ", amount: " + amount);
+				midiOutputEventAdapter.add("PitchWheel from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", amount: " + amount);
 			}
 		}
 	}
@@ -425,13 +425,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("SystemExclusive cable: " + cable + ", data:" + Arrays.toString(systemExclusive));
+			midiInputEventAdapter.add("SystemExclusive from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", data:" + Arrays.toString(systemExclusive));
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiSystemExclusive(cable, systemExclusive);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("SystemExclusive cable: " + cable + ", data:" + Arrays.toString(systemExclusive));
+				midiOutputEventAdapter.add("SystemExclusive from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", data:" + Arrays.toString(systemExclusive));
 			}
 		}
 	}
@@ -443,13 +443,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("SystemCommonMessage cable: " + cable + ", bytes: " + Arrays.toString(bytes));
+			midiInputEventAdapter.add("SystemCommonMessage from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", bytes: " + Arrays.toString(bytes));
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiSystemCommonMessage(cable, bytes);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("SystemCommonMessage cable: " + cable + ", bytes: " + Arrays.toString(bytes));
+				midiOutputEventAdapter.add("SystemCommonMessage from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", bytes: " + Arrays.toString(bytes));
 			}
 		}
 	}
@@ -461,13 +461,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("SingleByte cable: " + cable + ", data: " + byte1);
+			midiInputEventAdapter.add("SingleByte from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", data: " + byte1);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiSingleByte(cable, byte1);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("SingleByte cable: " + cable + ", data: " + byte1);
+				midiOutputEventAdapter.add("SingleByte from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", data: " + byte1);
 			}
 		}
 	}
@@ -479,13 +479,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("MiscellaneousFunctionCodes cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
+			midiInputEventAdapter.add("MiscellaneousFunctionCodes from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiMiscellaneousFunctionCodes(cable, byte1, byte2, byte3);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("MiscellaneousFunctionCodes cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
+				midiOutputEventAdapter.add("MiscellaneousFunctionCodes from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 			}
 		}
 	}
@@ -497,13 +497,13 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 	@Override
 	public void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		if (midiInputEventAdapter != null) {
-			midiInputEventAdapter.add("CableEvents cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
+			midiInputEventAdapter.add("CableEvents from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 		}
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
 			getMidiOutputDeviceFromSpinner().sendMidiCableEvents(cable, byte1, byte2, byte3);
 			if (midiOutputEventAdapter != null) {
-				midiOutputEventAdapter.add("CableEvents cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
+				midiOutputEventAdapter.add("CableEvents from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3);
 			}
 		}
 	}
