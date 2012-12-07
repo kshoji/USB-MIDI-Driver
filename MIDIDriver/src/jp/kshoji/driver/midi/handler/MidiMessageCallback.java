@@ -19,6 +19,8 @@ public final class MidiMessageCallback implements Callback {
 	private ByteArrayOutputStream systemExclusive = null;
 
 	/**
+	 * constructor
+	 * 
 	 * @param device
 	 * @param midiEventListener
 	 */
@@ -85,10 +87,8 @@ public final class MidiMessageCallback implements Callback {
 					// system common message with 1byte
 					// sysex end with 1 byte
 					if (systemExclusive == null) {
-						{
-							byte[] bytes = new byte[]{(byte) byte1};
-							midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
-						}
+						byte[] bytes = new byte[]{(byte) byte1};
+						midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
 					} else {
 						synchronized (systemExclusive) {
 							systemExclusive.write(byte1);

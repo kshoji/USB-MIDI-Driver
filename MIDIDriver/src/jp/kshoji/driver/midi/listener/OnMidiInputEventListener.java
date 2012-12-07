@@ -45,7 +45,7 @@ public interface OnMidiInputEventListener {
 	 * @param cable 0-15
 	 * @param bytes bytes.length:1, 2, or 3
 	 */
-	void onMidiSystemCommonMessage(final MidiInputDevice sender, int cable, byte[] bytes);
+	void onMidiSystemCommonMessage(final MidiInputDevice sender, int cable, final byte[] bytes);
 	
 	/**
 	 * SysEx
@@ -56,7 +56,7 @@ public interface OnMidiInputEventListener {
 	 * @param cable 0-15
 	 * @param systemExclusive
 	 */
-	void onMidiSystemExclusive(final MidiInputDevice sender, int cable, byte[] systemExclusive);
+	void onMidiSystemExclusive(final MidiInputDevice sender, int cable, final byte[] systemExclusive);
 	
 	/**
 	 * Note-off

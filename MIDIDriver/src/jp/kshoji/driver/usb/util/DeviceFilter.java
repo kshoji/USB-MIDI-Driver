@@ -23,25 +23,36 @@ import android.util.Log;
  */
 public final class DeviceFilter {
 	// USB Vendor ID (or -1 for unspecified)
-	public final int usbVendorId;
+	private final int usbVendorId;
 	// USB Product ID (or -1 for unspecified)
-	public final int usbProductId;
+	private final int usbProductId;
 	// USB device or interface class (or -1 for unspecified)
-	public final int usbClass;
+	private final int usbClass;
 	// USB device subclass (or -1 for unspecified)
-	public final int usbSubclass;
+	private final int usbSubclass;
 	// USB device protocol (or -1 for unspecified)
-	public final int usbProtocol;
+	private final int usbProtocol;
 	
-	public DeviceFilter(int vid, int pid, int clasz, int subclass, int protocol) {
-		usbVendorId = vid;
-		usbProductId = pid;
+	/**
+	 * constructor
+	 * 
+	 * @param vendorId
+	 * @param productId
+	 * @param clasz
+	 * @param subclass
+	 * @param protocol
+	 */
+	public DeviceFilter(int vendorId, int productId, int clasz, int subclass, int protocol) {
+		usbVendorId = vendorId;
+		usbProductId = productId;
 		usbClass = clasz;
 		usbSubclass = subclass;
 		usbProtocol = protocol;
 	}
 	
 	/**
+	 * Load DeviceFilter from resources(res/xml/device_filter.xml).
+	 * 
 	 * @param context
 	 * @return
 	 */

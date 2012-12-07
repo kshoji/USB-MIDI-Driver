@@ -21,36 +21,42 @@ import android.util.Log;
  */
 public final class MidiInputDevice {
 
-	final UsbDeviceConnection deviceConnection;
-	UsbEndpoint inputEndpoint;
+	private final UsbDevice usbDevice;
+	final UsbDeviceConnection usbDeviceConnection;
+	private final UsbInterface usbInterface;
+	final UsbEndpoint inputEndpoint;
+
 	private final WaiterThread waiterThread;
-	private UsbDevice usbDevice;
-	private UsbInterface usbInterface;
 
 	/**
-	 * @param device
-	 * @param connection
+	 * constructor
+	 * 
+	 * @param usbDevice
+	 * @param usbDeviceConnection
 	 * @param usbInterface
 	 * @param midiEventListener
-	 * @throws IllegalArgumentException
+	 * @throws IllegalArgumentException endpoint not found.
 	 */
-	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final UsbEndpoint endpoint, final OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
-		deviceConnection = connection;
-		usbDevice = device;
+	public MidiInputDevice(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, final UsbInterface usbInterface, final UsbEndpoint usbEndpoint, final OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
+		this.usbDevice = usbDevice;
+		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
 
 		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(this, midiEventListener)));
 
-		inputEndpoint = endpoint;
+		inputEndpoint = usbEndpoint;
 		if (inputEndpoint == null) {
 			throw new IllegalArgumentException("Input endpoint was not found.");
 		}
 
-		deviceConnection.claimInterface(usbInterface, true);
+		usbDeviceConnection.claimInterface(usbInterface, true);
 		
 		waiterThread.start();
 	}
 
+	/**
+	 * stops the watching thread
+	 */
 	public void stop() {
 		synchronized (waiterThread) {
 			waiterThread.stopFlag = true;
@@ -92,7 +98,7 @@ public final class MidiInputDevice {
 		private Handler receiveHandler;
 
 		/**
-		 * Constructor
+		 * constructor
 		 * 
 		 * @param handler
 		 */
@@ -117,7 +123,7 @@ public final class MidiInputDevice {
 					continue;
 				}
 				
-				int length = deviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
+				int length = usbDeviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
 				if (length > 0) {
 					byte[] read = new byte[length];
 					System.arraycopy(readBuffer, 0, read, 0, length);

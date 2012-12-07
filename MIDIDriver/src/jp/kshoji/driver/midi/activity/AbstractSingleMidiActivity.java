@@ -133,7 +133,6 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		});
 
 		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), deviceAttachedListener, deviceDetachedListener);
-		deviceConnectionWatcher.start();
 	}
 	
 	/*
@@ -158,7 +157,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	}
 	
 	/**
-	 * get MIDI output device, if available.
+	 * Get MIDI output device, if available.
 	 * 
 	 * @param usbDevice
 	 * @return MidiOutputDevice, null if not available

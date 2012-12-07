@@ -19,19 +19,21 @@ public final class MidiOutputDevice {
 	private final UsbDevice usbDevice;
 	private final UsbInterface usbInterface;
 	private final UsbDeviceConnection deviceConnection;
-	private UsbEndpoint outputEndpoint;
+	private final UsbEndpoint outputEndpoint;
 
 	/**
-	 * @param device
-	 * @param connection
+	 * constructor
+	 * 
+	 * @param usbDevice
+	 * @param usbDeviceConnection
 	 * @param usbInterface
 	 */
-	public MidiOutputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final UsbEndpoint endpoint) {
-		usbDevice = device;
+	public MidiOutputDevice(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, final UsbInterface usbInterface, final UsbEndpoint usbEndpoint) {
+		this.usbDevice = usbDevice;
+		this.deviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
-		deviceConnection = connection;
 
-		outputEndpoint = endpoint;
+		outputEndpoint = usbEndpoint;
 		if (outputEndpoint == null) {
 			throw new IllegalArgumentException("Output endpoint was not found.");
 		}
@@ -62,8 +64,7 @@ public final class MidiOutputDevice {
 	}
 	
 	/**
-	 * Sends MIDI message to output device.<br />
-	 * TODO do this method with another thread
+	 * Sends MIDI message to output device.
 	 * 
 	 * @param codeIndexNumber
 	 * @param cable

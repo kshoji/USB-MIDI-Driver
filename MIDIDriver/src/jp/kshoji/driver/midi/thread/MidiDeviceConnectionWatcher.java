@@ -23,15 +23,16 @@ import android.util.Log;
 
 /**
  * Detects USB MIDI Device Connected
+ * stop() method must be called when the application will be destroyed.
  * 
  * @author K.Shoji
  */
 public final class MidiDeviceConnectionWatcher {
-	private MidiDeviceConnectionWatchThread thread;
-	HashMap<String, UsbDevice> grantedDeviceMap;
+	private final MidiDeviceConnectionWatchThread thread;
+	final HashMap<String, UsbDevice> grantedDeviceMap;
 
 	/**
-	 * Constructor
+	 * constructor
 	 * 
 	 * @param context
 	 * @param deviceAttachedListener
@@ -40,17 +41,11 @@ public final class MidiDeviceConnectionWatcher {
 	public MidiDeviceConnectionWatcher(final Context context, final OnMidiDeviceAttachedListener deviceAttachedListener, final OnMidiDeviceDetachedListener deviceDetachedListener) {
 		grantedDeviceMap = new HashMap<String, UsbDevice>();
 		thread = new MidiDeviceConnectionWatchThread(context, deviceAttachedListener, deviceDetachedListener);
+		thread.start();
 	}
 	
 	public void checkConnectedDevicesImmediately() {
 		thread.checkConnectedDevices();
-	}
-
-	/**
-	 * starts the watching thread
-	 */
-	public void start() {
-		thread.start();
 	}
 	
 	/**
@@ -68,18 +63,18 @@ public final class MidiDeviceConnectionWatcher {
 	final class UsbMidiGrantedReceiver extends BroadcastReceiver {
 		public static final String USB_PERMISSION_GRANTED_ACTION = "jp.kshoji.driver.midi.USB_PERMISSION_GRANTED_ACTION";
 		
-		private String deviceName;
-		private UsbDevice device;
-		private OnMidiDeviceAttachedListener onDeviceAttachedListener;
+		private final String deviceName;
+		private final UsbDevice device;
+		private final OnMidiDeviceAttachedListener deviceAttachedListener;
 		
 		/**
 		 * @param device
-		 * @param onMidiDeviceAttachedListener
+		 * @param deviceAttachedListener
 		 */
-		public UsbMidiGrantedReceiver(final String deviceName, final UsbDevice device, final OnMidiDeviceAttachedListener onMidiDeviceAttachedListener) {
+		public UsbMidiGrantedReceiver(final String deviceName, final UsbDevice device, final OnMidiDeviceAttachedListener deviceAttachedListener) {
 			this.deviceName = deviceName;
 			this.device = device;
-			onDeviceAttachedListener = onMidiDeviceAttachedListener;
+			this.deviceAttachedListener = deviceAttachedListener;
 		}
 		
 		/*
@@ -92,9 +87,9 @@ public final class MidiDeviceConnectionWatcher {
 			if (USB_PERMISSION_GRANTED_ACTION.equals(action)) {
 				boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
 				if (granted) {
-					if (onDeviceAttachedListener != null && device != null) {
+					if (deviceAttachedListener != null && device != null) {
 						grantedDeviceMap.put(deviceName, device);
-						onDeviceAttachedListener.onDeviceAttached(device);
+						deviceAttachedListener.onDeviceAttached(device);
 					}
 				}
 			}
