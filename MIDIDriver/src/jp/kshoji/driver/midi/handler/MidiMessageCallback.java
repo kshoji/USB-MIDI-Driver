@@ -2,7 +2,8 @@ package jp.kshoji.driver.midi.handler;
 
 import java.io.ByteArrayOutputStream;
 
-import jp.kshoji.driver.midi.listener.OnMidiEventListener;
+import jp.kshoji.driver.midi.device.MidiInputDevice;
+import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import android.os.Handler.Callback;
 import android.os.Message;
 
@@ -11,25 +12,29 @@ import android.os.Message;
  * 
  * @author K.Shoji
  */
-public class MidiMessageCallback implements Callback {
+public final class MidiMessageCallback implements Callback {
 
-	private final OnMidiEventListener midiEventListener;
+	private final OnMidiInputEventListener midiEventListener;
+	private final MidiInputDevice sender;
+	private ByteArrayOutputStream systemExclusive = null;
 
 	/**
+	 * constructor
+	 * 
+	 * @param device
 	 * @param midiEventListener
 	 */
-	public MidiMessageCallback(OnMidiEventListener midiEventListener) {
+	public MidiMessageCallback(final MidiInputDevice device, final OnMidiInputEventListener midiEventListener) {
 		this.midiEventListener = midiEventListener;
+		sender = device;
 	}
-
-	private ByteArrayOutputStream systemExclusive = null;
 
 	/*
 	 * (non-Javadoc)
 	 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
 	 */
 	@Override
-	public boolean handleMessage(Message msg) {
+	public boolean handleMessage(final Message msg) {
 		if (midiEventListener == null) {
 			return false;
 		}
@@ -48,23 +53,23 @@ public class MidiMessageCallback implements Callback {
 
 			switch (codeIndexNumber) {
 				case 0:
-					midiEventListener.onMidiMiscellaneousFunctionCodes(cable, byte1, byte2, byte3);
+					midiEventListener.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
 					break;
 				case 1:
-					midiEventListener.onMidiCableEvents(cable, byte1, byte2, byte3);
+					midiEventListener.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
 					break;
 				case 2:
 				// system common message with 2 bytes
 				{
 					byte[] bytes = new byte[]{(byte) byte1, (byte) byte2};
-					midiEventListener.onMidiSystemCommonMessage(cable, bytes);
+					midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
 				}
 					break;
 				case 3:
 				// system common message with 3 bytes
 				{
 					byte[] bytes = new byte[]{(byte) byte1, (byte) byte2, (byte) byte3};
-					midiEventListener.onMidiSystemCommonMessage(cable, bytes);
+					midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
 				}
 					break;
 				case 4:
@@ -82,14 +87,12 @@ public class MidiMessageCallback implements Callback {
 					// system common message with 1byte
 					// sysex end with 1 byte
 					if (systemExclusive == null) {
-						{
-							byte[] bytes = new byte[]{(byte) byte1};
-							midiEventListener.onMidiSystemCommonMessage(cable, bytes);
-						}
+						byte[] bytes = new byte[]{(byte) byte1};
+						midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
 					} else {
 						synchronized (systemExclusive) {
 							systemExclusive.write(byte1);
-							midiEventListener.onMidiSystemExclusive(cable, systemExclusive.toByteArray());
+							midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
 						}
 						synchronized (this) {
 							systemExclusive = null;
@@ -102,7 +105,7 @@ public class MidiMessageCallback implements Callback {
 						synchronized (systemExclusive) {
 							systemExclusive.write(byte1);
 							systemExclusive.write(byte2);
-							midiEventListener.onMidiSystemExclusive(cable, systemExclusive.toByteArray());
+							midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
 						}
 						synchronized (this) {
 							systemExclusive = null;
@@ -116,7 +119,7 @@ public class MidiMessageCallback implements Callback {
 							systemExclusive.write(byte1);
 							systemExclusive.write(byte2);
 							systemExclusive.write(byte3);
-							midiEventListener.onMidiSystemExclusive(cable, systemExclusive.toByteArray());
+							midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
 						}
 						synchronized (this) {
 							systemExclusive = null;
@@ -124,34 +127,34 @@ public class MidiMessageCallback implements Callback {
 					}
 					break;
 				case 8:
-					midiEventListener.onMidiNoteOff(cable, byte1 & 0xf, byte2, byte3);
+					midiEventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
 					break;
 				case 9:
-					midiEventListener.onMidiNoteOn(cable, byte1 & 0xf, byte2, byte3);
+					midiEventListener.onMidiNoteOn(sender, cable, byte1 & 0xf, byte2, byte3);
 					break;
 				case 10:
 					// poly key press
-					midiEventListener.onMidiPolyphonicAftertouch(cable, byte1 & 0xf, byte2, byte3);
+					midiEventListener.onMidiPolyphonicAftertouch(sender, cable, byte1 & 0xf, byte2, byte3);
 					break;
 				case 11:
 					// control change
-					midiEventListener.onMidiControlChange(cable, byte1 & 0xf, byte2, byte3);
+					midiEventListener.onMidiControlChange(sender, cable, byte1 & 0xf, byte2, byte3);
 					break;
 				case 12:
 					// program change
-					midiEventListener.onMidiProgramChange(cable, byte1 & 0xf, byte2);
+					midiEventListener.onMidiProgramChange(sender, cable, byte1 & 0xf, byte2);
 					break;
 				case 13:
 					// channel pressure
-					midiEventListener.onMidiChannelAftertouch(cable, byte1 & 0xf, byte2);
+					midiEventListener.onMidiChannelAftertouch(sender, cable, byte1 & 0xf, byte2);
 					break;
 				case 14:
 					// pitch bend
-					midiEventListener.onMidiPitchWheel(cable, byte1 & 0xf, byte2 | (byte3 << 8));
+					midiEventListener.onMidiPitchWheel(sender, cable, byte1 & 0xf, byte2 | (byte3 << 8));
 					break;
 				case 15:
 					// single byte
-					midiEventListener.onMidiSingleByte(cable, byte1);
+					midiEventListener.onMidiSingleByte(sender, cable, byte1);
 					break;
 				default:
 					// do nothing.

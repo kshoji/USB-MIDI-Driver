@@ -2,9 +2,8 @@ package jp.kshoji.driver.midi.device;
 
 import java.util.Arrays;
 
-import jp.kshoji.driver.midi.listener.OnMidiEventListener;
 import jp.kshoji.driver.midi.util.Constants;
-import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
@@ -15,37 +14,57 @@ import android.util.Log;
  * 
  * @author K.Shoji
  */
-public class MidiOutputDevice implements OnMidiEventListener {
+public final class MidiOutputDevice {
 
+	private final UsbDevice usbDevice;
+	private final UsbInterface usbInterface;
 	private final UsbDeviceConnection deviceConnection;
-	private UsbEndpoint outputEndpoint;
+	private final UsbEndpoint outputEndpoint;
 
 	/**
-	 * @param connection
-	 * @param intf
+	 * constructor
+	 * 
+	 * @param usbDevice
+	 * @param usbDeviceConnection
+	 * @param usbInterface
 	 */
-	public MidiOutputDevice(UsbDeviceConnection connection, UsbInterface intf) {
-		deviceConnection = connection;
+	public MidiOutputDevice(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, final UsbInterface usbInterface, final UsbEndpoint usbEndpoint) {
+		this.usbDevice = usbDevice;
+		this.deviceConnection = usbDeviceConnection;
+		this.usbInterface = usbInterface;
 
-		for (int i = 0; i < intf.getEndpointCount(); i++) {
-			UsbEndpoint endpoint = intf.getEndpoint(i);
-			if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT) {
-				if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT) {
-					outputEndpoint = endpoint;
-				}
-			}
-		}
-
+		outputEndpoint = usbEndpoint;
 		if (outputEndpoint == null) {
 			throw new IllegalArgumentException("Output endpoint was not found.");
 		}
 
-		deviceConnection.claimInterface(intf, true);
+		Log.i(Constants.TAG, "deviceConnection:" + deviceConnection + ", usbInterface:" + usbInterface);
+		deviceConnection.claimInterface(this.usbInterface, true);
 	}
 
 	/**
-	 * Sends MIDI message to output device.<br />
-	 * TODO do this method with another thread
+	 * @return the usbDevice
+	 */
+	public UsbDevice getUsbDevice() {
+		return usbDevice;
+	}
+	
+	/**
+	 * @return the usbInterface
+	 */
+	public UsbInterface getUsbInterface() {
+		return usbInterface;
+	}
+	
+	/**
+	 * @return the usbEndpoint
+	 */
+	public UsbEndpoint getUsbEndpoint() {
+		return outputEndpoint;
+	}
+	
+	/**
+	 * Sends MIDI message to output device.
 	 * 
 	 * @param codeIndexNumber
 	 * @param cable
@@ -66,30 +85,40 @@ public class MidiOutputDevice implements OnMidiEventListener {
 		Log.d(Constants.TAG, "Output:" + Arrays.toString(writeBuffer));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiMiscellaneousFunctionCodes(int, int, int, int)
+	/**
+	 * Miscellaneous function codes. Reserved for future extensions.
+	 * Code Index Number : 0x0
+	 * 
+	 * @param cable 0-15
+	 * @param byte1
+	 * @param byte2
+	 * @param byte3
 	 */
-	@Override
-	public void onMidiMiscellaneousFunctionCodes(int cable, int byte1, int byte2, int byte3) {
+	public void sendMidiMiscellaneousFunctionCodes(int cable, int byte1, int byte2, int byte3) {
 		sendMidiMessage(0x0, cable, byte1, byte2, byte3);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiCableEvents(int, int, int, int)
+	/**
+	 * Cable events. Reserved for future expansion.
+	 * Code Index Number : 0x1
+	 * 
+	 * @param cable 0-15
+	 * @param byte1
+	 * @param byte2
+	 * @param byte3
 	 */
-	@Override
-	public void onMidiCableEvents(int cable, int byte1, int byte2, int byte3) {
+	public void sendMidiCableEvents(int cable, int byte1, int byte2, int byte3) {
 		sendMidiMessage(0x1, cable, byte1, byte2, byte3);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemCommonMessage(int, byte[])
+	/**
+	 * System Common messages, or SysEx ends with following single byte.
+	 * Code Index Number : 0x2 0x3 0x5
+	 * 
+	 * @param cable 0-15
+	 * @param bytes bytes.length:1, 2, or 3
 	 */
-	@Override
-	public void onMidiSystemCommonMessage(int cable, byte bytes[]) {
+	public void sendMidiSystemCommonMessage(int cable, final byte bytes[]) {
 		if (bytes == null) {
 			return;
 		}
@@ -112,12 +141,14 @@ public class MidiOutputDevice implements OnMidiEventListener {
 	private static final int PARAM_BUFFER_SIZE = 64;
 	private static final int PARAM_BUFFER_SIZE_FOR_RAW_SYSEX = PARAM_BUFFER_SIZE * 3 / 4;
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSystemExclusive(int, byte[])
+	/**
+	 * SysEx
+	 * Code Index Number : 0x4, 0x5, 0x6, 0x7
+	 * 
+	 * @param cable 0-15
+	 * @param systemExclusive
 	 */
-	@Override
-	public void onMidiSystemExclusive(int cable, byte[] systemExclusive) {
+	public void sendMidiSystemExclusive(int cable, final byte[] systemExclusive) {
 
 		for (int sysexStartPosition = 0; sysexStartPosition < systemExclusive.length; sysexStartPosition += PARAM_BUFFER_SIZE_FOR_RAW_SYSEX) {
 			int sysexTransferLength = 0;
@@ -171,75 +202,102 @@ public class MidiOutputDevice implements OnMidiEventListener {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOff(int, int, int, int)
+	/**
+	 * Note-off
+	 * Code Index Number : 0x8
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param note 0-127
+	 * @param velocity 0-127
 	 */
-	@Override
-	public void onMidiNoteOff(int cable, int channel, int note, int velocity) {
+	public void sendMidiNoteOff(int cable, int channel, int note, int velocity) {
 		sendMidiMessage(0x8, cable, 0x80 | (channel & 0xf), note, velocity);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiNoteOn(int, int, int, int)
+	/**
+	 * Note-on
+	 * Code Index Number : 0x9
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param note 0-127
+	 * @param velocity 0-127
 	 */
-	@Override
-	public void onMidiNoteOn(int cable, int channel, int note, int velocity) {
+	public void sendMidiNoteOn(int cable, int channel, int note, int velocity) {
 		sendMidiMessage(0x9, cable, 0x90 | (channel & 0xf), note, velocity);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPolyphonicAftertouch(int, int, int, int)
+	/**
+	 * Poly-KeyPress
+	 * Code Index Number : 0xa
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param note 0-127
+	 * @param pressure 0-127
 	 */
-	@Override
-	public void onMidiPolyphonicAftertouch(int cable, int channel, int note, int pressure) {
+	public void sendMidiPolyphonicAftertouch(int cable, int channel, int note, int pressure) {
 		sendMidiMessage(0xa, cable, 0xa0 | (channel & 0xf), note, pressure);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiControlChange(int, int, int, int)
+	/**
+	 * Control Change
+	 * Code Index Number : 0xb
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param function 0-127
+	 * @param value 0-127
 	 */
-	@Override
-	public void onMidiControlChange(int cable, int channel, int function, int value) {
+	public void sendMidiControlChange(int cable, int channel, int function, int value) {
 		sendMidiMessage(0xb, cable, 0xb0 | (channel & 0xf), function, value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiProgramChange(int, int, int)
+	/**
+	 * Program Change
+	 * Code Index Number : 0xc
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param program 0-127
 	 */
-	@Override
-	public void onMidiProgramChange(int cable, int channel, int program) {
+	public void sendMidiProgramChange(int cable, int channel, int program) {
 		sendMidiMessage(0xc, cable, 0xc0 | (channel & 0xf), program, 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiChannelAftertouch(int, int, int)
+	/**
+	 * Channel Pressure
+	 * Code Index Number : 0xd
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param pressure 0-127
 	 */
-	@Override
-	public void onMidiChannelAftertouch(int cable, int channel, int pressure) {
+	public void sendMidiChannelAftertouch(final int cable, final int channel, final int pressure) {
 		sendMidiMessage(0xd, cable, 0xd0 | (channel & 0xf), pressure, 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiPitchWheel(int, int, int)
+	/**
+	 * PitchBend Change
+	 * Code Index Number : 0xe
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
-	@Override
-	public void onMidiPitchWheel(int cable, int channel, int amount) {
+	public void sendMidiPitchWheel(final int cable, final int channel, final int amount) {
 		sendMidiMessage(0xe, cable, 0xe0 | (channel & 0xf), amount & 0xff, (amount >> 8) & 0xff);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiEventListener#onMidiSingleByte(int, int)
+	/**
+	 * ￼Single Byte
+	 * Code Index Number : 0xf
+	 * 
+	 * @param cable 0-15
+	 * @param byte1
 	 */
-	@Override
-	public void onMidiSingleByte(int cable, int byte1) {
+	public void sendMidiSingleByte(int cable, int byte1) {
 		sendMidiMessage(0xf, cable, byte1, 0, 0);
 	}
 }

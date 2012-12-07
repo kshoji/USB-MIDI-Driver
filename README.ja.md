@@ -1,47 +1,44 @@
-Android USB MIDI ƒhƒ‰ƒCƒo
+Android USB MIDI ãƒ‰ãƒ©ã‚¤ãƒ
 ====
 
-Android USBƒzƒXƒgAPI‚ðŽg‚Á‚½AUSB MIDI‚Ìƒhƒ‰ƒCƒo‚Å‚·B
+Android USBãƒ›ã‚¹ãƒˆAPIã‚’ä½¿ã£ãŸã€USB MIDIã®ãƒ‰ãƒ©ã‚¤ãƒã§ã™ã€‚
 
-- root•s—v
-- •W€“I‚ÈUSB MIDIƒfƒoƒCƒX(ƒV[ƒPƒ“ƒT‚âŠyŠí‚È‚Ç)‚ðƒTƒ|[ƒg
-- ƒvƒƒgƒRƒ‹‚ªUSB MIDI‚ÈA”ñ•W€‚ÈUSB MIDI‹@Ší‚ðƒTƒ|[ƒg
- - YAMAHA, Roland, MOTU‚ÌƒfƒoƒCƒX‚ªÚ‘±‚Å‚«‚Ü‚·(‚ªA[•ª‚ÉƒeƒXƒg‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ)
+- rootä¸è¦
+- æ¨™æº–çš„ãªUSB MIDIãƒ‡ãƒã‚¤ã‚¹(ã‚·ãƒ¼ã‚±ãƒ³ã‚µã‚„æ¥½å™¨ãªã©)ã‚’ã‚µãƒãƒ¼ãƒˆ
+- ãƒ—ãƒ­ãƒˆã‚³ãƒ«ãŒUSB MIDIãªã€éžæ¨™æº–ãªUSB MIDIæ©Ÿå™¨ã‚’ã‚µãƒãƒ¼ãƒˆ
+ - YAMAHA, Roland, MOTUã®ãƒ‡ãƒã‚¤ã‚¹ãŒæŽ¥ç¶šã§ãã¾ã™(ãŒã€å……åˆ†ã«ãƒ†ã‚¹ãƒˆã•ã‚Œã¦ã„ã¾ã›ã‚“)
+- è¤‡æ•°ã®ãƒ‡ãƒã‚¤ã‚¹ã‚’æŽ¥ç¶šã§ãã¾ã™ã€‚
 
-§ŒÀ
+å¿…è¦ãªã‚‚ã®
 ----
-- ˆê“x‚É1‚Â‚ÌƒfƒoƒCƒX‚µ‚©Ú‘±‚Å‚«‚Ü‚¹‚ñB
+- Android : OSãƒãƒ¼ã‚¸ãƒ§ãƒ³3.1ä»¥é™(API Level 11)ã§ã€USBãƒ›ã‚¹ãƒˆã®ãƒãƒ¼ãƒˆãŒã‚ã‚‹ã“ã¨ã€‚
+- USB MIDI(äº’æ›ãª)ãƒ‡ãƒã‚¤ã‚¹
 
-•K—v‚È‚à‚Ì
-----
-- Android : OSƒo[ƒWƒ‡ƒ“3.1ˆÈ~(API Level 11)‚ÅAUSBƒzƒXƒg‚Ìƒ|[ƒg‚ª‚ ‚é‚±‚ÆB
-- USB MIDI(ŒÝŠ·‚È)ƒfƒoƒCƒX
-
-ƒfƒoƒCƒX‚ÌÚ‘±
+ãƒ‡ãƒã‚¤ã‚¹ã®æŽ¥ç¶š
 ----
 ```
-Android [USB Aƒ|[ƒg]------[USB Bƒ|[ƒg] USB MIDI ƒfƒoƒCƒX
+Android [USB Aãƒãƒ¼ãƒˆ]---(USBãƒãƒ–)---[USB Bãƒãƒ¼ãƒˆ] USB MIDI ãƒ‡ãƒã‚¤ã‚¹
+                               ---[USB Bãƒãƒ¼ãƒˆ] USB MIDI ãƒ‡ãƒã‚¤ã‚¹ ...
 ```
 
-ƒvƒƒWƒFƒNƒg
+ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆ
 ----
-- ƒ‰ƒCƒuƒ‰ƒŠ  
- - MIDIDriver : –{ƒ‰ƒCƒuƒ‰ƒŠB
+- ãƒ©ã‚¤ãƒ–ãƒ©ãƒª  
+ - MIDIDriver : æœ¬ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã€‚
 
-- ƒTƒ“ƒvƒ‹
- - MIDIDriverSample : ƒ‰ƒCƒuƒ‰ƒŠ‚ðŽg‚Á‚ÄŽÀ‘•‚µ‚½AƒVƒ“ƒZƒTƒCƒUEMIDIƒCƒxƒ“ƒgƒƒK[‚Ì—á
+- ã‚µãƒ³ãƒ—ãƒ«
+ - MIDIDriverSample : ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’ä½¿ã£ã¦å®Ÿè£…ã—ãŸã€ã‚·ãƒ³ã‚»ã‚µã‚¤ã‚¶ãƒ»MIDIã‚¤ãƒ™ãƒ³ãƒˆãƒ­ã‚¬ãƒ¼ã®ä¾‹
 
-ƒ‰ƒCƒuƒ‰ƒŠƒvƒƒWƒFƒNƒg‚ÌŽg‚¢•û
+ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ä½¿ã„æ–¹
 ----
-ƒvƒƒWƒFƒNƒg‚ÌÝ’è
+ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®è¨­å®š
 
-- ƒ‰ƒCƒuƒ‰ƒŠƒvƒƒWƒFƒNƒg‚ðclone‚µ‚Ü‚·B
-- Eclipse‚Ìƒ[ƒNƒXƒy[ƒX‚Éƒ‰ƒCƒuƒ‰ƒŠƒvƒƒWƒFƒNƒg‚ðƒCƒ“ƒ|[ƒg‚µAƒrƒ‹ƒh‚µ‚Ü‚·B
-- V‚µ‚¢Android Project‚ðì¬‚µAƒvƒƒWƒFƒNƒg‚Ìƒ‰ƒCƒuƒ‰ƒŠ‚Éƒ‰ƒCƒuƒ‰ƒŠƒvƒƒWƒFƒNƒg‚ð ’Ç‰Á‚µ‚Ü‚·B
-- `jp.kshoji.driver.midi.activity.AbstractMidiActivity` ‚ðƒI[ƒo[ƒ‰ƒCƒh‚µ‚½Activity‚ðì‚è‚Ü‚·B
-- AndroidManifest.xml ƒtƒ@ƒCƒ‹‚Ì activity ƒ^ƒO‚ð•ÏX‚µ‚Ü‚·B
- - **intent-filter** android.hardware.usb.action.USB_DEVICE_ATTACHED ‚Æ **meta-data** ‚ð ƒI[ƒo[ƒ‰ƒCƒh‚µ‚½ Activity ‚É‘Î‚µ‚Ä’Ç‰Á‚µ‚Ü‚·B
- - Activity‚Ì **launchMode** ‚ð "singleTask" ‚É‚µ‚Ü‚·B
+- ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’cloneã—ã¾ã™ã€‚
+- Eclipseã®ãƒ¯ãƒ¼ã‚¯ã‚¹ãƒšãƒ¼ã‚¹ã«ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’ã‚¤ãƒ³ãƒãƒ¼ãƒˆã—ã€ãƒ“ãƒ«ãƒ‰ã—ã¾ã™ã€‚
+- æ–°ã—ã„Android Projectã‚’ä½œæˆã—ã€ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã«ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’ è¿½åŠ ã—ã¾ã™ã€‚
+- `jp.kshoji.driver.midi.activity.AbstractMidiActivity` ã‚’ã‚ªãƒ¼ãƒãƒ¼ãƒ©ã‚¤ãƒ‰ã—ãŸActivityã‚’ä½œã‚Šã¾ã™ã€‚
+- AndroidManifest.xml ãƒ•ã‚¡ã‚¤ãƒ«ã® activity ã‚¿ã‚°ã‚’å¤‰æ›´ã—ã¾ã™ã€‚
+ - Activityã® **launchMode** ã‚’ "singleTask" ã«ã—ã¾ã™ã€‚
 
 ```xml
         <activity
@@ -50,34 +47,29 @@ Android [USB Aƒ|[ƒg]------[USB Bƒ|[ƒg] USB MIDI ƒfƒoƒCƒX
             android:launchMode="singleTask" >
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
-    
-            <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
         </activity>
 ```
 
-MIDI ƒCƒxƒ“ƒg‚ÌŽóM
+MIDI ã‚¤ãƒ™ãƒ³ãƒˆã®å—ä¿¡
 
-- MIDIƒCƒxƒ“ƒg‚ðˆ—‚·‚éƒƒ\ƒbƒh (`"onMidi..."` ‚Æ‚¢‚¤–¼‘O)‚ðŽÀ‘•‚µ‚Ü‚·B
+- MIDIã‚¤ãƒ™ãƒ³ãƒˆã‚’å‡¦ç†ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰ (`"onMidi..."` ã¨ã„ã†åå‰)ã‚’å®Ÿè£…ã—ã¾ã™ã€‚
 
-MIDI ƒCƒxƒ“ƒg‚Ì‘—M
+MIDI ã‚¤ãƒ™ãƒ³ãƒˆã®é€ä¿¡
 
-- `MIDIOutputDevice`‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ðŽæ“¾‚·‚é‚½‚ß‚ÉAAbstractMidiActivity ‚Ì`getMidiOutputDevice()`ƒƒ\ƒbƒh‚ðŒÄ‚Ñ‚Ü‚·B
- - ‚»‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚Ì`"onMidi..."` ‚Æ‚¢‚¤–¼‘O‚Ìƒƒ\ƒbƒh‚ðŒÄ‚Ô‚ÆMIDIƒCƒxƒ“ƒg‚ª‘—M‚Å‚«‚Ü‚·B
+- `Set<MIDIOutputDevice>`ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’å–å¾—ã™ã‚‹ãŸã‚ã«ã€AbstractMidiActivity ã®`getMidiOutputDevices()`ãƒ¡ã‚½ãƒƒãƒ‰ã‚’å‘¼ã³ã¾ã™ã€‚
+- æŽ¥ç¶šã—ãŸã„MIDIOutputDeviceã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’`Set<MIDIOutputDevice>`ã‹ã‚‰é¸ã³ã¾ã™ã€‚
+ - ãã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã®`"sendMidi..."` ã¨ã„ã†åå‰ã®ãƒ¡ã‚½ãƒƒãƒ‰ã‚’å‘¼ã¶ã¨MIDIã‚¤ãƒ™ãƒ³ãƒˆãŒé€ä¿¡ã§ãã¾ã™ã€‚
 
-Maven‚ÅŽg‚¤
+Mavenã§ä½¿ã†
 ----
-maven-android-plugin‚ðŽg‚¤‚É‚ÍAMaven 3.0.4ˆÈ~‚ª•K—v‚Å‚·B
-AndroidƒAƒvƒŠ‚ðMaven‚ðŽg‚Á‚Äƒrƒ‹ƒh‚·‚é•û–@‚É‚Â‚¢‚ÄAÚ‚µ‚­‚Íumaven-android-pluginvƒvƒƒWƒFƒNƒg‚Ìwiki‚ðŽQÆ‚µ‚Ä‚­‚¾‚³‚¢B http://code.google.com/p/maven-android-plugin/wiki/GettingStarted
+maven-android-pluginã‚’ä½¿ã†ã«ã¯ã€Maven 3.0.4ä»¥é™ãŒå¿…è¦ã§ã™ã€‚
+Androidã‚¢ãƒ—ãƒªã‚’Mavenã‚’ä½¿ã£ã¦ãƒ“ãƒ«ãƒ‰ã™ã‚‹æ–¹æ³•ã«ã¤ã„ã¦ã€è©³ã—ãã¯ã€Œmaven-android-pluginã€ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®wikiã‚’å‚ç…§ã—ã¦ãã ã•ã„ã€‚ http://code.google.com/p/maven-android-plugin/wiki/GettingStarted
 
-- Eclipse‚©‚çV‹KMavenƒvƒƒWƒFƒNƒg‚ðì¬‚µ‚Ü‚·B
-- uAndroid 3.1v‚ÌˆË‘¶«‚ðmaven‚©‚çƒCƒ“ƒXƒg[ƒ‹‚µ‚Ü‚·B‚±‚¿‚ç‚Ìƒc[ƒ‹‚ðŽg‚Á‚Ä‚­‚¾‚³‚¢B https://github.com/mosabua/maven-android-sdk-deployer
-- ì¬‚µ‚½ƒvƒƒWƒFƒNƒg‚Ì `pom.xml` ƒtƒ@ƒCƒ‹‚ðˆÈ‰º‚Ì‚æ‚¤‚É•ÒW‚µ‚Ü‚·B(ƒTƒ“ƒvƒ‹ƒvƒƒWƒFƒNƒg‚Ì `pom.xml` ‚àŽQl‚É‚µ‚Ä‚Ý‚Ä‚­‚¾‚³‚¢)B
+- Eclipseã‹ã‚‰æ–°è¦Mavenãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’ä½œæˆã—ã¾ã™ã€‚
+- ã€ŒAndroid 3.1ã€ã®ä¾å­˜æ€§ã‚’mavenã‹ã‚‰ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã—ã¾ã™ã€‚ã“ã¡ã‚‰ã®ãƒ„ãƒ¼ãƒ«ã‚’ä½¿ã£ã¦ãã ã•ã„ã€‚ https://github.com/mosabua/maven-android-sdk-deployer
+- ä½œæˆã—ãŸãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã® `pom.xml` ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ä»¥ä¸‹ã®ã‚ˆã†ã«ç·¨é›†ã—ã¾ã™ã€‚(ã‚µãƒ³ãƒ—ãƒ«ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã® `pom.xml` ã‚‚å‚è€ƒã«ã—ã¦ã¿ã¦ãã ã•ã„)ã€‚
 
 ```xml
     <repositories>
@@ -104,7 +96,7 @@ AndroidƒAƒvƒŠ‚ðMaven‚ðŽg‚Á‚Äƒrƒ‹ƒh‚·‚é•û–@‚É‚Â‚¢‚ÄAÚ‚µ‚­‚Íumaven-android-plug
     </dependencies>
 ```
 
-ƒ‰ƒCƒZƒ“ƒX
+ãƒ©ã‚¤ã‚»ãƒ³ã‚¹
 ----
 [Apache License, Version 2.0][Apache]
 [Apache]: http://www.apache.org/licenses/LICENSE-2.0

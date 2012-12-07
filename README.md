@@ -7,10 +7,7 @@ USB MIDI Driver using Android USB Host API
 - Supports the standard USB MIDI devices; like sequencers, or instruments.
 - Supports some non-standard USB MIDI (but protocol is compatible with USB MIDI) devices.
  - YAMAHA, Roland, MOTU's devices can be connected(not been tested much).
-
-Restriction
-----
-- Currently, this library can connect only one device.
+- Supports multiple device connections.
 
 Requirement
 ----
@@ -20,7 +17,8 @@ Requirement
 Device Connection
 ----
 ```
-Android [USB A port]------[USB B port] USB MIDI Device
+Android [USB A port]---(USB Hub)---[USB B port] USB MIDI Device
+                                ---[USB B port] USB MIDI Device ...
 ```
 
 Projects
@@ -40,7 +38,6 @@ Project setup
 - Create new Android Project. And add the library project to the project.
 - Override `jp.kshoji.driver.midi.activity.AbstractMidiActivity`.
 - Modify the AndroidManifest.xml file's activity tag.
- - Add **intent-filter** android.hardware.usb.action.USB_DEVICE_ATTACHED and **meta-data** to the overridden Activity.
  - Activity's **launchMode** must be "singleTask".
 
 ```xml
@@ -50,14 +47,8 @@ Project setup
             android:launchMode="singleTask" >
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
-            
-            <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
         </activity>
 ```
 
@@ -67,8 +58,9 @@ MIDI event receiving
 
 MIDI event sending
 
-- Call AbstractMidiActivity's `getMidiOutputDevice()` method to get the instance on `MIDIOutputDevice`.
- - And call the instance's method (named `"onMidi..."`) to send MIDI events.
+- Call AbstractMultipleMidiActivity's `getMidiOutputDevices()` method to get the instance of `Set<MIDIOutputDevice>`.
+- Choose an instance from the `Set<MIDIOutputDevice`.
+ - And call the instance's method (named `"sendMidi..."`) to send MIDI events.
 
 Use library with Maven
 ----
