@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import jp.kshoji.driver.midi.activity.AbstractMidiActivity;
+import jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.sample.util.SoundMaker;
@@ -34,7 +34,7 @@ import android.widget.ToggleButton;
  * 
  * @author K.Shoji
  */
-public class MIDIDriverSampleActivity extends AbstractMidiActivity {
+public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivity {
 	// User interface
 	private ArrayAdapter<String> midiInputEventAdapter;
 	ArrayAdapter<String> midiOutputEventAdapter;
@@ -74,7 +74,7 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.activity.AbstractMidiActivity#onCreate(android.os.Bundle)
+	 * @see jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity#onCreate(android.os.Bundle)
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -196,7 +196,7 @@ public class MIDIDriverSampleActivity extends AbstractMidiActivity {
 
 	/*
 	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.activity.AbstractMidiActivity#onDestroy()
+	 * @see jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity#onDestroy()
 	 */
 	@Override
 	protected void onDestroy() {

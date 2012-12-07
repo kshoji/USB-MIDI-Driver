@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, MIDIDriverSampleActivity!</string>
     <string name="app_name">MIDIDriverSample</string>
+    <string name="app_name_single">MIDIDriverSample(Single Device)</string>
+    <string name="app_name_multiple">MIDIDriverSample(Multiple Devices)</string>
 
-</resources>
+</resources>	

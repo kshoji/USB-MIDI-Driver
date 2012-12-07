@@ -9,13 +9,13 @@ import java.util.Set;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.util.Constants;
-import jp.kshoji.driver.midi.util.UsbDeviceUtils;
+import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
+import jp.kshoji.driver.usb.util.DeviceFilter;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
@@ -154,9 +154,9 @@ public final class MidiDeviceConnectionWatcher {
 					deviceNameSet.add(deviceName);
 					UsbDevice device = deviceMap.get(deviceName);
 					
-					Set<UsbInterface> inputInterfaces = UsbDeviceUtils.findMidiInterfaces(device, UsbConstants.USB_DIR_IN);
-					Set<UsbInterface> outputInterfaces = UsbDeviceUtils.findMidiInterfaces(device, UsbConstants.USB_DIR_OUT);
-					if (inputInterfaces.size() > 0 || outputInterfaces.size() > 0) {
+					List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(context);
+					Set<UsbInterface> midiInterfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(device, deviceFilters);
+					if (midiInterfaces.size() > 0) {
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
 						context.registerReceiver(new UsbMidiGrantedReceiver(deviceName, device, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
 						usbManager.requestPermission(device, permissionIntent);

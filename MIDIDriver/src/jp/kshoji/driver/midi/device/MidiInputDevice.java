@@ -5,8 +5,6 @@ import java.util.Arrays;
 import jp.kshoji.driver.midi.handler.MidiMessageCallback;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.Constants;
-import jp.kshoji.driver.midi.util.UsbDeviceUtils;
-import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
@@ -36,21 +34,19 @@ public final class MidiInputDevice {
 	 * @param midiEventListener
 	 * @throws IllegalArgumentException
 	 */
-	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(final UsbDevice device, final UsbDeviceConnection connection, final UsbInterface usbInterface, final UsbEndpoint endpoint, final OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
 		deviceConnection = connection;
 		usbDevice = device;
 		this.usbInterface = usbInterface;
 
 		waiterThread = new WaiterThread(new Handler(new MidiMessageCallback(this, midiEventListener)));
 
-		inputEndpoint = UsbDeviceUtils.findMidiEndpoint(usbInterface, UsbConstants.USB_DIR_IN);
+		inputEndpoint = endpoint;
 		if (inputEndpoint == null) {
 			throw new IllegalArgumentException("Input endpoint was not found.");
 		}
 
-		if (deviceConnection != null) {
-			deviceConnection.claimInterface(usbInterface, true);
-		}
+		deviceConnection.claimInterface(usbInterface, true);
 		
 		waiterThread.start();
 	}
