@@ -146,7 +146,7 @@ public final class MidiOutputDevice {
 	 * Code Index Number : 0x4, 0x5, 0x6, 0x7
 	 * 
 	 * @param cable 0-15
-	 * @param systemExclusive
+	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
 	public void sendMidiSystemExclusive(int cable, final byte[] systemExclusive) {
 
@@ -162,8 +162,8 @@ public final class MidiOutputDevice {
 			int bufferIndex = 0;
 
 			for (int sysexIndex = sysexStartPosition; sysexIndex < sysexStartPosition + sysexTransferLength; sysexIndex += 3, bufferIndex += 4) {
-				if (sysexIndex + 3 < sysexStartPosition + sysexTransferLength) {
-					// sysex continues...
+				if ((sysexIndex + 3 < systemExclusive.length) && (sysexIndex + 3 <= sysexStartPosition + sysexTransferLength)) {
+					// sysex starts or continues...
 					buffer[bufferIndex + 0] = (byte) (((cable & 0xf) << 4) | (0x4 & 0xf));
 					buffer[bufferIndex + 1] = systemExclusive[sysexIndex + 0];
 					buffer[bufferIndex + 2] = systemExclusive[sysexIndex + 1];
