@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.device;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
 import jp.kshoji.driver.midi.util.Constants;
@@ -73,7 +74,7 @@ public final class MidiOutputDevice {
 	 * @param byte3
 	 */
 	private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
-		byte[] writeBuffer = new byte[outputEndpoint.getMaxPacketSize()];
+		byte[] writeBuffer = new byte[4];
 
 		writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
 		writeBuffer[1] = (byte) byte1;
@@ -138,9 +139,6 @@ public final class MidiOutputDevice {
 		}
 	}
 
-	private static final int PARAM_BUFFER_SIZE = 64;
-	private static final int PARAM_BUFFER_SIZE_FOR_RAW_SYSEX = PARAM_BUFFER_SIZE * 3 / 4;
-
 	/**
 	 * SysEx
 	 * Code Index Number : 0x4, 0x5, 0x6, 0x7
@@ -149,57 +147,45 @@ public final class MidiOutputDevice {
 	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
 	public void sendMidiSystemExclusive(int cable, final byte[] systemExclusive) {
+		ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
 
-		for (int sysexStartPosition = 0; sysexStartPosition < systemExclusive.length; sysexStartPosition += PARAM_BUFFER_SIZE_FOR_RAW_SYSEX) {
-			int sysexTransferLength = 0;
-			if (sysexStartPosition + PARAM_BUFFER_SIZE_FOR_RAW_SYSEX > systemExclusive.length) {
-				sysexTransferLength = systemExclusive.length - sysexStartPosition;
+		for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
+			if ((sysexIndex + 3 < systemExclusive.length)) {
+				// sysex starts or continues...
+				transferDataStream.write((((cable & 0xf) << 4) | 0x4));
+				transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+				transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+				transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
 			} else {
-				sysexTransferLength = PARAM_BUFFER_SIZE_FOR_RAW_SYSEX;
-			}
-
-			byte[] buffer = new byte[PARAM_BUFFER_SIZE];
-			int bufferIndex = 0;
-
-			for (int sysexIndex = sysexStartPosition; sysexIndex < sysexStartPosition + sysexTransferLength; sysexIndex += 3, bufferIndex += 4) {
-				if ((sysexIndex + 3 < systemExclusive.length) && (sysexIndex + 3 <= sysexStartPosition + sysexTransferLength)) {
-					// sysex starts or continues...
-					buffer[bufferIndex + 0] = (byte) (((cable & 0xf) << 4) | (0x4 & 0xf));
-					buffer[bufferIndex + 1] = systemExclusive[sysexIndex + 0];
-					buffer[bufferIndex + 2] = systemExclusive[sysexIndex + 1];
-					buffer[bufferIndex + 3] = systemExclusive[sysexIndex + 2];
-				} else {
-					switch (sysexStartPosition + sysexTransferLength - sysexIndex) {
-					case 1:
-						// sysex end with 1 byte
-						buffer[bufferIndex + 0] = (byte) (((cable & 0xf) << 4) | (0x5 & 0xf));
-						buffer[bufferIndex + 1] = systemExclusive[sysexIndex + 0];
-						buffer[bufferIndex + 2] = 0;
-						buffer[bufferIndex + 3] = 0;
-						break;
-					case 2:
-						// sysex end with 2 bytes
-						buffer[bufferIndex + 0] = (byte) (((cable & 0xf) << 4) | (0x6 & 0xf));
-						buffer[bufferIndex + 1] = systemExclusive[sysexIndex + 0];
-						buffer[bufferIndex + 2] = systemExclusive[sysexIndex + 1];
-						buffer[bufferIndex + 3] = 0;
-						break;
-					case 3:
-						// sysex end with 3 bytes
-						buffer[bufferIndex + 0] = (byte) (((cable & 0xf) << 4) | (0x7 & 0xf));
-						buffer[bufferIndex + 1] = systemExclusive[sysexIndex + 0];
-						buffer[bufferIndex + 2] = systemExclusive[sysexIndex + 1];
-						buffer[bufferIndex + 3] = systemExclusive[sysexIndex + 2];
-						break;
-					default:
-						// do nothing.
-						break;
-					}
+				switch (systemExclusive.length % 3) {
+				case 1:
+					// sysex end with 1 byte
+					transferDataStream.write((((cable & 0xf) << 4) | 0x5));
+					transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+					transferDataStream.write(0);
+					transferDataStream.write(0);
+					break;
+				case 2:
+					// sysex end with 2 bytes
+					transferDataStream.write((((cable & 0xf) << 4) | 0x6));
+					transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+					transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+					transferDataStream.write(0);
+					break;
+				case 0:
+					// sysex end with 3 bytes
+					transferDataStream.write((((cable & 0xf) << 4) | 0x7));
+					transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+					transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+					transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+					break;
 				}
 			}
-
-			deviceConnection.bulkTransfer(outputEndpoint, buffer, buffer.length, 0);
 		}
+		
+		byte[] buffer = transferDataStream.toByteArray();
+		int transferedBytes = deviceConnection.bulkTransfer(outputEndpoint, buffer, buffer.length, 0);
+		Log.d(Constants.TAG, "" + transferedBytes + " bytes of " + buffer.length + " bytes has been transfered.");
 	}
 
 	/**
