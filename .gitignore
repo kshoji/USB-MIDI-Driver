@@ -2,3 +2,7 @@ MIDIDriverSample/target
 MIDIDriver/target
 MIDIDriver/.settings
 MIDIDriverSample/.settings
+MIDIDriver/bin
+MIDIDriverSample/bin
+MIDIDriver/gen
+MIDIDriverSample/gen
