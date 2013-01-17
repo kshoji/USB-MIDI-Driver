@@ -127,7 +127,7 @@ public final class DeviceFilter {
 	 * @return
 	 */
 	private boolean matches(int clasz, int subclass, int protocol) {
-		return ((usbClass == -1 || clasz == usbClass) && (subclass == -1 || subclass == usbSubclass) && (protocol == -1 || protocol == usbProtocol));
+		return ((usbClass == -1 || clasz == usbClass) && (usbSubclass == -1 || subclass == usbSubclass) && (usbProtocol == -1 || protocol == usbProtocol));
 	}
 	
 	/**
