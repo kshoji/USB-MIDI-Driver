@@ -75,7 +75,9 @@ public final class MidiMessageCallback implements Callback {
 				case 4:
 					// sysex starts, and has next
 					synchronized (this) {
-						systemExclusive = new ByteArrayOutputStream();
+						if (systemExclusive == null) {
+							systemExclusive = new ByteArrayOutputStream();
+						}
 					}
 					synchronized (systemExclusive) {
 						systemExclusive.write(byte1);
