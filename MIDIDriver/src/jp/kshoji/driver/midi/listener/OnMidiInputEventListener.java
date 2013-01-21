@@ -147,7 +147,7 @@ public interface OnMidiInputEventListener {
 	void onMidiPitchWheel(final MidiInputDevice sender, int cable, int channel, int amount);
 	
 	/**
-	 * ￼Single Byte
+	 * Single Byte
 	 * Code Index Number : 0xf
 	 * 
 	 * @param senderDevice

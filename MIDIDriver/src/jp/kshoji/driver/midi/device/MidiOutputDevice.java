@@ -277,7 +277,7 @@ public final class MidiOutputDevice {
 	}
 
 	/**
-	 * ￼Single Byte
+	 * Single Byte
 	 * Code Index Number : 0xf
 	 * 
 	 * @param cable 0-15
