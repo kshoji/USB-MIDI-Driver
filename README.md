@@ -11,7 +11,7 @@ USB MIDI Driver using Android USB Host API
 
 Requirement
 ----
-- Android : OS version 3.1(API Level 11) or higher, and have an USB host port.
+- Android : OS version 3.1(API Level 12) or higher, and have an USB host port.
  - The android Linux kernel must support USB MIDI devices. Some Android device recognizes only USB-HID and USB-MSD by kernel configurations.
 - USB MIDI (compatible) device
 
