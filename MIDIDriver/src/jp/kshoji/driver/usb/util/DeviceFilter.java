@@ -137,14 +137,17 @@ public final class DeviceFilter {
 	 * @return
 	 */
 	public boolean matches(UsbDevice device) {
-		if (usbVendorId != -1 && device.getVendorId() != usbVendorId)
+		if (usbVendorId != -1 && device.getVendorId() != usbVendorId) {
 			return false;
-		if (usbProductId != -1 && device.getProductId() != usbProductId)
+		}
+		if (usbProductId != -1 && device.getProductId() != usbProductId) {
 			return false;
+		}
 		
 		// check device class/subclass/protocol
-		if (matches(device.getDeviceClass(), device.getDeviceSubclass(), device.getDeviceProtocol()))
+		if (matches(device.getDeviceClass(), device.getDeviceSubclass(), device.getDeviceProtocol())) {
 			return true;
+		}
 		
 		// if device doesn't match, check the interfaces
 		int count = device.getInterfaceCount();

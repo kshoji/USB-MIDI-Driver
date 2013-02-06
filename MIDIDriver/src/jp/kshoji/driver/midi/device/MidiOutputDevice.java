@@ -29,7 +29,7 @@ public final class MidiOutputDevice {
 	 * @param usbDeviceConnection
 	 * @param usbInterface
 	 */
-	public MidiOutputDevice(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, final UsbInterface usbInterface, final UsbEndpoint usbEndpoint) {
+	public MidiOutputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint) {
 		this.usbDevice = usbDevice;
 		this.deviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -119,7 +119,7 @@ public final class MidiOutputDevice {
 	 * @param cable 0-15
 	 * @param bytes bytes.length:1, 2, or 3
 	 */
-	public void sendMidiSystemCommonMessage(int cable, final byte bytes[]) {
+	public void sendMidiSystemCommonMessage(int cable, byte bytes[]) {
 		if (bytes == null) {
 			return;
 		}
@@ -146,7 +146,8 @@ public final class MidiOutputDevice {
 	 * @param cable 0-15
 	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
-	public void sendMidiSystemExclusive(int cable, final byte[] systemExclusive) {
+	@SuppressWarnings("incomplete-switch")
+	public void sendMidiSystemExclusive(int cable, byte[] systemExclusive) {
 		ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
 
 		for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
@@ -260,7 +261,7 @@ public final class MidiOutputDevice {
 	 * @param channel 0-15
 	 * @param pressure 0-127
 	 */
-	public void sendMidiChannelAftertouch(final int cable, final int channel, final int pressure) {
+	public void sendMidiChannelAftertouch(int cable, int channel, int pressure) {
 		sendMidiMessage(0xd, cable, 0xd0 | (channel & 0xf), pressure, 0);
 	}
 
@@ -272,7 +273,7 @@ public final class MidiOutputDevice {
 	 * @param channel 0-15
 	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
-	public void sendMidiPitchWheel(final int cable, final int channel, final int amount) {
+	public void sendMidiPitchWheel(int cable, int channel, int amount) {
 		sendMidiMessage(0xe, cable, 0xe0 | (channel & 0xf), amount & 0xff, (amount >> 8) & 0xff);
 	}
 

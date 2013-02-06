@@ -29,7 +29,7 @@ public final class UsbMidiDeviceUtils {
 	 * @param deviceFilters
 	 * @return {@link Set<UsbInterface>} always not null
 	 */
-	public static Set<UsbInterface> findMidiInterfaces(final UsbDevice usbDevice, int direction, List<DeviceFilter> deviceFilters) {
+	public static Set<UsbInterface> findMidiInterfaces(UsbDevice usbDevice, int direction, List<DeviceFilter> deviceFilters) {
 		Set<UsbInterface> usbInterfaces = new HashSet<UsbInterface>();
 		
 		int count = usbDevice.getInterfaceCount();
@@ -50,7 +50,7 @@ public final class UsbMidiDeviceUtils {
 	 * @param deviceFilters
 	 * @return {@link Set<UsbInterface>} always not null
 	 */
-	public static Set<UsbInterface> findAllMidiInterfaces(final UsbDevice usbDevice, List<DeviceFilter> deviceFilters) {
+	public static Set<UsbInterface> findAllMidiInterfaces(UsbDevice usbDevice, List<DeviceFilter> deviceFilters) {
 		Set<UsbInterface> usbInterfaces = new HashSet<UsbInterface>();
 		
 		int count = usbDevice.getInterfaceCount();
@@ -76,7 +76,7 @@ public final class UsbMidiDeviceUtils {
 	 * @param inputEventListener
 	 * @return {@link Set<MidiIntputDevice>} always not null
 	 */
-	public static Set<MidiInputDevice> findMidiInputDevices(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters, OnMidiInputEventListener inputEventListener) {
+	public static Set<MidiInputDevice> findMidiInputDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters, OnMidiInputEventListener inputEventListener) {
 		Set<MidiInputDevice> devices = new HashSet<MidiInputDevice>();
 
 		int count = usbDevice.getInterfaceCount();
@@ -100,7 +100,7 @@ public final class UsbMidiDeviceUtils {
 	 * @param deviceFilters
 	 * @return {@link Set<MidiOutputDevice>} always not null
 	 */
-	public static Set<MidiOutputDevice> findMidiOutputDevices(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters) {
+	public static Set<MidiOutputDevice> findMidiOutputDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters) {
 		Set<MidiOutputDevice> devices = new HashSet<MidiOutputDevice>();
 		
 		int count = usbDevice.getInterfaceCount();
@@ -128,10 +128,12 @@ public final class UsbMidiDeviceUtils {
 	 * @param deviceFilters
 	 * @return {@link UsbEndpoint}, null if not found
 	 */
-	private static UsbEndpoint findMidiEndpoint(final UsbDevice usbDevice, final UsbInterface usbInterface, int direction, final List<DeviceFilter> deviceFilters) {
+	private static UsbEndpoint findMidiEndpoint(UsbDevice usbDevice, UsbInterface usbInterface, int direction, List<DeviceFilter> deviceFilters) {
+		int endpointCount = usbInterface.getEndpointCount();
+		
 		// standard USB MIDI interface
 		if (usbInterface.getInterfaceClass() == 1 && usbInterface.getInterfaceSubclass() == 3) {
-			for (int endpointIndex = 0; endpointIndex < usbInterface.getEndpointCount(); endpointIndex++) {
+			for (int endpointIndex = 0; endpointIndex < endpointCount; endpointIndex++) {
 				UsbEndpoint endpoint = usbInterface.getEndpoint(endpointIndex);
 				if (endpoint.getDirection() == direction) {
 					return endpoint;
@@ -152,7 +154,7 @@ public final class UsbMidiDeviceUtils {
 			}
 
 			// non standard USB MIDI interface
-			for (int endpointIndex = 0; endpointIndex < usbInterface.getEndpointCount(); endpointIndex++) {
+			for (int endpointIndex = 0; endpointIndex < endpointCount; endpointIndex++) {
 				UsbEndpoint endpoint = usbInterface.getEndpoint(endpointIndex);
 				if ((endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT)) {
 					if (endpoint.getDirection() == direction) {

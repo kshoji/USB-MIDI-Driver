@@ -21,7 +21,7 @@ public interface OnMidiInputEventListener {
 	 * @param byte2
 	 * @param byte3
 	 */
-	void onMidiMiscellaneousFunctionCodes(final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
+	void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
 	
 	/**
 	 * Cable events. Reserved for future expansion.
@@ -34,7 +34,7 @@ public interface OnMidiInputEventListener {
 	 * @param byte2
 	 * @param byte3
 	 */
-	void onMidiCableEvents(final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
+	void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
 	
 	/**
 	 * System Common messages, or SysEx ends with following single byte.
@@ -45,7 +45,7 @@ public interface OnMidiInputEventListener {
 	 * @param cable 0-15
 	 * @param bytes bytes.length:1, 2, or 3
 	 */
-	void onMidiSystemCommonMessage(final MidiInputDevice sender, int cable, final byte[] bytes);
+	void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes);
 	
 	/**
 	 * SysEx
@@ -56,7 +56,7 @@ public interface OnMidiInputEventListener {
 	 * @param cable 0-15
 	 * @param systemExclusive
 	 */
-	void onMidiSystemExclusive(final MidiInputDevice sender, int cable, final byte[] systemExclusive);
+	void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive);
 	
 	/**
 	 * Note-off
@@ -69,7 +69,7 @@ public interface OnMidiInputEventListener {
 	 * @param note 0-127
 	 * @param velocity 0-127
 	 */
-	void onMidiNoteOff(final MidiInputDevice sender, int cable, int channel, int note, int velocity);
+	void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity);
 	
 	/**
 	 * Note-on
@@ -82,7 +82,7 @@ public interface OnMidiInputEventListener {
 	 * @param note 0-127
 	 * @param velocity 0-127
 	 */
-	void onMidiNoteOn(final MidiInputDevice sender, int cable, int channel, int note, int velocity);
+	void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity);
 	
 	/**
 	 * Poly-KeyPress
@@ -95,7 +95,7 @@ public interface OnMidiInputEventListener {
 	 * @param note 0-127
 	 * @param pressure 0-127
 	 */
-	void onMidiPolyphonicAftertouch(final MidiInputDevice sender, int cable, int channel, int note, int pressure);
+	void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure);
 	
 	/**
 	 * Control Change
@@ -108,7 +108,7 @@ public interface OnMidiInputEventListener {
 	 * @param function 0-127
 	 * @param value 0-127
 	 */
-	void onMidiControlChange(final MidiInputDevice sender, int cable, int channel, int function, int value);
+	void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value);
 	
 	/**
 	 * Program Change
@@ -120,7 +120,7 @@ public interface OnMidiInputEventListener {
 	 * @param channel 0-15
 	 * @param program 0-127
 	 */
-	void onMidiProgramChange(final MidiInputDevice sender, int cable, int channel, int program);
+	void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program);
 	
 	/**
 	 * Channel Pressure
@@ -132,7 +132,7 @@ public interface OnMidiInputEventListener {
 	 * @param channel 0-15
 	 * @param pressure 0-127
 	 */
-	void onMidiChannelAftertouch(final MidiInputDevice sender, int cable, int channel, int pressure);
+	void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure);
 	
 	/**
 	 * PitchBend Change
@@ -144,7 +144,7 @@ public interface OnMidiInputEventListener {
 	 * @param channel 0-15
 	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
-	void onMidiPitchWheel(final MidiInputDevice sender, int cable, int channel, int amount);
+	void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount);
 	
 	/**
 	 * Single Byte
@@ -155,5 +155,5 @@ public interface OnMidiInputEventListener {
 	 * @param cable 0-15
 	 * @param byte1
 	 */
-	void onMidiSingleByte(final MidiInputDevice sender, int cable, int byte1);
+	void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1);
 }

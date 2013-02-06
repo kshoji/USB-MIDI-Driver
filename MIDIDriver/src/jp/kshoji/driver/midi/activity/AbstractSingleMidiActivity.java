@@ -32,14 +32,23 @@ import android.util.Log;
  * @author K.Shoji
  */
 public abstract class AbstractSingleMidiActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
-	UsbDevice device = null;
-	UsbDeviceConnection deviceConnection = null;
-	MidiInputDevice midiInputDevice = null;
-	MidiOutputDevice midiOutputDevice = null;
-	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
-	Handler deviceDetachedHandler = null;
-
-	private OnMidiDeviceAttachedListener deviceAttachedListener = new OnMidiDeviceAttachedListener() {
+	/**
+	 * Implementation for single device connections.
+	 * 
+	 * @author K.Shoji
+	 */
+	final class OnMidiDeviceAttachedListenerImpl implements OnMidiDeviceAttachedListener {
+		private final UsbManager usbManager;
+		
+		/**
+		 * constructor
+		 * 
+		 * @param usbManager
+		 */
+		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
+			this.usbManager = usbManager;
+		}
+		
 		/*
 		 * (non-Javadoc)
 		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice, android.hardware.usb.UsbInterface)
@@ -51,8 +60,6 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 				return;
 			}
 
-			UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
-			
 			deviceConnection = usbManager.openDevice(attachedDevice);
 			if (deviceConnection == null) {
 				return;
@@ -60,19 +67,28 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 			
 			List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
 
-			Set<MidiInputDevice> foundDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters, AbstractSingleMidiActivity.this);
-			midiInputDevice = (MidiInputDevice) foundDevices.toArray()[0];
+			Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters, AbstractSingleMidiActivity.this);
+			if (foundInputDevices.size() > 0) {
+				midiInputDevice = (MidiInputDevice) foundInputDevices.toArray()[0];
+			}
 			
 			Set<MidiOutputDevice> foundOutputDevices = UsbMidiDeviceUtils.findMidiOutputDevices(attachedDevice, deviceConnection, deviceFilters);
-			midiOutputDevice = (MidiOutputDevice) foundOutputDevices.toArray()[0];
+			if (foundOutputDevices.size() > 0) {
+				midiOutputDevice = (MidiOutputDevice) foundOutputDevices.toArray()[0];
+			}
 			
 			Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
 			
 			AbstractSingleMidiActivity.this.onDeviceAttached(attachedDevice);
 		}
-	};
-
-	private OnMidiDeviceDetachedListener deviceDetachedListener = new OnMidiDeviceDetachedListener() {
+	}
+	
+	/**
+	 * Implementation for single device connections.
+	 * 
+	 * @author K.Shoji
+	 */
+	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 		/*
 		 * (non-Javadoc)
 		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
@@ -109,7 +125,17 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 			message.obj = detachedDevice;
 			deviceDetachedHandler.sendMessage(message);
 		}
-	};
+	}
+	
+	UsbDevice device = null;
+	UsbDeviceConnection deviceConnection = null;
+	MidiInputDevice midiInputDevice = null;
+	MidiOutputDevice midiOutputDevice = null;
+	OnMidiDeviceAttachedListener deviceAttachedListener = null;
+	OnMidiDeviceDetachedListener deviceDetachedListener = null;
+	Handler deviceDetachedHandler = null;
+	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+
 
 	/*
 	 * (non-Javadoc)
@@ -118,6 +144,10 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
+		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl(usbManager);
+		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl(); 
 		
 		deviceDetachedHandler = new Handler(new Callback() {
 			/*
@@ -132,7 +162,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 			}
 		});
 
-		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), deviceAttachedListener, deviceDetachedListener);
+		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
 	}
 	
 	/*
@@ -154,6 +184,8 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		}
 		
 		midiOutputDevice = null;
+		
+		deviceConnection = null;
 	}
 	
 	/**

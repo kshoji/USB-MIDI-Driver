@@ -35,12 +35,13 @@ public final class MidiDeviceConnectionWatcher {
 	 * constructor
 	 * 
 	 * @param context
+	 * @param usbManager
 	 * @param deviceAttachedListener
 	 * @param deviceDetachedListener
 	 */
-	public MidiDeviceConnectionWatcher(final Context context, final OnMidiDeviceAttachedListener deviceAttachedListener, final OnMidiDeviceDetachedListener deviceDetachedListener) {
+	public MidiDeviceConnectionWatcher(Context context, UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
 		grantedDeviceMap = new HashMap<String, UsbDevice>();
-		thread = new MidiDeviceConnectionWatchThread(context, deviceAttachedListener, deviceDetachedListener);
+		thread = new MidiDeviceConnectionWatchThread(context, usbManager, deviceAttachedListener, deviceDetachedListener);
 		thread.start();
 	}
 	
@@ -49,7 +50,10 @@ public final class MidiDeviceConnectionWatcher {
 	}
 	
 	/**
-	 * stops the watching thread
+	 * stops the watching thread <br />
+	 * <br />
+	 * Note: Takes one second until the thread stops.
+	 * The device attached / detached events will be noticed until the thread will completely stops.
 	 */
 	public void stop() {
 		thread.stopFlag = true;
@@ -60,8 +64,8 @@ public final class MidiDeviceConnectionWatcher {
 	 * 
 	 * @author K.Shoji
 	 */
-	final class UsbMidiGrantedReceiver extends BroadcastReceiver {
-		public static final String USB_PERMISSION_GRANTED_ACTION = "jp.kshoji.driver.midi.USB_PERMISSION_GRANTED_ACTION";
+	private final class UsbMidiGrantedReceiver extends BroadcastReceiver {
+		private static final String USB_PERMISSION_GRANTED_ACTION = "jp.kshoji.driver.midi.USB_PERMISSION_GRANTED_ACTION";
 		
 		private final String deviceName;
 		private final UsbDevice device;
@@ -71,7 +75,7 @@ public final class MidiDeviceConnectionWatcher {
 		 * @param device
 		 * @param deviceAttachedListener
 		 */
-		public UsbMidiGrantedReceiver(final String deviceName, final UsbDevice device, final OnMidiDeviceAttachedListener deviceAttachedListener) {
+		public UsbMidiGrantedReceiver(String deviceName, UsbDevice device, OnMidiDeviceAttachedListener deviceAttachedListener) {
 			this.deviceName = deviceName;
 			this.device = device;
 			this.deviceAttachedListener = deviceAttachedListener;
@@ -82,7 +86,7 @@ public final class MidiDeviceConnectionWatcher {
 		 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
 		 */
 		@Override
-		public void onReceive(final Context context, final Intent intent) {
+		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
 			if (USB_PERMISSION_GRANTED_ACTION.equals(action)) {
 				boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
@@ -101,17 +105,25 @@ public final class MidiDeviceConnectionWatcher {
 	 * 
 	 * @author K.Shoji
 	 */
-	final class MidiDeviceConnectionWatchThread extends Thread {
+	private final class MidiDeviceConnectionWatchThread extends Thread {
 		private Context context;
 		private UsbManager usbManager;
 		private OnMidiDeviceAttachedListener deviceAttachedListener;
 		private OnMidiDeviceDetachedListener deviceDetachedListener;
 		private HashSet<String> deviceNameSet;
 		boolean stopFlag;
-		
-		MidiDeviceConnectionWatchThread(final Context context, final OnMidiDeviceAttachedListener deviceAttachedListener, final OnMidiDeviceDetachedListener deviceDetachedListener) {
+
+		/**
+		 * constructor
+		 * 
+		 * @param context
+		 * @param usbManager
+		 * @param deviceAttachedListener
+		 * @param deviceDetachedListener
+		 */
+		MidiDeviceConnectionWatchThread(Context context, UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
 			this.context = context;
-			usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedListener = deviceDetachedListener;
 			deviceNameSet = new HashSet<String>();

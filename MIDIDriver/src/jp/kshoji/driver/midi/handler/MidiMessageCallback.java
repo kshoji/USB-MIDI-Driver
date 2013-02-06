@@ -24,7 +24,7 @@ public final class MidiMessageCallback implements Callback {
 	 * @param device
 	 * @param midiEventListener
 	 */
-	public MidiMessageCallback(final MidiInputDevice device, final OnMidiInputEventListener midiEventListener) {
+	public MidiMessageCallback(MidiInputDevice device, OnMidiInputEventListener midiEventListener) {
 		this.midiEventListener = midiEventListener;
 		sender = device;
 	}
@@ -34,7 +34,7 @@ public final class MidiMessageCallback implements Callback {
 	 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
 	 */
 	@Override
-	public boolean handleMessage(final Message msg) {
+	public boolean handleMessage(Message msg) {
 		if (midiEventListener == null) {
 			return false;
 		}

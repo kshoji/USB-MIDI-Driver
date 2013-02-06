@@ -37,7 +37,7 @@ public final class MidiInputDevice {
 	 * @param midiEventListener
 	 * @throws IllegalArgumentException endpoint not found.
 	 */
-	public MidiInputDevice(final UsbDevice usbDevice, final UsbDeviceConnection usbDeviceConnection, final UsbInterface usbInterface, final UsbEndpoint usbEndpoint, final OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint, OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -58,9 +58,7 @@ public final class MidiInputDevice {
 	 * stops the watching thread
 	 */
 	public void stop() {
-		synchronized (waiterThread) {
-			waiterThread.stopFlag = true;
-		}
+		waiterThread.stopFlag = true;
 	}
 
 	/**
@@ -90,10 +88,10 @@ public final class MidiInputDevice {
 	 * 
 	 * @author K.Shoji
 	 */
-	private class WaiterThread extends Thread {
+	private final class WaiterThread extends Thread {
 		private byte[] readBuffer = new byte[64];
 
-		public boolean stopFlag;
+		boolean stopFlag;
 		
 		private Handler receiveHandler;
 
@@ -102,7 +100,7 @@ public final class MidiInputDevice {
 		 * 
 		 * @param handler
 		 */
-		public WaiterThread(final Handler handler) {
+		WaiterThread(Handler handler) {
 			stopFlag = false;
 			this.receiveHandler = handler;
 		}
@@ -114,11 +112,10 @@ public final class MidiInputDevice {
 		@Override
 		public void run() {
 			while (true) {
-				synchronized (this) {
-					if (stopFlag) {
-						return;
-					}
+				if (stopFlag) {
+					return;
 				}
+				
 				if (inputEndpoint == null) {
 					continue;
 				}
@@ -131,7 +128,10 @@ public final class MidiInputDevice {
 					
 					Message message = new Message();
 					message.obj = read;
-					receiveHandler.sendMessage(message);
+					
+					if (!stopFlag) {
+						receiveHandler.sendMessage(message);
+					}
 				}
 				
 				// XXX uncomment below if high CPU usage with many devices. (But, this sleep makes latency).
