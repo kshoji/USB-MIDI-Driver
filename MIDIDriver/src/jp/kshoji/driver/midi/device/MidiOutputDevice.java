@@ -1,6 +1,7 @@
 package jp.kshoji.driver.midi.device;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import jp.kshoji.driver.midi.util.Constants;
@@ -8,6 +9,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
 /**
@@ -21,6 +23,7 @@ public final class MidiOutputDevice {
 	private final UsbInterface usbInterface;
 	private final UsbDeviceConnection deviceConnection;
 	private final UsbEndpoint outputEndpoint;
+	private final UsbRequest usbRequest;
 
 	/**
 	 * constructor
@@ -41,6 +44,9 @@ public final class MidiOutputDevice {
 
 		Log.i(Constants.TAG, "deviceConnection:" + deviceConnection + ", usbInterface:" + usbInterface);
 		deviceConnection.claimInterface(this.usbInterface, true);
+		
+		usbRequest =  new UsbRequest();
+		usbRequest.initialize(deviceConnection, outputEndpoint);
 	}
 
 	/**
@@ -81,8 +87,18 @@ public final class MidiOutputDevice {
 		writeBuffer[2] = (byte) byte2;
 		writeBuffer[3] = (byte) byte3;
 
-		deviceConnection.bulkTransfer(outputEndpoint, writeBuffer, writeBuffer.length, 0);
-
+		// usbRequest.queue() is not thread-safe
+		synchronized (deviceConnection) {
+			while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), 4) == false) {
+				// loop until queue completed
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// ignore exception
+				}
+			}
+		}
+		
 		Log.d(Constants.TAG, "Output:" + Arrays.toString(writeBuffer));
 	}
 
@@ -185,8 +201,19 @@ public final class MidiOutputDevice {
 		}
 		
 		byte[] buffer = transferDataStream.toByteArray();
-		int transferedBytes = deviceConnection.bulkTransfer(outputEndpoint, buffer, buffer.length, 0);
-		Log.d(Constants.TAG, "" + transferedBytes + " bytes of " + buffer.length + " bytes has been transfered.");
+
+		// usbRequest.queue() is not thread-safe
+		synchronized (deviceConnection) {
+			while (usbRequest.queue(ByteBuffer.wrap(buffer), buffer.length) == false) {
+				// loop until queue completed
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// ignore exception
+				}
+			}
+		}
+		Log.d(Constants.TAG, "" + buffer.length + " bytes of " + buffer.length + " bytes has been queued for transfering.");
 	}
 
 	/**

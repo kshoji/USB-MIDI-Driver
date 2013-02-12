@@ -57,6 +57,15 @@ public final class MidiDeviceConnectionWatcher {
 	 */
 	public void stop() {
 		thread.stopFlag = true;
+		
+		// blocks while the thread will stop
+		while (thread.isAlive()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// ignore
+			}
+		}
 	}
 	
 	/**

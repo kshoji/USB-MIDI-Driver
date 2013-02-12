@@ -1,6 +1,7 @@
 package jp.kshoji.driver.midi.handler;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
@@ -16,6 +17,7 @@ public final class MidiMessageCallback implements Callback {
 
 	private final OnMidiInputEventListener midiEventListener;
 	private final MidiInputDevice sender;
+	private ByteArrayOutputStream received;
 	private ByteArrayOutputStream systemExclusive = null;
 
 	/**
@@ -34,11 +36,43 @@ public final class MidiMessageCallback implements Callback {
 	 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
 	 */
 	@Override
-	public boolean handleMessage(Message msg) {
+	public synchronized boolean handleMessage(Message msg) {
 		if (midiEventListener == null) {
 			return false;
 		}
-		byte[] read = (byte[]) msg.obj;
+
+		if (received == null) {
+			received = new ByteArrayOutputStream();
+		}
+		try {
+			received.write((byte[]) msg.obj);
+		} catch (IOException e) {
+			// ignore exception
+		}
+		if (received.size() < 4) {
+			// more data needed
+			return false;
+		}
+
+		// USB MIDI data stream: 4 bytes boundary
+		byte[] receivedBytes = received.toByteArray();
+		byte[] read = new byte[receivedBytes.length / 4 * 4];
+		System.arraycopy(receivedBytes, 0, read, 0, read.length);
+		
+		// Note: received.reset() method don't reset ByteArrayOutputStream's internal buffer.
+		received = new ByteArrayOutputStream();
+		
+		// keep unread bytes
+		if (receivedBytes.length - read.length > 0) {
+			byte[] unread = new byte[receivedBytes.length - read.length];
+			System.arraycopy(receivedBytes, read.length, unread, 0, unread.length);
+			try {
+				received.write(unread);
+			} catch (IOException e) {
+				// ignore exception
+			}
+		}
+		
 		int cable;
 		int codeIndexNumber;
 		int byte1;

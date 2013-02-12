@@ -59,6 +59,15 @@ public final class MidiInputDevice {
 	 */
 	public void stop() {
 		waiterThread.stopFlag = true;
+		
+		// blocks while the thread will stop
+		while (waiterThread.isAlive()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// ignore
+			}
+		}
 	}
 
 	/**
@@ -120,7 +129,8 @@ public final class MidiInputDevice {
 					continue;
 				}
 				
-				int length = usbDeviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
+				// input bulkTransfer with 'argument timeout = 0' blocks thread until data received.
+				int length = usbDeviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 1);
 				if (length > 0) {
 					byte[] read = new byte[length];
 					System.arraycopy(readBuffer, 0, read, 0, length);
@@ -133,13 +143,6 @@ public final class MidiInputDevice {
 						receiveHandler.sendMessage(message);
 					}
 				}
-				
-				// XXX uncomment below if high CPU usage with many devices. (But, this sleep makes latency).
-				// try {
-				// sleep(10);
-				// } catch (InterruptedException e) {
-				// // do nothing
-				// }
 			}
 		}
 	}
