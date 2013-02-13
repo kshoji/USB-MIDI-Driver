@@ -51,19 +51,24 @@ Project setup
     - `AbstractSingleMidiActivity` can connect only **one** MIDI device.
     - `AbstractMultipleMidiActivity` can connect **multiple** MIDI devices.
         - NOTE: The performance problem (slow latency or high CPU/memory usage) may occur if many devices have been connected.
-- Modify the AndroidManifest.xml file's activity tag.
- - Activity's **launchMode** must be "singleTask".
+- Modify the AndroidManifest.xml
+    - Add "uses-feature" tag to use USB Host feature.
+    - Activity's **launchMode** must be "singleTask".
 
 ```xml
-<activity
-    android:name=".MyMidiMainActivity"
-    android:label="@string/app_name"
-    android:launchMode="singleTask" >
-    <intent-filter>
-        <category android:name="android.intent.category.LAUNCHER" />
-        <action android:name="android.intent.action.MAIN" />
-    </intent-filter>
-</activity>
+<uses-feature android:name="android.hardware.usb.host" /> 
+
+<application>
+    <activity
+        android:name=".MyMidiMainActivity"
+        android:label="@string/app_name"
+        android:launchMode="singleTask" >
+        <intent-filter>
+            <category android:name="android.intent.category.LAUNCHER" />
+            <action android:name="android.intent.action.MAIN" />
+        </intent-filter>
+    </activity>
+    :
 ```
 
 MIDI event handling with AbstractSingleMidiActivity
