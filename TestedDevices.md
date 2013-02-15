@@ -21,3 +21,4 @@ USB MIDI Devices
 - Roland FP-5 (Digital Piano)
 - Roland GW-8 (Synthesizer Workstation)
 - Line 6 Pocket POD (Guitar Effector)
+- Medeli M5 (Keyboard)
