@@ -1,9 +1,10 @@
 package jp.kshoji.driver.midi.thread;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
@@ -30,6 +31,8 @@ import android.util.Log;
 public final class MidiDeviceConnectionWatcher {
 	private final MidiDeviceConnectionWatchThread thread;
 	final HashMap<String, UsbDevice> grantedDeviceMap;
+	final Queue<UsbDevice> deviceGrantQueue;
+	volatile boolean isGranting;
 
 	/**
 	 * constructor
@@ -40,6 +43,8 @@ public final class MidiDeviceConnectionWatcher {
 	 * @param deviceDetachedListener
 	 */
 	public MidiDeviceConnectionWatcher(Context context, UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
+		deviceGrantQueue = new LinkedList<UsbDevice>();
+		isGranting = false;
 		grantedDeviceMap = new HashMap<String, UsbDevice>();
 		thread = new MidiDeviceConnectionWatchThread(context, usbManager, deviceAttachedListener, deviceDetachedListener);
 		thread.start();
@@ -119,8 +124,10 @@ public final class MidiDeviceConnectionWatcher {
 		private UsbManager usbManager;
 		private OnMidiDeviceAttachedListener deviceAttachedListener;
 		private OnMidiDeviceDetachedListener deviceDetachedListener;
-		private HashSet<String> deviceNameSet;
+		private Set<String> connectedDeviceNameSet;
+		private Set<String> removedDeviceNames;
 		boolean stopFlag;
+		private List<DeviceFilter> deviceFilters;
 
 		/**
 		 * constructor
@@ -135,8 +142,10 @@ public final class MidiDeviceConnectionWatcher {
 			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedListener = deviceDetachedListener;
-			deviceNameSet = new HashSet<String>();
+			connectedDeviceNameSet = new HashSet<String>();
+			removedDeviceNames = new HashSet<String>();
 			stopFlag = false;
+			deviceFilters = DeviceFilter.getDeviceFilters(context);
 		}
 
 		/*
@@ -149,6 +158,17 @@ public final class MidiDeviceConnectionWatcher {
 			
 			while (stopFlag == false) {
 				checkConnectedDevices();
+				
+				synchronized (deviceGrantQueue) {
+					if (!deviceGrantQueue.isEmpty() && !isGranting) {
+						isGranting = true;
+						UsbDevice device = deviceGrantQueue.remove();
+						
+						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
+						context.registerReceiver(new UsbMidiGrantedReceiver(device.getDeviceName(), device, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
+						usbManager.requestPermission(device, permissionIntent);
+					}
+				}
 				
 				try {
 					sleep(1000);
@@ -166,27 +186,29 @@ public final class MidiDeviceConnectionWatcher {
 			
 			// check attached device
 			for (String deviceName : deviceMap.keySet()) {
-				if (!deviceNameSet.contains(deviceName)) {
-					deviceNameSet.add(deviceName);
+				// check if already removed
+				if (removedDeviceNames.contains(deviceName)) {
+					continue;
+				}
+				
+				if (!connectedDeviceNameSet.contains(deviceName)) {
+					connectedDeviceNameSet.add(deviceName);
 					UsbDevice device = deviceMap.get(deviceName);
 					
-					List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(context);
 					Set<UsbInterface> midiInterfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(device, deviceFilters);
 					if (midiInterfaces.size() > 0) {
-						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
-						context.registerReceiver(new UsbMidiGrantedReceiver(deviceName, device, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
-						usbManager.requestPermission(device, permissionIntent);
+						synchronized (deviceGrantQueue) {
+							deviceGrantQueue.add(device);
+						}
 					}
 				}
 			}
 			
 			// check detached device
-			List<String> removeDeviceNames = new ArrayList<String>();
-			for (String deviceName : deviceNameSet) {
+			for (String deviceName : connectedDeviceNameSet) {
 				if (!deviceMap.containsKey(deviceName)) {
-					removeDeviceNames.add(deviceName);
-					UsbDevice device = grantedDeviceMap.get(deviceName);
-					grantedDeviceMap.remove(deviceName);
+					removedDeviceNames.add(deviceName);
+					UsbDevice device = grantedDeviceMap.remove(deviceName);
 
 					Log.d(Constants.TAG, "deviceName:" + deviceName + ", device:" + device + " detached.");
 					if (device != null) {
@@ -195,9 +217,14 @@ public final class MidiDeviceConnectionWatcher {
 				}
 			}
 			
-			for (String deviceName : removeDeviceNames) {
-				deviceNameSet.remove(deviceName);
-			}
+			connectedDeviceNameSet.removeAll(removedDeviceNames);
 		}
+	}
+
+	/**
+	 * notifies the 'current granting device' has successfully granted.
+	 */
+	public void notifyDeviceGranted() {
+		isGranting = false;
 	}
 }

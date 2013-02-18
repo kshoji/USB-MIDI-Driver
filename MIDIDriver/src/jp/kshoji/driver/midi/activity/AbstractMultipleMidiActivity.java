@@ -19,7 +19,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -63,6 +62,8 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 				// nothing to do
 				return;
 			}
+			
+			deviceConnectionWatcher.notifyDeviceGranted();
 
 			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);
 			if (deviceConnection == null) {
@@ -118,7 +119,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
 		 */
 		@Override
-		public void onDeviceDetached(UsbDevice detachedDevice) {
+		public synchronized void onDeviceDetached(UsbDevice detachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
 			if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
 				// nothing to do
@@ -138,20 +139,16 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 			
 			Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(detachedDevice);
 			if (outputDevices != null) {
+				for (MidiOutputDevice outputDevice : outputDevices) {
+					if (outputDevice != null) {
+						outputDevice.stop();
+					}
+				}
 				midiOutputDevices.remove(detachedDevice);
 			}
 
 			UsbDeviceConnection deviceConnection = deviceConnections.get(detachedDevice);
 			if (deviceConnection != null) {
-				List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
-				
-				Set<UsbInterface> allInterfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(detachedDevice, deviceFilters);
-				for (UsbInterface usbInterface : allInterfaces) {
-					if (usbInterface != null) {
-						deviceConnection.releaseInterface(usbInterface);
-					}
-				}
-				
 				deviceConnection.close();
 				
 				deviceConnections.remove(detachedDevice);
@@ -171,7 +168,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	OnMidiDeviceAttachedListener deviceAttachedListener = null;
 	OnMidiDeviceDetachedListener deviceDetachedListener = null;
 	Handler deviceDetachedHandler = null;
-	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+	MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
 	/*
 	 * (non-Javadoc)
@@ -196,6 +193,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 			 */
 			@Override
 			public boolean handleMessage(Message msg) {
+				Log.i(Constants.TAG, "(handleMessage) detached device:" + msg.obj);
 				UsbDevice usbDevice = (UsbDevice) msg.obj;
 				onDeviceDetached(usbDevice);
 				return true;

@@ -69,6 +69,13 @@ public final class MidiOutputDevice {
 	public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;
 	}
+
+	/**
+	 * stop to use this device.
+	 */
+	public void stop() {
+		deviceConnection.releaseInterface(usbInterface);
+	}
 	
 	/**
 	 * Sends MIDI message to output device.

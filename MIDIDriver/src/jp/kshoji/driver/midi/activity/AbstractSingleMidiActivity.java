@@ -16,7 +16,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -94,26 +93,18 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
 		 */
 		@Override
-		public void onDeviceDetached(final UsbDevice detachedDevice) {
-			// Stop input device's thread.
+		public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
 			if (midiInputDevice != null) {
 				midiInputDevice.stop();
 				midiInputDevice = null;
 			}
 			
-			midiOutputDevice = null;
-
+			if (midiOutputDevice != null) {
+				midiOutputDevice.stop();
+				midiOutputDevice = null;
+			}
+			
 			if (deviceConnection != null) {
-				List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
-
-				Set<UsbInterface> allInterfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(detachedDevice, deviceFilters);
-				
-				for (UsbInterface usbInterface : allInterfaces) {
-					if (usbInterface != null) {
-						deviceConnection.releaseInterface(usbInterface);
-					}
-				}
-				
 				deviceConnection.close();
 				deviceConnection = null;
 			}

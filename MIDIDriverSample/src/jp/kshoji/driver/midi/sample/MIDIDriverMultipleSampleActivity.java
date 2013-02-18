@@ -242,6 +242,7 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 	@Override
 	public void onDeviceAttached(final UsbDevice usbDevice) {
 		if (connectedDevicesAdapter != null) {
+			connectedDevicesAdapter.remove(usbDevice);
 			connectedDevicesAdapter.add(usbDevice);
 			connectedDevicesAdapter.notifyDataSetChanged();
 		}

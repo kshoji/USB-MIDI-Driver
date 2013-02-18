@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>jp.kshoji</groupId>
+	<artifactId>midi-driver</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>apklib</packaging>
+	<name>Android USB MIDI Driver</name>
+	<description>USB MIDI Driver for Android tablets(3.1 or higher)</description>
+	<url>https://github.com/kshoji/USB-MIDI-Driver</url>
+
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/kshoji/USB-MIDI-Driver/issues</url>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<url>https://github.com/kshoji/USB-MIDI-Driver</url>
+		<connection>scm:git:git://github.com/kshoji/USB-MIDI-Driver.git</connection>
+		<developerConnection>scm:git:git@github.com:kshoji/USB-MIDI-Driver.git</developerConnection>
+	</scm>
+
+	<developers>
+		<developer>
+			<email>0x0badc0de@gmail.com</email>
+			<name>Kaoru Shoji</name>
+			<url>https://github.com/kshoji</url>
+			<id>kshoji</id>
+		</developer>
+	</developers>
+
+	<distributionManagement>
+		<repository>
+			<id>repo</id>
+			<url>http://github.com/kshoji/USB-MIDI-Driver/raw/master/release</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshot-repo</id>
+			<url>http://github.com/kshoji/USB-MIDI-Driver/raw/master/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.5.1</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+					<compilerVersion>1.6</compilerVersion>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.jayway.maven.plugins.android.generation2</groupId>
+				<artifactId>android-maven-plugin</artifactId>
+				<version>3.3.2</version>
+				<configuration>
+					<androidManifestFile>${project.basedir}/AndroidManifest.xml</androidManifestFile>
+					<resourceDirectory>${project.basedir}/res</resourceDirectory>
+					<sdk>
+						<platform>12</platform>
+					</sdk>
+					<deleteConflictingFiles>true</deleteConflictingFiles>
+					<undeployBeforeDeploy>true</undeployBeforeDeploy>
+				</configuration>
+				<extensions>true</extensions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<excludes>
+						<exclude>android:android</exclude>
+					</excludes>
+					<classpathContainers>
+						<classpathContainer>com.android.ide.eclipse.adt.ANDROID_FRAMEWORK</classpathContainer>
+					</classpathContainers>
+					<additionalProjectnatures>
+						<projectnature>com.android.ide.eclipse.adt.AndroidNature</projectnature>
+					</additionalProjectnatures>
+					<additionalBuildcommands>
+						<buildcommand>com.android.ide.eclipse.adt.ResourceManagerBuilder</buildcommand>
+						<buildcommand>com.android.ide.eclipse.adt.PreCompilerBuilder</buildcommand>
+						<buildcommand>com.android.ide.eclipse.adt.ApkBuilder</buildcommand>
+					</additionalBuildcommands>
+					<useProjectReferences>false</useProjectReferences>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<!-- install dependency using https://github.com/mosabua/maven-android-sdk-deployer -->
+		<!-- mvn install -P 3.1 -->
+		<dependency>
+			<groupId>android</groupId>
+			<artifactId>android</artifactId>
+			<version>3.1_r3</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

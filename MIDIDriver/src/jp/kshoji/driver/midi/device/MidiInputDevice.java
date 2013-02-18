@@ -68,6 +68,8 @@ public final class MidiInputDevice {
 				// ignore
 			}
 		}
+		
+		usbDeviceConnection.releaseInterface(usbInterface);
 	}
 
 	/**
