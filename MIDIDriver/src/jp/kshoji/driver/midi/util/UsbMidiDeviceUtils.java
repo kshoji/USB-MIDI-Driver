@@ -93,7 +93,7 @@ public final class UsbMidiDeviceUtils {
 	}
 	
 	/**
-	 * Finf {@link Set<MidiOutputDevice>} from {@link UsbDevice}
+	 * Find {@link Set<MidiOutputDevice>} from {@link UsbDevice}
 	 * 
 	 * @param usbDevice
 	 * @param usbDeviceConnection
@@ -128,7 +128,7 @@ public final class UsbMidiDeviceUtils {
 	 * @param deviceFilters
 	 * @return {@link UsbEndpoint}, null if not found
 	 */
-	private static UsbEndpoint findMidiEndpoint(UsbDevice usbDevice, UsbInterface usbInterface, int direction, List<DeviceFilter> deviceFilters) {
+	public static UsbEndpoint findMidiEndpoint(UsbDevice usbDevice, UsbInterface usbInterface, int direction, List<DeviceFilter> deviceFilters) {
 		int endpointCount = usbInterface.getEndpointCount();
 		
 		// standard USB MIDI interface
