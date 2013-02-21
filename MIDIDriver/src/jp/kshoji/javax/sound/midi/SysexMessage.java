@@ -1,4 +1,4 @@
-package javax.sound.midi;
+package jp.kshoji.javax.sound.midi;
 
 public class SysexMessage extends MidiMessage {
 

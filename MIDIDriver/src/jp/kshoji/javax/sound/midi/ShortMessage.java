@@ -1,4 +1,4 @@
-package javax.sound.midi;
+package jp.kshoji.javax.sound.midi;
 
 public class ShortMessage extends MidiMessage {
 	public static final int NOTE_OFF = 0x80;

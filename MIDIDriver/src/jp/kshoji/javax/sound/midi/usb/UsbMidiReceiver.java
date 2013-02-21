@@ -1,19 +1,19 @@
-package jp.kshoji.javax.sound.midi;
+package jp.kshoji.javax.sound.midi.usb;
 
-import javax.sound.midi.MetaMessage;
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.SysexMessage;
 
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
+import jp.kshoji.javax.sound.midi.MetaMessage;
+import jp.kshoji.javax.sound.midi.MidiMessage;
+import jp.kshoji.javax.sound.midi.Receiver;
+import jp.kshoji.javax.sound.midi.ShortMessage;
+import jp.kshoji.javax.sound.midi.SysexMessage;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 
 /**
- * {@link javax.sound.midi.Receiver} implementation
+ * {@link jp.kshoji.javax.sound.midi.Receiver} implementation
  *
  * @author K.Shoji
  *

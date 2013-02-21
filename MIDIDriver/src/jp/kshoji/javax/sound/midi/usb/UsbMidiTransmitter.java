@@ -1,14 +1,14 @@
-package jp.kshoji.javax.sound.midi;
+package jp.kshoji.javax.sound.midi.usb;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.SysexMessage;
-import javax.sound.midi.Transmitter;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.javax.sound.midi.InvalidMidiDataException;
+import jp.kshoji.javax.sound.midi.Receiver;
+import jp.kshoji.javax.sound.midi.ShortMessage;
+import jp.kshoji.javax.sound.midi.SysexMessage;
+import jp.kshoji.javax.sound.midi.Transmitter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
@@ -16,7 +16,7 @@ import android.hardware.usb.UsbInterface;
 import android.util.Log;
 
 /**
- * {@link javax.sound.midi.Transmitter} implementation
+ * {@link jp.kshoji.javax.sound.midi.Transmitter} implementation
  * 
  * @author K.Shoji
  */

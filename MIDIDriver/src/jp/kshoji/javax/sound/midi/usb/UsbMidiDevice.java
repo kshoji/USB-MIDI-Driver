@@ -1,21 +1,20 @@
-package jp.kshoji.javax.sound.midi;
+package jp.kshoji.javax.sound.midi.usb;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.Transmitter;
-
+import jp.kshoji.javax.sound.midi.MidiDevice;
+import jp.kshoji.javax.sound.midi.MidiUnavailableException;
+import jp.kshoji.javax.sound.midi.Receiver;
+import jp.kshoji.javax.sound.midi.Transmitter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 
 /**
- * {@link javax.sound.midi.MidiDevice} implementation
+ * {@link jp.kshoji.javax.sound.midi.MidiDevice} implementation
  * 
  * @author K.Shoji
  */
@@ -23,8 +22,6 @@ public final class UsbMidiDevice implements MidiDevice {
 	private final UsbDevice usbDevice;
 	private final UsbDeviceConnection usbDeviceConnection;
 	private final UsbInterface usbInterface;
-	private final UsbEndpoint inputEndpoint;
-	private final UsbEndpoint outputEndpoint;
 	
 	private final List<Receiver> receivers = new ArrayList<Receiver>();
 	private final List<Transmitter> transmitters = new ArrayList<Transmitter>();
@@ -35,8 +32,9 @@ public final class UsbMidiDevice implements MidiDevice {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
-		this.inputEndpoint = inputEndpoint;
-		this.outputEndpoint = outputEndpoint;
+
+		receivers.add(new UsbMidiReceiver(usbDevice, usbDeviceConnection, usbInterface, outputEndpoint));
+		transmitters.add(new UsbMidiTransmitter(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
 
 		isOpened = false;
 	}
@@ -56,9 +54,6 @@ public final class UsbMidiDevice implements MidiDevice {
 			return;
 		}
 		
-		receivers.add(new UsbMidiReceiver(usbDevice, usbDeviceConnection, usbInterface, outputEndpoint));
-		transmitters.add(new UsbMidiTransmitter(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
-
 		for (final Receiver receiver : receivers) {
 			if (receiver instanceof UsbMidiReceiver) {
 				final UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;

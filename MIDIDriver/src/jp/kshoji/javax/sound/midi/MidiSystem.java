@@ -1,4 +1,4 @@
-package javax.sound.midi;
+package jp.kshoji.javax.sound.midi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +13,7 @@ import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
-import jp.kshoji.javax.sound.midi.UsbMidiDevice;
+import jp.kshoji.javax.sound.midi.usb.UsbMidiDevice;
 import android.content.Context;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
@@ -35,7 +35,8 @@ public final class MidiSystem {
 	static Map<UsbDevice, UsbDeviceConnection> deviceConnections;
 	static OnMidiDeviceAttachedListener deviceAttachedListener = null;
 	static OnMidiDeviceDetachedListener deviceDetachedListener = null;
-	private static MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+	static MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+	static OnMidiSystemEventListener systemEventListener = null;
 	
 	/**
 	 * Find {@link Set<UsbMidiDevice>} from {@link UsbDevice}<br />
@@ -83,7 +84,9 @@ public final class MidiSystem {
 		 */
 		@Override
 		public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
-			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);
+			deviceConnectionWatcher.notifyDeviceGranted();
+			
+			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);			
 			if (deviceConnection == null) {
 				return;
 			}
@@ -97,6 +100,10 @@ public final class MidiSystem {
 			}
 
 			Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
+			
+			if (systemEventListener != null) {
+				systemEventListener.onMidiSystemChanged();
+			}
 		}
 	}
 
@@ -131,9 +138,34 @@ public final class MidiSystem {
 			}
 
 			Log.d(Constants.TAG, "Device " + detachedDevice.getDeviceName() + " has been detached.");
+			
+			if (systemEventListener != null) {
+				systemEventListener.onMidiSystemChanged();
+			}
 		}
 	}
 
+	/**
+	 * Listener for MidiSystem event listener
+	 * 
+	 * @author K.Shoji
+	 */
+	public interface OnMidiSystemEventListener {
+		/**
+		 * MidiSystem has been changed.
+		 * (new device is connected, or disconnected.)
+		 */
+		void onMidiSystemChanged();
+	}
+	
+	/**
+	 * Set the listener of Device connection/disconnection
+	 * @param listener
+	 */
+	public static void setOnMidiSystemEventListener(OnMidiSystemEventListener listener) {
+		systemEventListener = listener;
+	}
+	
 	/**
 	 * Initializes MidiSystem
 	 * 

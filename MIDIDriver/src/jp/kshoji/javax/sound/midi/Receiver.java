@@ -1,4 +1,4 @@
-package javax.sound.midi;
+package jp.kshoji.javax.sound.midi;
 
 public interface Receiver {
 	void send(MidiMessage message, long timeStamp);
