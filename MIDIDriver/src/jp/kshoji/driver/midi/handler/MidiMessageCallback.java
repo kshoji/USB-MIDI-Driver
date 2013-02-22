@@ -186,7 +186,7 @@ public final class MidiMessageCallback implements Callback {
 					break;
 				case 14:
 					// pitch bend
-					midiEventListener.onMidiPitchWheel(sender, cable, byte1 & 0xf, byte2 | (byte3 << 8));
+					midiEventListener.onMidiPitchWheel(sender, cable, byte1 & 0xf, byte2 | (byte3 << 7));
 					break;
 				case 15:
 					// single byte
