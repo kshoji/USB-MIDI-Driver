@@ -2,6 +2,7 @@ package jp.kshoji.driver.usb.util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jp.kshoji.driver.midi.R;
@@ -75,7 +76,7 @@ public final class DeviceFilter {
 			Log.d(Constants.TAG, "IOException", e);
 		}
 		
-		return deviceFilters;
+		return Collections.unmodifiableList(deviceFilters);
 	}
 	
 	/**

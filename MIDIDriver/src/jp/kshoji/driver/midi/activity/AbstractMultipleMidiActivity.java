@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.activity;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -247,10 +248,10 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
 		if (deviceConnections != null) {
-			return deviceConnections.keySet();
+			return Collections.unmodifiableSet(deviceConnections.keySet());
 		}
 		
-		return new HashSet<UsbDevice>();
+		return Collections.unmodifiableSet(new HashSet<UsbDevice>());
 	}
 	
 	/**
@@ -264,9 +265,9 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
 		if (midiOutputDevices != null) {
-			return midiOutputDevices.get(usbDevice);
+			return Collections.unmodifiableSet(midiOutputDevices.get(usbDevice));
 		}
 		
-		return new HashSet<MidiOutputDevice>();
+		return Collections.unmodifiableSet(new HashSet<MidiOutputDevice>());
 	}
 }

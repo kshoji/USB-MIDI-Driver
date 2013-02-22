@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.util;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,7 @@ public final class UsbMidiDeviceUtils {
 				usbInterfaces.add(usbInterface);
 			}
 		}
-		return usbInterfaces;
+		return Collections.unmodifiableSet(usbInterfaces);
 	}
 	
 	/**
@@ -64,7 +65,7 @@ public final class UsbMidiDeviceUtils {
 				usbInterfaces.add(usbInterface);
 			}
 		}
-		return usbInterfaces;
+		return Collections.unmodifiableSet(usbInterfaces);
 	}
 
 	/**
@@ -89,7 +90,7 @@ public final class UsbMidiDeviceUtils {
 			}
 		}
 
-		return devices;
+		return Collections.unmodifiableSet(devices);
 	}
 	
 	/**
@@ -116,7 +117,7 @@ public final class UsbMidiDeviceUtils {
 			}
 		}
 		
-		return devices;
+		return Collections.unmodifiableSet(devices);
 	}
 
 	/**

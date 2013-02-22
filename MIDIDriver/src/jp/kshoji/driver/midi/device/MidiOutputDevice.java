@@ -308,7 +308,7 @@ public final class MidiOutputDevice {
 	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
 	public void sendMidiPitchWheel(int cable, int channel, int amount) {
-		sendMidiMessage(0xe, cable, 0xe0 | (channel & 0xf), amount & 0xff, (amount >> 8) & 0xff);
+		sendMidiMessage(0xe, cable, 0xe0 | (channel & 0xf), amount & 0x7f, (amount >> 7) & 0x7f);
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package jp.kshoji.javax.sound.midi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +58,7 @@ public final class MidiSystem {
 			result.add(new UsbMidiDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, outputEndpoint));
 		}
 		
-		return result;
+		return Collections.unmodifiableSet(result);
 	}
 
 	

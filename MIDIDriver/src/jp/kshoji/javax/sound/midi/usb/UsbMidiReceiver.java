@@ -63,7 +63,7 @@ public final class UsbMidiReceiver implements Receiver {
 					outputDevice.sendMidiNoteOn(cableId, shortMessage.getChannel(), shortMessage.getData1(), shortMessage.getData2());
 					break;
 				case ShortMessage.PITCH_BEND:
-					outputDevice.sendMidiPitchWheel(cableId, shortMessage.getChannel(), shortMessage.getData1() << 7 | shortMessage.getData2());
+					outputDevice.sendMidiPitchWheel(cableId, shortMessage.getChannel(), shortMessage.getData1() | (shortMessage.getData2() << 7));
 					break;
 				case ShortMessage.POLY_PRESSURE:
 					outputDevice.sendMidiPolyphonicAftertouch(cableId, shortMessage.getChannel(), shortMessage.getData1(), shortMessage.getData2());
