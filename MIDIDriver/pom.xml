@@ -6,7 +6,7 @@
 	<artifactId>midi-driver</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>apklib</packaging>
-	<name>Android USB MIDI Driver</name>
+	<name>Android USB MIDI Driver Library</name>
 	<description>USB MIDI Driver for Android tablets(3.1 or higher)</description>
 	<url>https://github.com/kshoji/USB-MIDI-Driver</url>
 
@@ -24,9 +24,10 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/kshoji/USB-MIDI-Driver</url>
+		<url>https://github.com/kshoji/USB-MIDI-Driver/tree/master</url>
 		<connection>scm:git:git://github.com/kshoji/USB-MIDI-Driver.git</connection>
-		<developerConnection>scm:git:git@github.com:kshoji/USB-MIDI-Driver.git</developerConnection>
+		<developerConnection>scm:git:ssh://git@github.com/kshoji/USB-MIDI-Driver.git</developerConnection>
+		<tag>HEAD</tag>
 	</scm>
 
 	<developers>
@@ -40,12 +41,12 @@
 
 	<distributionManagement>
 		<repository>
-			<id>repo</id>
-			<url>http://github.com/kshoji/USB-MIDI-Driver/raw/master/release</url>
+			<id>release-repo</id>
+			<url>file://${project.build.directory}/release-repo</url>
 		</repository>
 		<snapshotRepository>
 			<id>snapshot-repo</id>
-			<url>http://github.com/kshoji/USB-MIDI-Driver/raw/master/snapshots</url>
+			<url>file://${project.build.directory}/snapshot-repo</url>
 		</snapshotRepository>
 	</distributionManagement>
 

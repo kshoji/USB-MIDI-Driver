@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.kshoji</groupId>
 	<artifactId>midi-driver-sample</artifactId>
@@ -25,7 +24,7 @@
 	<scm>
 		<url>https://github.com/kshoji/USB-MIDI-Driver</url>
 		<connection>scm:git:git://github.com/kshoji/USB-MIDI-Driver.git</connection>
-		<developerConnection>scm:git:git@github.com:kshoji/USB-MIDI-Driver.git</developerConnection>
+		<tag>HEAD</tag>
 	</scm>
 
 	<developers>
@@ -37,12 +36,16 @@
 		</developer>
 	</developers>
 
-	<repositories>
+	<distributionManagement>
 		<repository>
-			<id>midi-driver-snapshots</id>
-			<url>https://github.com/kshoji/USB-MIDI-Driver/raw/master/MIDIDriver/snapshots</url>
+			<id>release-repo</id>
+			<url>file://${project.build.directory}/release-repo</url>
 		</repository>
-	</repositories>
+		<snapshotRepository>
+			<id>snapshot-repo</id>
+			<url>file://${project.build.directory}/snapshot-repo</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -99,8 +102,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>jp.kshoji</groupId>
-			<artifactId>midi-driver</artifactId>
-			<version>${project.version}</version>
+			<artifactId>midi-driver-library</artifactId>
+			<version>0.0.3-SNAPSHOT</version>
 			<type>apklib</type>
 		</dependency>
 

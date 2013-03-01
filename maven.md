@@ -32,3 +32,46 @@ More infomation to build Android application with Maven, See the 'maven-android-
         </dependency>
     </dependencies>
 ```
+
+Update/Release process with Maven
+====
+
+Currently, the processes do not work on github.
+This section has written for developing with local git repository.
+The local git repository can create with `git init --bare` command.
+
+Update the snapshot
+-------------------
+Execute this on the command line.
+
+```
+mvn -DaltDeploymentRepository=snapshots::default::file:snapshots clean deploy
+```
+
+Then, xml and apklib files are generated in `snapshots` directory.
+Commit these and push to the repository.
+
+Release a new version
+---------------------
+At first, you must edit `pom.xml` file's `<scm>` section.
+
+```xml
+<scm>
+	<url>file:///path/to/repo</url>
+    <connection>scm:git:file:///path/to/repo</connection>
+	<developerConnection>scm:git:file:///path/to/repo</developerConnection>
+</scm>
+```
+
+Then execute this on the command line.
+
+```
+mvn release:clean release:prepare
+```
+
+The packages will be uploaded to github. And the new tag will be added.
+And now, execute this for release completion.
+
+```
+mvn release:perform
+```
