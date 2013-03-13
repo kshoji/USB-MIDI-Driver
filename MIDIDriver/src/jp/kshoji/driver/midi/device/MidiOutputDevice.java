@@ -23,7 +23,7 @@ public final class MidiOutputDevice {
 	private final UsbInterface usbInterface;
 	private final UsbDeviceConnection deviceConnection;
 	private final UsbEndpoint outputEndpoint;
-	private final UsbRequest usbRequest;
+	private UsbRequest usbRequest;
 
 	/**
 	 * constructor
@@ -44,9 +44,6 @@ public final class MidiOutputDevice {
 
 		Log.i(Constants.TAG, "deviceConnection:" + deviceConnection + ", usbInterface:" + usbInterface);
 		deviceConnection.claimInterface(this.usbInterface, true);
-		
-		usbRequest =  new UsbRequest();
-		usbRequest.initialize(deviceConnection, outputEndpoint);
 	}
 
 	/**
@@ -74,6 +71,9 @@ public final class MidiOutputDevice {
 	 * stop to use this device.
 	 */
 	public void stop() {
+		if (usbRequest != null) {
+			usbRequest.close();
+		}
 		deviceConnection.releaseInterface(usbInterface);
 	}
 	
@@ -96,6 +96,11 @@ public final class MidiOutputDevice {
 
 		// usbRequest.queue() is not thread-safe
 		synchronized (deviceConnection) {
+			if (usbRequest == null) {
+				usbRequest =  new UsbRequest();
+				usbRequest.initialize(deviceConnection, outputEndpoint);
+			}
+			
 			while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), 4) == false) {
 				// loop until queue completed
 				try {
@@ -211,6 +216,11 @@ public final class MidiOutputDevice {
 
 		// usbRequest.queue() is not thread-safe
 		synchronized (deviceConnection) {
+			if (usbRequest == null) {
+				usbRequest =  new UsbRequest();
+				usbRequest.initialize(deviceConnection, outputEndpoint);
+			}
+			
 			while (usbRequest.queue(ByteBuffer.wrap(buffer), buffer.length) == false) {
 				// loop until queue completed
 				try {
