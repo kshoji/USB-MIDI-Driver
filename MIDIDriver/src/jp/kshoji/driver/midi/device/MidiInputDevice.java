@@ -131,8 +131,7 @@ public final class MidiInputDevice {
 					continue;
 				}
 				
-				// input bulkTransfer with 'argument timeout = 0' blocks thread until data received.
-				int length = usbDeviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 1);
+				int length = usbDeviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
 				if (length > 0) {
 					byte[] read = new byte[length];
 					System.arraycopy(readBuffer, 0, read, 0, length);
