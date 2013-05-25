@@ -25,3 +25,4 @@ USB MIDI Devices
 - Line 6 Pocket POD (Guitar Effector)
 - Medeli M5 (Keyboard)
 - Roland GAIA SH-01 (VA synthesizer)
+- M-Audio Fast Track Pro (MIDI Interface) 
