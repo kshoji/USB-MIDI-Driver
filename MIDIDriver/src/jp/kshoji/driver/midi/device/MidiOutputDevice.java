@@ -109,6 +109,15 @@ public final class MidiOutputDevice {
 					// ignore exception
 				}
 			}
+			
+			while (usbRequest.equals(deviceConnection.requestWait()) == false) {
+				// loop until result received
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// ignore exception
+				}
+			}
 		}
 		
 		Log.d(Constants.TAG, "Output:" + Arrays.toString(writeBuffer));
@@ -223,6 +232,15 @@ public final class MidiOutputDevice {
 			
 			while (usbRequest.queue(ByteBuffer.wrap(buffer), buffer.length) == false) {
 				// loop until queue completed
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// ignore exception
+				}
+			}
+
+			while (usbRequest.equals(deviceConnection.requestWait()) == false) {
+				// loop until result received
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) {
