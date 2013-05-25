@@ -166,7 +166,11 @@ public final class MidiMessageCallback implements Callback {
 					midiEventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
 					break;
 				case 9:
-					midiEventListener.onMidiNoteOn(sender, cable, byte1 & 0xf, byte2, byte3);
+					if (byte3 == 0x00) {
+						midiEventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
+					} else {
+						midiEventListener.onMidiNoteOn(sender, cable, byte1 & 0xf, byte2, byte3);
+					}
 					break;
 				case 10:
 					// poly key press
