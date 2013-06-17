@@ -2,7 +2,6 @@ package jp.kshoji.driver.midi.device;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import jp.kshoji.driver.midi.util.Constants;
 import android.hardware.usb.UsbDevice;
@@ -119,8 +118,6 @@ public final class MidiOutputDevice {
 				}
 			}
 		}
-		
-		Log.d(Constants.TAG, "Output:" + Arrays.toString(writeBuffer));
 	}
 
 	/**
@@ -348,5 +345,84 @@ public final class MidiOutputDevice {
 	 */
 	public void sendMidiSingleByte(int cable, int byte1) {
 		sendMidiMessage(0xf, cable, byte1, 0, 0);
+	}
+	
+	/**
+	 * RPN message
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param function 14bits
+	 * @param value 7bits or 14bits
+	 */
+	public void sendRPNMessage(int cable, int channel, int function, int value) {
+		sendRPNMessage(cable, channel, (function >> 7) & 0x7f, function & 0x7f, value);
+	}
+	
+	/**
+	 * RPN message
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param functionMSB higher 7bits
+	 * @param functionLSB lower 7bits
+	 * @param value 7bits or 14bits
+	 */
+	public void sendRPNMessage(int cable, int channel, int functionMSB, int functionLSB, int value) {
+		// send the function
+		sendMidiControlChange(cable, channel, 101, functionMSB & 0x7f);
+		sendMidiControlChange(cable, channel, 100, functionLSB & 0x7f);
+		
+		// send the value
+		if ((value >> 7) > 0) {
+			sendMidiControlChange(cable, channel, 6, (value >> 7) & 0x7f);
+			sendMidiControlChange(cable, channel, 38, value & 0x7f);
+		} else {
+			sendMidiControlChange(cable, channel, 6, value & 0x7f);
+		}
+		
+		// send the NULL function
+		sendMidiControlChange(cable, channel, 101, 0x7f);
+		sendMidiControlChange(cable, channel, 100, 0x7f);
+	}
+	
+	
+	/**
+	 * NRPN message
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param function 14bits
+	 * @param value 7bits or 14bits
+	 */
+	public void sendNRPNMessage(int cable, int channel, int function, int value) {
+		sendNRPNMessage(cable, channel, (function >> 7) & 0x7f, function & 0x7f, value);
+	}
+
+	/**
+	 * NRPN message
+	 * 
+	 * @param cable 0-15
+	 * @param channel 0-15
+	 * @param functionMSB higher 7bits
+	 * @param functionLSB lower 7bits
+	 * @param value 7bits or 14bits
+	 */
+	public void sendNRPNMessage(int cable, int channel, int functionMSB, int functionLSB, int value) {
+		// send the function
+		sendMidiControlChange(cable, channel, 99, functionMSB & 0x7f);
+		sendMidiControlChange(cable, channel, 98, functionLSB & 0x7f);
+		
+		// send the value
+		if ((value >> 7) > 0) {
+			sendMidiControlChange(cable, channel, 6, (value >> 7) & 0x7f);
+			sendMidiControlChange(cable, channel, 38, value & 0x7f);
+		} else {
+			sendMidiControlChange(cable, channel, 6, value & 0x7f);
+		}
+		
+		// send the NULL function
+		sendMidiControlChange(cable, channel, 101, 0x7f);
+		sendMidiControlChange(cable, channel, 100, 0x7f);
 	}
 }

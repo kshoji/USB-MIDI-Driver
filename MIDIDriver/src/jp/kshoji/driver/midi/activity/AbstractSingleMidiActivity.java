@@ -192,4 +192,34 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		
 		return midiOutputDevice;
 	}
+	
+	/**
+	 * RPN message
+	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
+	 * 
+	 * @param sender
+	 * @param cable
+	 * @param channel
+	 * @param function 14bits
+	 * @param valueMSB higher 7bits
+	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 */
+	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+		// do nothing in this implementation
+	}
+	
+	/**
+	 * NRPN message
+	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
+	 * 
+	 * @param sender
+	 * @param cable
+	 * @param channel
+	 * @param function 14bits
+	 * @param valueMSB higher 7bits
+	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 */
+	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+		// do nothing in this implementation
+	}
 }

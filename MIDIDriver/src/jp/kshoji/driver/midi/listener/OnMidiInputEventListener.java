@@ -156,4 +156,28 @@ public interface OnMidiInputEventListener {
 	 * @param byte1
 	 */
 	void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1);
+
+	/**
+	 * RPN message
+	 * 
+	 * @param sender
+	 * @param cable
+	 * @param channel
+	 * @param function 14bits
+	 * @param valueMSB higher 7bits
+	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 */
+	void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
+
+	/**
+	 * NRPN message
+	 * 
+	 * @param sender
+	 * @param cable
+	 * @param channel
+	 * @param function 14bits
+	 * @param valueMSB higher 7bits
+	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 */
+	void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
 }
