@@ -179,6 +179,7 @@ public final class MidiMessageCallback implements Callback {
 				case 11:
 					// control change
 					midiEventListener.onMidiControlChange(sender, cable, byte1 & 0xf, byte2, byte3);
+					processRpnMessages(cable, byte1, byte2, byte3);
 					break;
 				case 12:
 					// program change
@@ -202,5 +203,76 @@ public final class MidiMessageCallback implements Callback {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * current RPN status
+	 * @author K.Shoji
+	 */
+	private enum RPNStatus{
+		RPN,
+		NRPN,
+		NONE
+	}
+	
+	private RPNStatus rpnStatus = RPNStatus.NONE;
+	private int rpnFunctionMSB = 0x7f;
+	private int rpnFunctionLSB = 0x7f;
+	private int nrpnFunctionMSB = 0x7f;
+	private int nrpnFunctionLSB = 0x7f;
+	private int rpnValueMSB;
+
+	/**
+	 * RPN and NRPN messages
+	 * 
+	 * @param cable
+	 * @param byte1
+	 * @param byte2
+	 * @param byte3
+	 */
+	private void processRpnMessages(int cable, int byte1, int byte2, int byte3) {
+		switch (byte2) {
+		case 6:
+			rpnValueMSB = byte3 & 0x7f;
+			if (rpnStatus == RPNStatus.RPN) {
+				midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, -1);
+			} else if (rpnStatus == RPNStatus.NRPN) {
+				midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, -1);
+			}
+			break;
+		case 38:
+			if (rpnStatus == RPNStatus.RPN) {
+				midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
+			} else if (rpnStatus == RPNStatus.NRPN) {
+				midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
+			}
+			break;
+		case 98:
+			nrpnFunctionLSB = byte3 & 0x7f;
+			rpnStatus = RPNStatus.NRPN;
+			break;
+		case 99:
+			nrpnFunctionMSB = byte3 & 0x7f;
+			rpnStatus = RPNStatus.NRPN;
+			break;
+		case 100:
+			rpnFunctionLSB = byte3 & 0x7f;
+			if (rpnFunctionMSB == 0x7f && rpnFunctionLSB == 0x7f) {
+				rpnStatus = RPNStatus.NONE;
+			} else {
+				rpnStatus = RPNStatus.RPN;
+			}
+			break;
+		case 101:
+			rpnFunctionMSB = byte3 & 0x7f;
+			if (rpnFunctionMSB == 0x7f && rpnFunctionLSB == 0x7f) {
+				rpnStatus = RPNStatus.NONE;
+			} else {
+				rpnStatus = RPNStatus.RPN;
+			}
+			break;
+		default:
+			break;
+		}
 	}
 }
