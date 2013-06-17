@@ -26,3 +26,4 @@ USB MIDI Devices
 - Medeli M5 (Keyboard)
 - Roland GAIA SH-01 (VA synthesizer)
 - M-Audio Fast Track Pro (MIDI Interface) 
+- KORG nanoKEY2 (Keyboard)
