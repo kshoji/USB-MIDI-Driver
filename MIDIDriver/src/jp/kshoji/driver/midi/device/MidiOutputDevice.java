@@ -9,20 +9,25 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
+import android.os.Handler;
+import android.os.Handler.Callback;
+import android.os.Message;
 import android.util.Log;
 
 /**
  * MIDI Output Device
+ * stop() method must be called when the application will be destroyed.
  * 
  * @author K.Shoji
  */
 public final class MidiOutputDevice {
 
 	private final UsbDevice usbDevice;
+	final UsbDeviceConnection usbDeviceConnection;
 	private final UsbInterface usbInterface;
-	private final UsbDeviceConnection deviceConnection;
-	private final UsbEndpoint outputEndpoint;
-	private UsbRequest usbRequest;
+	final UsbEndpoint outputEndpoint;
+
+	private final WaiterThread waiterThread;
 
 	/**
 	 * constructor
@@ -33,16 +38,37 @@ public final class MidiOutputDevice {
 	 */
 	public MidiOutputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint) {
 		this.usbDevice = usbDevice;
-		this.deviceConnection = usbDeviceConnection;
+		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
 
+		waiterThread = new WaiterThread();
+		
 		outputEndpoint = usbEndpoint;
 		if (outputEndpoint == null) {
 			throw new IllegalArgumentException("Output endpoint was not found.");
 		}
 
-		Log.i(Constants.TAG, "deviceConnection:" + deviceConnection + ", usbInterface:" + usbInterface);
-		deviceConnection.claimInterface(this.usbInterface, true);
+		usbDeviceConnection.claimInterface(usbInterface, true);
+		
+		waiterThread.start();
+	}
+
+	/**
+	 * stop to use this device.
+	 */
+	public void stop() {
+		waiterThread.stopFlag = true;
+		
+		// blocks while the thread will stop
+		while (waiterThread.isAlive()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// ignore
+			}
+		}
+		
+		usbDeviceConnection.releaseInterface(usbInterface);
 	}
 
 	/**
@@ -65,17 +91,89 @@ public final class MidiOutputDevice {
 	public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;
 	}
-
-	/**
-	 * stop to use this device.
-	 */
-	public void stop() {
-		if (usbRequest != null) {
-			usbRequest.close();
-		}
-		deviceConnection.releaseInterface(usbInterface);
-	}
 	
+	/**
+	 * Thread for output data.
+	 * Loops infinitely while stopFlag == false.
+	 * 
+	 * @author K.Shoji
+	 */
+	private final class WaiterThread extends Thread {
+		boolean stopFlag;
+
+		UsbRequest usbRequest;
+
+		/**
+		 * constructor
+		 * 
+		 * @param handler
+		 */
+		WaiterThread() {
+			stopFlag = false;
+		}
+		
+		private final Handler handler = new Handler(new Callback() {
+			@Override
+			public synchronized boolean handleMessage(Message msg) {
+				if (!(msg.obj instanceof byte[])) {
+					return false;
+				}
+				
+				byte[] writeBuffer = (byte[])msg.obj;
+				
+				// usbRequest.queue() is not thread-safe
+				synchronized (usbDeviceConnection) {
+					if (usbRequest == null) {
+						usbRequest =  new UsbRequest();
+						usbRequest.initialize(usbDeviceConnection, outputEndpoint);
+					}
+					
+					while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), 4) == false) {
+						// loop until queue completed
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {
+							// ignore exception
+						}
+					}
+					
+					while (usbRequest.equals(usbDeviceConnection.requestWait()) == false) {
+						// loop until result received
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {
+							// ignore exception
+						}
+					}
+				}
+
+				// message handled successfully
+				return true;
+			}
+		});
+		
+		Handler getHandler() {
+			return handler;
+		}
+		
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Thread#run()
+		 */
+		@Override
+		public void run() {
+			while (true) {
+				if (stopFlag) {
+					if (usbRequest != null) {
+						usbRequest.close();
+					}
+					
+					return;
+				}
+			}
+		}
+	}
+
 	/**
 	 * Sends MIDI message to output device.
 	 * 
@@ -94,30 +192,9 @@ public final class MidiOutputDevice {
 		writeBuffer[3] = (byte) byte3;
 
 		// usbRequest.queue() is not thread-safe
-		synchronized (deviceConnection) {
-			if (usbRequest == null) {
-				usbRequest =  new UsbRequest();
-				usbRequest.initialize(deviceConnection, outputEndpoint);
-			}
-			
-			while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), 4) == false) {
-				// loop until queue completed
-				try {
-					Thread.sleep(1);
-				} catch (InterruptedException e) {
-					// ignore exception
-				}
-			}
-			
-			while (usbRequest.equals(deviceConnection.requestWait()) == false) {
-				// loop until result received
-				try {
-					Thread.sleep(1);
-				} catch (InterruptedException e) {
-					// ignore exception
-				}
-			}
-		}
+		Message message = new Message();
+		message.obj = writeBuffer;
+		waiterThread.getHandler().sendMessage(message);
 	}
 
 	/**
@@ -219,32 +296,13 @@ public final class MidiOutputDevice {
 		}
 		
 		byte[] buffer = transferDataStream.toByteArray();
+		
 
 		// usbRequest.queue() is not thread-safe
-		synchronized (deviceConnection) {
-			if (usbRequest == null) {
-				usbRequest =  new UsbRequest();
-				usbRequest.initialize(deviceConnection, outputEndpoint);
-			}
-			
-			while (usbRequest.queue(ByteBuffer.wrap(buffer), buffer.length) == false) {
-				// loop until queue completed
-				try {
-					Thread.sleep(1);
-				} catch (InterruptedException e) {
-					// ignore exception
-				}
-			}
-
-			while (usbRequest.equals(deviceConnection.requestWait()) == false) {
-				// loop until result received
-				try {
-					Thread.sleep(1);
-				} catch (InterruptedException e) {
-					// ignore exception
-				}
-			}
-		}
+		Message message = new Message();
+		message.obj = buffer;
+		waiterThread.getHandler().sendMessage(message);
+		
 		Log.d(Constants.TAG, "" + buffer.length + " bytes of " + buffer.length + " bytes has been queued for transfering.");
 	}
 
