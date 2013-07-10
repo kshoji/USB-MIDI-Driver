@@ -112,7 +112,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 
 			Log.d(Constants.TAG, "Device " + detachedDevice.getDeviceName() + " has been detached.");
 			
-			Message message = new Message();
+			Message message = Message.obtain(deviceDetachedHandler);
 			message.obj = detachedDevice;
 			deviceDetachedHandler.sendMessage(message);
 		}

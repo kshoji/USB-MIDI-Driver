@@ -137,7 +137,7 @@ public final class MidiInputDevice {
 					System.arraycopy(readBuffer, 0, read, 0, length);
 					Log.d(Constants.TAG, "Input:" + Arrays.toString(read));
 					
-					Message message = new Message();
+					Message message = Message.obtain(receiveHandler);
 					message.obj = read;
 					
 					if (!stopFlag) {
