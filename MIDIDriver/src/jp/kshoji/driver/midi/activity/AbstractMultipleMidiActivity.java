@@ -178,7 +178,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
 		deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
 		midiInputDevices = new HashMap<UsbDevice, Set<MidiInputDevice>>();
 		midiOutputDevices = new HashMap<UsbDevice, Set<MidiOutputDevice>>();
@@ -264,7 +264,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
-		if (midiOutputDevices != null) {
+		if (midiOutputDevices != null && midiOutputDevices.get(usbDevice) != null) {
 			return Collections.unmodifiableSet(midiOutputDevices.get(usbDevice));
 		}
 		

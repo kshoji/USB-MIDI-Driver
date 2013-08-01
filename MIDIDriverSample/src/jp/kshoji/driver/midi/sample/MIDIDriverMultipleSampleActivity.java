@@ -58,7 +58,7 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 	 * @return
 	 */
 	MidiOutputDevice getMidiOutputDeviceFromSpinner() {
-		if (deviceSpinner != null && connectedDevicesAdapter != null && !connectedDevicesAdapter.isEmpty()) {
+		if (deviceSpinner != null && deviceSpinner.getSelectedItemPosition() >= 0 && connectedDevicesAdapter != null && !connectedDevicesAdapter.isEmpty()) {
 			UsbDevice device = connectedDevicesAdapter.getItem(deviceSpinner.getSelectedItemPosition());
 			if (device != null) {
 				Set<MidiOutputDevice> midiOutputDevices = getMidiOutputDevices(device);
@@ -80,7 +80,7 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
+		
 		ListView midiInputEventListView = (ListView) findViewById(R.id.midiInputEventListView);
 		midiInputEventAdapter = new ArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
 		midiInputEventListView.setAdapter(midiInputEventAdapter);
@@ -114,7 +114,7 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 				case MotionEvent.ACTION_DOWN:
 						midiOutputDevice.sendMidiNoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
 					if (midiOutputEventAdapter != null) {
-							midiOutputEventAdapter.add("NoteOn to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
+						midiOutputEventAdapter.add("NoteOn to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127");
 					}
 					break;
 				case MotionEvent.ACTION_UP:
