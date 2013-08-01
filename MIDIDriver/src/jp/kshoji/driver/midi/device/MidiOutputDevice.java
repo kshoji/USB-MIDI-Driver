@@ -60,6 +60,8 @@ public final class MidiOutputDevice {
 	 * stop to use this device.
 	 */
 	public void stop() {
+		usbDeviceConnection.releaseInterface(usbInterface);
+		
 		waiterThread.stopFlag = true;
 		
 		// blocks while the thread will stop
@@ -70,8 +72,6 @@ public final class MidiOutputDevice {
 				// ignore
 			}
 		}
-		
-		usbDeviceConnection.releaseInterface(usbInterface);
 	}
 
 	/**
@@ -94,7 +94,7 @@ public final class MidiOutputDevice {
 	public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;
 	}
-	
+
 	/**
 	 * Sending thread for output data.
 	 * Loops infinitely while stopFlag == false.

@@ -58,6 +58,8 @@ public final class MidiInputDevice {
 	 * stops the watching thread
 	 */
 	public void stop() {
+		usbDeviceConnection.releaseInterface(usbInterface);
+		
 		waiterThread.stopFlag = true;
 		
 		// blocks while the thread will stop
@@ -68,8 +70,6 @@ public final class MidiInputDevice {
 				// ignore
 			}
 		}
-		
-		usbDeviceConnection.releaseInterface(usbInterface);
 	}
 
 	/**
