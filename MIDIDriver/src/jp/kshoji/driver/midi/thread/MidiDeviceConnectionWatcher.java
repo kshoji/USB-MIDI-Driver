@@ -109,6 +109,9 @@ public final class MidiDeviceConnectionWatcher {
 						grantedDeviceMap.put(deviceName, device);
 						deviceAttachedListener.onDeviceAttached(device);
 					}
+				} else {
+					// reset the 'isGranting' to false
+					notifyDeviceGranted();
 				}
 			}
 		}

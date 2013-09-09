@@ -17,6 +17,7 @@ import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
@@ -94,27 +95,43 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		 */
 		@Override
 		public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
-			if (midiInputDevice != null) {
-				midiInputDevice.stop();
-				midiInputDevice = null;
-			}
 			
-			if (midiOutputDevice != null) {
-				midiOutputDevice.stop();
-				midiOutputDevice = null;
-			}
-			
-			if (deviceConnection != null) {
-				deviceConnection.close();
-				deviceConnection = null;
-			}
-			device = null;
+			AsyncTask<UsbDevice, Void, Void> task = new AsyncTask<UsbDevice, Void, Void>() {
 
-			Log.d(Constants.TAG, "Device " + detachedDevice.getDeviceName() + " has been detached.");
-			
-			Message message = new Message();
-			message.obj = detachedDevice;
-			deviceDetachedHandler.sendMessage(message);
+				@Override
+				protected Void doInBackground(UsbDevice... params) {
+					if (params == null || params.length < 1) {
+						return null;
+					}
+					
+					UsbDevice usbDevice = params[0];
+					
+					// TODO Auto-generated method stub
+					if (midiInputDevice != null) {
+						midiInputDevice.stop();
+						midiInputDevice = null;
+					}
+					
+					if (midiOutputDevice != null) {
+						midiOutputDevice.stop();
+						midiOutputDevice = null;
+					}
+					
+					if (deviceConnection != null) {
+						deviceConnection.close();
+						deviceConnection = null;
+					}
+					device = null;
+					
+					Log.d(Constants.TAG, "Device " + usbDevice.getDeviceName() + " has been detached.");
+					
+					Message message = Message.obtain(deviceDetachedHandler);
+					message.obj = usbDevice;
+					deviceDetachedHandler.sendMessage(message);
+					return null;
+				}
+			};
+			task.execute(detachedDevice);
 		}
 	}
 	
