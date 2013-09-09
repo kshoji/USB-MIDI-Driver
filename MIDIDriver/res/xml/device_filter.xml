@@ -9,4 +9,6 @@
     <usb-device vendor-id="1410" />
     <!-- MOTU -->
     <usb-device vendor-id="2045" />
+    <!-- vmeter -->
+    <usb-device vendor-id="5840" />
 </resources>
