@@ -12,6 +12,7 @@ import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.sample.util.SoundMaker;
 import jp.kshoji.driver.midi.sample.util.Tone;
+import jp.kshoji.driver.midi.sample.view.LimitedArrayAdapter;
 import android.graphics.PorterDuff.Mode;
 import android.hardware.usb.UsbDevice;
 import android.media.AudioFormat;
@@ -83,11 +84,11 @@ public class MIDIDriverSingleSampleActivity extends AbstractSingleMidiActivity {
 		setContentView(R.layout.main);
 
 		ListView midiInputEventListView = (ListView) findViewById(R.id.midiInputEventListView);
-		midiInputEventAdapter = new ArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
+		midiInputEventAdapter = new LimitedArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView, 1024);
 		midiInputEventListView.setAdapter(midiInputEventAdapter);
 
 		ListView midiOutputEventListView = (ListView) findViewById(R.id.midiOutputEventListView);
-		midiOutputEventAdapter = new ArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
+		midiOutputEventAdapter = new LimitedArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView, 1024);
 		midiOutputEventListView.setAdapter(midiOutputEventAdapter);
 
 		thruToggleButton = (ToggleButton) findViewById(R.id.toggleButtonThru);
