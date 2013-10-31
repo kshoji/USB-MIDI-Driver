@@ -9,7 +9,7 @@ USB MIDI Driver using Android USB Host API
     - YAMAHA, Roland, MOTU's devices can be connected(not been tested much).
 - Supports multiple device connections.
 - Has `javax.sound.midi` compatible classes.
-    - See the [javax.sound.midi Documents](javax.sound.midi.md).
+    - See the [javax.sound.midi Documents](wiki/javax.sound.midi-porting-for-Android).
 
 Requirement
 ----
@@ -138,7 +138,7 @@ FAQ
     - A single USB MIDI endpoint has multiple "virtual MIDI cables". 
     It's used for increasing the midi channels. The cable number's range is 0 to 15.
 - The application doesn't detect the device even if the USB MIDI device connected.
-    - See the [Trouble shooting](TroubleShooting.md) documents.
+    - See the [Trouble shooting](wiki/TroubleShooting-on-connecting-an-USB-MIDI-device) documents.
 
 License
 ----
