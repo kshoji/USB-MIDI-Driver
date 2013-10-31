@@ -3,13 +3,13 @@ Android USB MIDI Driver
 
 USB MIDI Driver using Android USB Host API
 
-- No root needed.
+- No root privilege needed.
 - Supports the standard USB MIDI devices; like sequencers, or instruments.
 - Supports some non-standard USB MIDI (but protocol is compatible with USB MIDI) devices.
     - YAMAHA, Roland, MOTU's devices can be connected(not been tested much).
 - Supports multiple device connections.
 - Has `javax.sound.midi` compatible classes.
-    - See the [javax.sound.midi Documents](javax.sound.midi.md).
+    - See the [javax.sound.midi Documents](wiki/javax.sound.midi-porting-for-Android).
 
 Requirement
 ----
@@ -25,10 +25,17 @@ the optional thing:
 
 Device Connection
 ----
+
+Single device
 ```
-Android [USB A port]---(USB Hub)---[USB B port] USB MIDI Device
-                                ---[USB B port] USB MIDI Device 
-                                   ...
+Android [USB A port / microUSB port with USB OTG cable]--- USB MIDI Device
+```
+
+Multiple devices
+```
+Android [USB A port / microUSB port with USB OTG cable]---(USB Hub)---┬-- USB MIDI Device
+                                                                      ├-- USB MIDI Device 
+                                                                      └   ...
 ```
 
 Repository Overview
@@ -130,7 +137,8 @@ FAQ
 - What is the 'cable' argument of `"onMidi..."` or `"sendMidi..."` method?
     - A single USB MIDI endpoint has multiple "virtual MIDI cables". 
     It's used for increasing the midi channels. The cable number's range is 0 to 15.
-
+- The application doesn't detect the device even if the USB MIDI device connected.
+    - See the [Trouble shooting](wiki/TroubleShooting-on-connecting-an-USB-MIDI-device) documents.
 
 License
 ----
