@@ -1,7 +1,6 @@
 package jp.kshoji.driver.midi.handler;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
@@ -17,7 +16,8 @@ public final class MidiMessageCallback implements Callback {
 
 	private final OnMidiInputEventListener midiEventListener;
 	private final MidiInputDevice sender;
-	private ByteArrayOutputStream received;
+	private final ByteArrayOutputStream received = new ByteArrayOutputStream();
+
 	private ByteArrayOutputStream systemExclusive = null;
 
 	/**
@@ -41,14 +41,8 @@ public final class MidiMessageCallback implements Callback {
 			return false;
 		}
 
-		if (received == null) {
-			received = new ByteArrayOutputStream();
-		}
-		try {
-			received.write((byte[]) msg.obj);
-		} catch (IOException e) {
-			// ignore exception
-		}
+		received.write((byte[]) msg.obj, 0, msg.arg1);
+		
 		if (received.size() < 4) {
 			// more data needed
 			return false;
@@ -56,21 +50,14 @@ public final class MidiMessageCallback implements Callback {
 
 		// USB MIDI data stream: 4 bytes boundary
 		byte[] receivedBytes = received.toByteArray();
-		byte[] read = new byte[receivedBytes.length / 4 * 4];
-		System.arraycopy(receivedBytes, 0, read, 0, read.length);
-		
-		// Note: received.reset() method don't reset ByteArrayOutputStream's internal buffer.
-		received = new ByteArrayOutputStream();
+
+		received.reset();
 		
 		// keep unread bytes
-		if (receivedBytes.length - read.length > 0) {
-			byte[] unread = new byte[receivedBytes.length - read.length];
-			System.arraycopy(receivedBytes, read.length, unread, 0, unread.length);
-			try {
-				received.write(unread);
-			} catch (IOException e) {
-				// ignore exception
-			}
+		int readLength = receivedBytes.length / 4 * 4;
+		int unreadLength = receivedBytes.length - readLength;
+		if (unreadLength > 0) {
+			received.write(receivedBytes, readLength, unreadLength);
 		}
 		
 		int cable;
@@ -78,12 +65,12 @@ public final class MidiMessageCallback implements Callback {
 		int byte1;
 		int byte2;
 		int byte3;
-		for (int i = 0; i < read.length; i += 4) {
-			cable = (read[i + 0] >> 4) & 0xf;
-			codeIndexNumber = read[i + 0] & 0xf;
-			byte1 = read[i + 1] & 0xff;
-			byte2 = read[i + 2] & 0xff;
-			byte3 = read[i + 3] & 0xff;
+		for (int i = 0; i < readLength; i += 4) {
+			cable = (receivedBytes[i + 0] >> 4) & 0xf;
+			codeIndexNumber = receivedBytes[i + 0] & 0xf;
+			byte1 = receivedBytes[i + 1] & 0xff;
+			byte2 = receivedBytes[i + 2] & 0xff;
+			byte3 = receivedBytes[i + 3] & 0xff;
 
 			switch (codeIndexNumber) {
 				case 0:

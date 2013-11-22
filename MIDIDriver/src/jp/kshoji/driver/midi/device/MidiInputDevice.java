@@ -133,12 +133,11 @@ public final class MidiInputDevice {
 				
 				int length = usbDeviceConnection.bulkTransfer(inputEndpoint, readBuffer, readBuffer.length, 0);
 				if (length > 0) {
-					byte[] read = new byte[length];
-					System.arraycopy(readBuffer, 0, read, 0, length);
-					Log.d(Constants.TAG, "Input:" + Arrays.toString(read));
+					Log.d(Constants.TAG, "Input:" + Arrays.toString(readBuffer));
 					
 					Message message = Message.obtain(receiveHandler);
-					message.obj = read;
+					message.obj = readBuffer;
+					message.arg1 = length;
 					
 					if (!stopFlag) {
 						receiveHandler.sendMessage(message);
