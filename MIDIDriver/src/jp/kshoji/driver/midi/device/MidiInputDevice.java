@@ -99,6 +99,7 @@ public final class MidiInputDevice {
 	 * @author K.Shoji
 	 */
 	final class WaiterThread extends Thread {
+		private static final int BUFFER_LENGTH = 64;
 
 		boolean stopFlag;
 
@@ -116,44 +117,40 @@ public final class MidiInputDevice {
 		 */
 		@Override
 		public void run() {
-
-			final byte[] bulkReadBuffer = new byte[64];
-			final int bulkReadBufLen = bulkReadBuffer.length;
-
-			final UsbDeviceConnection usbDeviceConn = usbDeviceConnection;
-			final UsbEndpoint inputEndpt = inputEndpoint;
-
-			byte[] readBuffer = new byte[64 * 2]; // *2 for safety (64+4 would be enough )
-			int readBufSize = 0;
-
-			byte[] read = new byte[64 * 2];
-
+			final UsbDeviceConnection deviceConnection = usbDeviceConnection;
+			final UsbEndpoint usbEndpoint = inputEndpoint;
 			final MidiInputDevice sender = MidiInputDevice.this;
-			final OnMidiInputEventListener eventListener = MidiInputDevice.this.midiEventListener;
+			final OnMidiInputEventListener eventListener = midiEventListener;
+			
+			// prepare buffer variables
+			final byte[] bulkReadBuffer = new byte[BUFFER_LENGTH];
+			byte[] readBuffer = new byte[BUFFER_LENGTH * 2]; // *2 for safety (BUFFER_LENGTH+4 would be enough)
+			int readBufferSize = 0;
+			byte[] read = new byte[BUFFER_LENGTH * 2];
 			ByteArrayOutputStream systemExclusive = null;
 
 			while (!stopFlag) {
-				int length = usbDeviceConn.bulkTransfer(inputEndpt, bulkReadBuffer, bulkReadBufLen, 0);
+				int length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, BUFFER_LENGTH, 0);
 				if (length > 0) {
-					System.arraycopy(bulkReadBuffer, 0, readBuffer, readBufSize, length);
-					readBufSize += length;
+					System.arraycopy(bulkReadBuffer, 0, readBuffer, readBufferSize, length);
+					readBufferSize += length;
 
-					if (readBufSize < 4) {
+					if (readBufferSize < 4) {
 						// more data needed
 						continue;
 					}
 
 					// USB MIDI data stream: 4 bytes boundary
-					final int readSize = readBufSize / 4 * 4;
+					final int readSize = readBufferSize / 4 * 4;
 					System.arraycopy(readBuffer, 0, read, 0, readSize); // fill the read array
 
 					// keep unread bytes
-					int unreadSize = readBufSize - readSize;
+					int unreadSize = readBufferSize - readSize;
 					if (unreadSize > 0) {
 						System.arraycopy(readBuffer, readSize, readBuffer, 0, unreadSize);
-						readBufSize = unreadSize;
+						readBufferSize = unreadSize;
 					} else {
-						readBufSize = 0;
+						readBufferSize = 0;
 					}
 
 					int cable;

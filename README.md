@@ -86,6 +86,7 @@ MIDI event handling with AbstractSingleMidiActivity
 MIDI event receiving:
 
 - Implement the MIDI event handling method (named `"onMidi..."`) to receive MIDI events.
+- Note: The method `"onMidi..."` will be called by another thread (NOT the `UI thread`), so you must manipulate the Views with the `Handler` and `Callback` in the UI thread.
 
 MIDI event sending:
 
@@ -102,6 +103,7 @@ MIDI event receiving:
 
 - Implement the MIDI event handling method (named `"onMidi..."`) to receive MIDI events.
     - The event sender object(MIDIInputDevice instance) will be set on the first argument.
+- Note: The method `"onMidi..."` will be called by another thread (NOT the `UI thread`), so you must manipulate the Views with the `Handler` and `Callback` in the UI thread.
 
 MIDI event sending:
 
