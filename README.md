@@ -9,7 +9,7 @@ USB MIDI Driver using Android USB Host API
     - YAMAHA, Roland, MOTU's devices can be connected(not been tested much).
 - Supports multiple device connections.
 - Has `javax.sound.midi` compatible classes.
-    - See the [javax.sound.midi Documents](wiki/javax.sound.midi-porting-for-Android).
+    - See the [javax.sound.midi Documents](https://github.com/kshoji/USB-MIDI-Driver/wiki/javax.sound.midi-porting-for-Android).
 
 Requirement
 ----
@@ -86,6 +86,34 @@ MIDI event handling with AbstractSingleMidiActivity
 MIDI event receiving:
 
 - Implement the MIDI event handling method (named `"onMidi..."`) to receive MIDI events.
+- Note: The method `"onMidi..."` will be called by another thread (NOT the `UI thread`), so you must manipulate the Views with the `Handler` and `Callback` in the UI thread. Like the code below.
+
+<a name="ui_thread"></a>
+
+```java
+public class SampleActivity extends AbstractSingleMidiActivity {
+
+    // this field belongs to the UI thread
+    final Handler uiThreadEventHandler = new Handler(new Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if ("note on".equals(msg.obj)) {
+                textView.setText("note on event received.");
+            }
+
+            // message handled successfully
+            return true;
+        }
+    });
+
+    // this method will be called from the another thread, so it can't change View's state.
+    @Override
+    public void onMidiNoteOn(final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+        // Send a message to the UI thread
+        String message = "note on";
+        uiThreadEventHandler.sendMessage(Message.obtain(uiThreadEventHandler, 0, message));
+    }
+```
 
 MIDI event sending:
 
@@ -102,6 +130,7 @@ MIDI event receiving:
 
 - Implement the MIDI event handling method (named `"onMidi..."`) to receive MIDI events.
     - The event sender object(MIDIInputDevice instance) will be set on the first argument.
+- Note: The method `"onMidi..."` will be called by another thread (NOT the `UI thread`), so you must manipulate the Views with the `Handler` and `Callback` in the UI thread. See also [the code above](#ui_thread)
 
 MIDI event sending:
 
@@ -138,7 +167,7 @@ FAQ
     - A single USB MIDI endpoint has multiple "virtual MIDI cables". 
     It's used for increasing the midi channels. The cable number's range is 0 to 15.
 - The application doesn't detect the device even if the USB MIDI device connected.
-    - See the [Trouble shooting](wiki/TroubleShooting-on-connecting-an-USB-MIDI-device) documents.
+    - See the [Trouble shooting](https://github.com/kshoji/USB-MIDI-Driver/wiki/TroubleShooting-on-connecting-an-USB-MIDI-device) documents.
 
 License
 ----

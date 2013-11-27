@@ -9,7 +9,7 @@ Android USBホストAPIを使った、USB MIDIのドライバです。
     - YAMAHA, Roland, MOTUのデバイスが接続できます(が、充分にテストされていません)。
 - 複数のデバイスを接続できます。
 - `javax.sound.midi` 互換のクラスをサポート
-    - 詳細は [javax.sound.midi ドキュメント](wiki/javax.sound.midi-porting-for-Android) に記載があります。
+    - 詳細は [javax.sound.midi ドキュメント(英語)](https://github.com/kshoji/USB-MIDI-Driver/wiki/javax.sound.midi-porting-for-Android) に記載があります。
 
 必要なもの
 ----
@@ -86,6 +86,33 @@ AbstractSingleMidiActivity を用いた MIDI イベント処理
 MIDI イベントの受信
 
 - MIDIイベントを処理するメソッド (`"onMidi..."` という名前)を実装します。
+- 注意: `"onMidi..."` メソッドは(UIスレッドではない)別のスレッドから呼ばれるので、UIスレッド内の`Handler`と`Callback`を用いてビューを操作する必要があります。下のコードのような感じです。
+
+<a name="ui_thread"></a>
+```java
+public class SampleActivity extends AbstractSingleMidiActivity {
+
+    // this field belongs to the UI thread
+    final Handler uiThreadEventHandler = new Handler(new Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if ("note on".equals(msg.obj)) {
+                textView.setText("note on event received.");
+            }
+
+            // message handled successfully
+            return true;
+        }
+    });
+
+    // this method will be called from the another thread, so it can't change View's state.
+    @Override
+    public void onMidiNoteOn(final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+        // Send a message to the UI thread
+        String message = "note on";
+        uiThreadEventHandler.sendMessage(Message.obtain(uiThreadEventHandler, 0, message));
+    }
+```
 
 MIDI イベントの送信 TODO
 
@@ -102,6 +129,7 @@ MIDI イベントの受信
 
 - MIDIイベントを処理するメソッド (`"onMidi..."` という名前)を実装します。
     - イベントを送信したデバイスの情報(`MIDIInputDevice`のインスタンス)が最初の引数に設定されて呼ばれます。
+- 注意: `"onMidi..."` メソッドは(UIスレッドではない)別のスレッドから呼ばれるので、UIスレッド内の`Handler`と`Callback`を用いてビューを操作する必要があります。[前述のコード](#ui_thread)のような感じです。
 
 MIDI イベントの送信
 
@@ -138,7 +166,7 @@ FAQ
     - 一つのUSB MIDIデバイスには複数の仮想MIDIケーブルを持つことができます。 
     これはMIDIチャンネルを拡張するのに使われています。cable番号は、0から15が指定できます。
 - USBデバイスを接続したのに、アプリがデバイスを認識しません。
-    - [Trouble shooting(英語)](wiki/TroubleShooting-on-connecting-an-USB-MIDI-device) を参考にしてみてください。
+    - [Trouble shooting(英語)](https://github.com/kshoji/USB-MIDI-Driver/wiki/TroubleShooting-on-connecting-an-USB-MIDI-device) を参考にしてみてください。
 
 ライセンス
 ----
