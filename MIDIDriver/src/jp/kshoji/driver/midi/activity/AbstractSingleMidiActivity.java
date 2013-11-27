@@ -106,7 +106,6 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 					
 					UsbDevice usbDevice = params[0];
 					
-					// TODO Auto-generated method stub
 					if (midiInputDevice != null) {
 						midiInputDevice.stop();
 						midiInputDevice = null;
