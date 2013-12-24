@@ -322,7 +322,7 @@ public class MIDIDriverSingleSampleActivity extends AbstractSingleMidiActivity {
 	 */
 	@Override
 	public void onMidiControlChange(final MidiInputDevice sender, int cable, int channel, int function, int value) {
-		midiInputEventAdapter.add("ControlChange cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "ControlChange cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value));
 
 		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDevice() != null) {
 			getMidiOutputDevice().sendMidiControlChange(cable, channel, function, value);
