@@ -6,3 +6,9 @@ MIDIDriver/bin
 MIDIDriverSample/bin
 MIDIDriver/gen
 MIDIDriverSample/gen
+MIDIDriverSample/build
+MIDIDriver/build
+.idea
+.gradle
+*.iml
+local.properties
