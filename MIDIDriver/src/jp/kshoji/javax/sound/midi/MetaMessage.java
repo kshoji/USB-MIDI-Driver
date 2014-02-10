@@ -4,6 +4,9 @@ import java.util.Arrays;
 
 public class MetaMessage extends MidiMessage {
 	public static final int META = 0xff;
+	
+	public static final int TYPE_END_OF_TRACK = 0x2f;
+	
 	private static byte[] defaultMessage = { (byte) META, 0 };
 
 	private int dataLength = 0;

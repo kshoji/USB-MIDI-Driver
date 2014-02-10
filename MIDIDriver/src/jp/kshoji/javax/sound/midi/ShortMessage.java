@@ -8,9 +8,11 @@ public class ShortMessage extends MidiMessage {
 	public static final int PROGRAM_CHANGE = 0xc0;
 	public static final int CHANNEL_PRESSURE = 0xd0;
 	public static final int PITCH_BEND = 0xe0;
+	public static final int START_OF_EXCLUSIVE = 0xf0;
 	public static final int MIDI_TIME_CODE = 0xf1;
 	public static final int SONG_POSITION_POINTER = 0xf2;
 	public static final int SONG_SELECT = 0xf3;
+	public static final int BUS_SELECT = 0xf5;
 	public static final int TUNE_REQUEST = 0xf6;
 	public static final int END_OF_EXCLUSIVE = 0xf7;
 	public static final int TIMING_CLOCK = 0xf8;
@@ -19,6 +21,8 @@ public class ShortMessage extends MidiMessage {
 	public static final int STOP = 0xfc;
 	public static final int ACTIVE_SENSING = 0xfe;
 	public static final int SYSTEM_RESET = 0xff;
+	
+	public static final int MASK_EVENT = 0xf0;
 
 	public ShortMessage() {
 		this(new byte[] { (byte) NOTE_ON, 0x40, 0x7f });
