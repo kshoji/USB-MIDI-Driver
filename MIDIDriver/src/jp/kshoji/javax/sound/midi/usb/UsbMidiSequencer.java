@@ -20,6 +20,7 @@ import jp.kshoji.javax.sound.midi.Sequencer;
 import jp.kshoji.javax.sound.midi.Track;
 import jp.kshoji.javax.sound.midi.Transmitter;
 import jp.kshoji.javax.sound.midi.io.StandardMidiFileReader;
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 /**
@@ -34,6 +35,7 @@ public class UsbMidiSequencer implements Sequencer {
 	List<Receiver> receivers = new ArrayList<Receiver>();
 	
 	Set<MetaEventListener> metaEventListeners = new HashSet<MetaEventListener>();
+	@SuppressLint("UseSparseArrays")
 	Map<Integer, Set<ControllerEventListener>> controllerEventListenerMap = new HashMap<Integer, Set<ControllerEventListener>>();
 
 	private Sequence sequence = null;
@@ -44,8 +46,17 @@ public class UsbMidiSequencer implements Sequencer {
 	private SyncMode masterSyncMode = SyncMode.INTERNAL_CLOCK;
 	private SyncMode slaveSyncMode = SyncMode.NO_SYNC;
 	private float tempoFactor = 1.0f;
+	private long loopStartPoint = 0;
+	private long loopEndPoint = 0;
+	@SuppressLint("UseSparseArrays")
+	private Map<Integer, Boolean> trackMute = new HashMap<Integer, Boolean>();
+	@SuppressLint("UseSparseArrays")
+	private Map<Integer, Boolean> trackSolo = new HashMap<Integer, Boolean>();
+	private long tickPosition = 0;
+	private float tempoInBPM = 60f;
+	private Map<Track, Set<Integer>> recordEnable = new HashMap<Track, Set<Integer>>();
 	
-	public UsbMidiSequencer(Context context) throws MidiUnavailableException{
+	public UsbMidiSequencer(Context context) throws MidiUnavailableException {
 		MidiSystem.initialize(context);
 		transmitters.add(MidiSystem.getTransmitter());
 		receivers.add(MidiSystem.getReceiver());
@@ -137,6 +148,7 @@ public class UsbMidiSequencer implements Sequencer {
 		}
 		return resultPrimitiveArray;
 	}
+	
 	@Override
 	public boolean addMetaEventListener(MetaEventListener listener) {
 		// return true if registered successfully
@@ -160,26 +172,22 @@ public class UsbMidiSequencer implements Sequencer {
 
 	@Override
 	public long getLoopStartPoint() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.loopStartPoint;
 	}
 
 	@Override
 	public void setLoopStartPoint(long tick) {
-		// TODO Auto-generated method stub
-
+		loopStartPoint = tick;
 	}
 
 	@Override
 	public long getLoopEndPoint() {
-		// TODO Auto-generated method stub
-		return 0;
+		return loopEndPoint;
 	}
 
 	@Override
 	public void setLoopEndPoint(long tick) {
-		// TODO Auto-generated method stub
-
+		loopEndPoint = tick;
 	}
 
 	@Override
@@ -204,22 +212,35 @@ public class UsbMidiSequencer implements Sequencer {
 
 	@Override
 	public long getMicrosecondPosition() {
-		// TODO Auto-generated method stub
-		return 0;
+		return (long) (tickPosition * getTicksPerMicrosecond());
 	}
 
 	@Override
 	public void setMicrosecondPosition(long microseconds) {
-		// TODO Auto-generated method stub
+		setTickPosition((long) (getTicksPerMicrosecond() * microseconds));
+	}
 
+	/**
+	 * convert parameter from microseconds to tick
+	 * 
+	 * @return
+	 */
+	private float getTicksPerMicrosecond() {
+		float ticksPerMicrosecond;
+		if (sequence.getDivisionType() == Sequence.PPQ) {
+			// PPQ : 2 * resolution / 1000000 ticks per microsecond
+			ticksPerMicrosecond = 2f * sequence.getResolution() / 1000000f;
+		} else {
+			// SMPTE : divisionType * resolution / 1000000 ticks per microsecond
+			ticksPerMicrosecond = sequence.getDivisionType() * sequence.getResolution() / 1000000f;
+		}
+		return ticksPerMicrosecond;
 	}
 	
 	@Override
 	public long getMicrosecondLength() {
-		// TODO Auto-generated method stub
-		return 0;
+		return sequence.getMicrosecondLength();
 	}
-
 
 	@Override
 	public Sequence getSequence() {
@@ -268,25 +289,22 @@ public class UsbMidiSequencer implements Sequencer {
 
 	@Override
 	public float getTempoInBPM() {
-		// TODO Auto-generated method stub
-		return 0;
+		return tempoInBPM;
 	}
 
 	@Override
 	public void setTempoInBPM(float bpm) {
-		// TODO Auto-generated method stub
+		tempoInBPM = bpm;
 	}
 
 	@Override
 	public float getTempoInMPQ() {
-		// TODO Auto-generated method stub
-		return 0;
+		return 60000000f / tempoInBPM;
 	}
 
 	@Override
 	public void setTempoInMPQ(float mpq) {
-		// TODO Auto-generated method stub
-
+		tempoInBPM = 60000000f / mpq;
 	}
 
 	@Override
@@ -299,50 +317,65 @@ public class UsbMidiSequencer implements Sequencer {
 
 	@Override
 	public long getTickPosition() {
-		// TODO Auto-generated method stub
-		return 0;
+		return tickPosition;
 	}
 
 	@Override
 	public void setTickPosition(long tick) {
-		// TODO Auto-generated method stub
-
+		tickPosition = tick;
 	}
 
 	@Override
 	public boolean getTrackMute(int track) {
-		// TODO Auto-generated method stub
-		return false;
+		return Boolean.TRUE.equals(trackMute.get(track));
 	}
 
 	@Override
 	public void setTrackMute(int track, boolean mute) {
-		// TODO Auto-generated method stub
-
+		trackMute.put(track, mute);
 	}
 
 	@Override
 	public boolean getTrackSolo(int track) {
-		// TODO Auto-generated method stub
-		return false;
+		return Boolean.TRUE.equals(trackMute.get(track));
 	}
 
 	@Override
 	public void setTrackSolo(int track, boolean solo) {
-		// TODO Auto-generated method stub
-
+		trackSolo.put(track, solo);
 	}
 
 	@Override
 	public void recordDisable(Track track) {
-		// TODO Auto-generated method stub
-
+		if (track == null) {
+			// disable all track
+			recordEnable.clear();
+		} else {
+			// disable specified track
+			Set<Integer> trackRecordEnable = recordEnable.get(track);
+			if (trackRecordEnable != null) {
+				recordEnable.put(track, null);
+			}
+		}
 	}
 
 	@Override
 	public void recordEnable(Track track, int channel) {
-		// TODO Auto-generated method stub
-
+		Set<Integer> trackRecordEnable = recordEnable.get(track);
+		if (trackRecordEnable == null) {
+			trackRecordEnable = new HashSet<Integer>();
+		}
+		
+		if (channel == -1) {
+			for (int i = 0; i < 16; i++) {
+				// record to the all channels
+				trackRecordEnable.add(i);
+			}
+			recordEnable.put(track, trackRecordEnable);
+		} else if (channel >= 0 && channel < 16) {
+			trackRecordEnable.add(channel);
+			recordEnable.put(track, trackRecordEnable);
+		}
 	}
 
 	@Override
@@ -379,5 +412,4 @@ public class UsbMidiSequencer implements Sequencer {
 		isRecording = false;
 		// TODO stop playing and recording
 	}
-
 }
