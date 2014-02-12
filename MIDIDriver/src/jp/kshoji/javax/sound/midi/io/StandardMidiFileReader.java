@@ -1,5 +1,7 @@
 package jp.kshoji.javax.sound.midi.io;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,6 +19,7 @@ import jp.kshoji.javax.sound.midi.ShortMessage;
 import jp.kshoji.javax.sound.midi.SysexMessage;
 import jp.kshoji.javax.sound.midi.Track;
 import jp.kshoji.javax.sound.midi.spi.MidiFileReader;
+import android.content.res.AssetManager.AssetInputStream;
 
 public class StandardMidiFileReader extends MidiFileReader {
 	class ExtendedMidiFileFormat extends MidiFileFormat {
@@ -81,6 +84,9 @@ public class StandardMidiFileReader extends MidiFileReader {
 		DataInputStream dataInputStream;
 		if (inputStream instanceof DataInputStream) {
 			dataInputStream = (DataInputStream) inputStream;
+		} else if (inputStream instanceof AssetInputStream) {
+			// AssetInputStream can't read with DataInputStream
+			dataInputStream = new MidiDataInputStream(convertToByteArrayInputStream(inputStream));
 		} else {
 			dataInputStream = new DataInputStream(inputStream);
 		}
@@ -173,7 +179,13 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getSequence(java.io.InputStream)
 	 */
 	public Sequence getSequence(InputStream inputStream) throws InvalidMidiDataException, IOException {
-		MidiDataInputStream midiDataInputStream = new MidiDataInputStream(inputStream);
+		MidiDataInputStream midiDataInputStream;
+		if (inputStream instanceof AssetInputStream) {
+			// AssetInputStream can't read with DataInputStream
+			midiDataInputStream = new MidiDataInputStream(convertToByteArrayInputStream(inputStream));
+		} else {
+			midiDataInputStream = new MidiDataInputStream(inputStream);
+		}
 		
 		try {
 			ExtendedMidiFileFormat midiFileFormat = (ExtendedMidiFileFormat) getMidiFileFormat(midiDataInputStream);
@@ -347,6 +359,30 @@ public class StandardMidiFileReader extends MidiFileReader {
 		} finally {
 			midiDataInputStream.close();
 		}
+	}
+
+	/**
+	 * Convert inputStream into {@link ByteArrayInputStream}
+	 * 
+	 * @param inputStream
+	 * @return
+	 * @throws IOException
+	 */
+	private static ByteArrayInputStream convertToByteArrayInputStream(InputStream inputStream) throws IOException {
+		if (inputStream instanceof ByteArrayInputStream) {
+			// already ByteArrayInputStream
+			return (ByteArrayInputStream) inputStream;
+		}
+		
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		byte[] buffer = new byte[10240];
+		int readBytes = 0;
+		while ((readBytes = inputStream.read(buffer)) >= 0) {
+			outputStream.write(buffer, 0, readBytes);
+		}
+		
+		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(outputStream.toByteArray());
+		return byteArrayInputStream;
 	}
 
 	/*

@@ -21,7 +21,6 @@ import jp.kshoji.javax.sound.midi.Track;
 import jp.kshoji.javax.sound.midi.Transmitter;
 import jp.kshoji.javax.sound.midi.io.StandardMidiFileReader;
 import android.annotation.SuppressLint;
-import android.content.Context;
 
 /**
  * {@link jp.kshoji.javax.sound.midi.Sequencer} implementation
@@ -56,8 +55,7 @@ public class UsbMidiSequencer implements Sequencer {
 	private float tempoInBPM = 60f;
 	private Map<Track, Set<Integer>> recordEnable = new HashMap<Track, Set<Integer>>();
 	
-	public UsbMidiSequencer(Context context) throws MidiUnavailableException {
-		MidiSystem.initialize(context);
+	public UsbMidiSequencer() throws MidiUnavailableException {
 		transmitters.add(MidiSystem.getTransmitter());
 		receivers.add(MidiSystem.getReceiver());
 	}
