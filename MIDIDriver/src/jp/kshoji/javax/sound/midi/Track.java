@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import android.util.Log;
+
 public class Track {
     // MetaMessage with MetaMessage.data contains -1, 47 and 0 is meta-event End of Track.
     private static final byte[] END_OF_TRACK = new byte[] {-1, 47, 0};
@@ -58,16 +60,19 @@ public class Track {
 	         * in any case addition of this meta-event is successful, this method 
 	         * return 'true' even if meta-event End of Track already contains in the Track
 	         */
-	        if (event.getMessage().getMessage()[0] == -1 &&
-	                event.getMessage().getMessage()[1] == 47 &&
-	                event.getMessage().getMessage()[2] == 0 ) {
+	        byte[] message = event.getMessage().getMessage();
+			if (Arrays.equals(END_OF_TRACK, message)) {
 	        	if (events.size() == 0) {
+		        	Log.i("USB MIDI Logger", "event added 66");
 	                return events.add(event);
 	            }
+	        	
 	            byte[] lastEvent = events.get(events.size() - 1).getMessage().getMessage();
-	            if (Arrays.equals(END_OF_TRACK, lastEvent)) {
+	            if (!Arrays.equals(END_OF_TRACK, lastEvent)) {
+		        	Log.i("USB MIDI Logger", "event added 72");
 	                return events.add(event);
 	            }         
+	        	Log.i("USB MIDI Logger", "event not added 75");
 	            return true;
 	        }
 	        /*
@@ -80,12 +85,14 @@ public class Track {
 	            badEvent = event;
 	            throw new ArrayIndexOutOfBoundsException("-1");
 	        }
+	        
 	        byte[] lastEvent = events.get(events.size() - 1).getMessage().getMessage();
-	        if (Arrays.equals(END_OF_TRACK, lastEvent)) {
+	        if (!Arrays.equals(END_OF_TRACK, lastEvent)) {
 	            events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), 0));
 	        }
 	        
 	        if (events.contains(event)) {
+	        	Log.i("USB MIDI Logger", "event not added 95");
 	            return false;
 	        } 
 	        
@@ -94,13 +101,21 @@ public class Track {
 	         */
 	        if (events.size() == 1) {
 	            events.add(0, event);
+	        	Log.i("USB MIDI Logger", "event added 104");
 	        }
-	        for (int i = 0; i < events.size() - 1; i++ ) {
+
+	        boolean added = false;
+	        for (int i = 0; i < events.size() - 1; i++) {
 	            if (events.get(i).getTick() <= event.getTick()) {
 	                continue;
 	            }
 	            events.add(i, event);
+	            added = true;
+	        	Log.i("USB MIDI Logger", "event added 112");
 	            break;
+	        }
+	        if (!added) {
+	            events.add(events.size() - 1, event);
 	        }
 		}
         

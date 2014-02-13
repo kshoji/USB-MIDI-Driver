@@ -12,6 +12,7 @@ import java.util.Set;
 import jp.kshoji.javax.sound.midi.ControllerEventListener;
 import jp.kshoji.javax.sound.midi.InvalidMidiDataException;
 import jp.kshoji.javax.sound.midi.MetaEventListener;
+import jp.kshoji.javax.sound.midi.MidiEvent;
 import jp.kshoji.javax.sound.midi.MidiSystem;
 import jp.kshoji.javax.sound.midi.MidiUnavailableException;
 import jp.kshoji.javax.sound.midi.Receiver;
@@ -21,6 +22,7 @@ import jp.kshoji.javax.sound.midi.Track;
 import jp.kshoji.javax.sound.midi.Transmitter;
 import jp.kshoji.javax.sound.midi.io.StandardMidiFileReader;
 import android.annotation.SuppressLint;
+import android.util.Log;
 
 /**
  * {@link jp.kshoji.javax.sound.midi.Sequencer} implementation
@@ -54,6 +56,59 @@ public class UsbMidiSequencer implements Sequencer {
 	private long tickPosition = 0;
 	private float tempoInBPM = 60f;
 	private Map<Track, Set<Integer>> recordEnable = new HashMap<Track, Set<Integer>>();
+
+	SeqencerThread seqencerThread = new SeqencerThread();
+	
+	private class SeqencerThread extends Thread {
+		boolean playing = false;
+
+		public SeqencerThread() {
+		}
+
+		void play() {
+			playing = true;
+		}
+		
+		@Override
+		public void run() {
+			super.run();
+
+			Track[] tracks = sequence.getTracks();
+			Track track = null;
+			Log.i("USB MIDI Logger", "track length:" + tracks.length);
+			if (tracks != null && tracks.length > 0) {
+				track = tracks[1];// 0, 1, 2, 3, 11, 12
+			}
+			// wait for start playing
+			while (playing == false);
+			
+			while (playing) {
+				if (track != null) {
+					int trackSize = track.size();
+					float ticksPerMicrosecond = getTicksPerMicrosecond();
+					float microsecondsPerTick = 1.f / ticksPerMicrosecond;
+					Log.i("USB MIDI Logger", "microsecondsPerTick:" + microsecondsPerTick);
+					long lastTick = 0;
+
+					for (int i = 0; i < trackSize; i++) {
+						MidiEvent midiEvent = track.get(i);
+						Log.i("USB MIDI Logger", "tick:" + midiEvent.getTick() + ", message:" + midiEvent.getMessage());
+						try {
+							
+							sleep((long) (microsecondsPerTick * (midiEvent.getTick() - lastTick) / 1000f));
+							lastTick = midiEvent.getTick();
+						} catch (InterruptedException e) {
+						}
+						for (Receiver receiver : receivers) {
+							receiver.send(midiEvent.getMessage(), 0);
+						}
+					}
+					playing = false;
+					Log.i("USB MIDI Logger", "playing finished");
+				}
+			}
+		}
+	}
 	
 	public UsbMidiSequencer() throws MidiUnavailableException {
 		transmitters.add(MidiSystem.getTransmitter());
@@ -68,6 +123,13 @@ public class UsbMidiSequencer implements Sequencer {
 	@Override
 	public void open() throws MidiUnavailableException {
 		// TODO open device
+		for (Receiver receiver : receivers) {
+			if (receiver instanceof UsbMidiReceiver) {
+				UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
+				usbMidiReceiver.open();
+			}
+		}
+		
 		isOpen = true;
 	}
 
@@ -397,6 +459,8 @@ public class UsbMidiSequencer implements Sequencer {
 	public void start() {
 		isRunning = true;
 		// TODO start playing
+		seqencerThread.start();
+		seqencerThread.playing = true;
 	}
 
 	@Override

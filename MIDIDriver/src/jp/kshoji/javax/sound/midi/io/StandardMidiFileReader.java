@@ -20,6 +20,7 @@ import jp.kshoji.javax.sound.midi.SysexMessage;
 import jp.kshoji.javax.sound.midi.Track;
 import jp.kshoji.javax.sound.midi.spi.MidiFileReader;
 import android.content.res.AssetManager.AssetInputStream;
+import android.util.Log;
 
 public class StandardMidiFileReader extends MidiFileReader {
 	class ExtendedMidiFileFormat extends MidiFileFormat {
@@ -200,14 +201,14 @@ public class StandardMidiFileReader extends MidiFileReader {
 				midiDataInputStream.readInt();
 	
 				int runningStatus = -1;
-				int click = 0;
+				int ticks = 0;
 				boolean isEndOfTrack = false;
 	
 				// Read all of the events.
 				while (!isEndOfTrack) {
 					MidiMessage message;
 
-					click += midiDataInputStream.readVariableLengthInt(); // add deltaTime
+					ticks += midiDataInputStream.readVariableLengthInt(); // add deltaTime
 	
 					int data = midiDataInputStream.readUnsignedByte();
 					if (data < 0xf0) {
@@ -255,6 +256,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 							} else {
 								throw new InvalidMidiDataException(String.format("Invalid data: %02x", data));
 							}
+							break;
 						}
 						message = shortMessage;
 					} else if (data == ShortMessage.START_OF_EXCLUSIVE || data == ShortMessage.END_OF_EXCLUSIVE) {
@@ -350,8 +352,8 @@ public class StandardMidiFileReader extends MidiFileReader {
 						
 						message = shortMessage;
 					}
-	
-					track.add(new MidiEvent(message, click));
+
+					track.add(new MidiEvent(message, ticks));
 				}
 			}
 	
