@@ -31,6 +31,7 @@ public class SysexMessage extends MidiMessage {
 		}
 
 		if (this.data == null || this.data.length < data.length + 1) {
+			// extend 1 byte
 			this.data = new byte[data.length + 1];
 		}
 
@@ -41,15 +42,13 @@ public class SysexMessage extends MidiMessage {
 	}
 
 	public byte[] getData() {
-		byte[] returnedArray = new byte[data.length - 1];
-		System.arraycopy(data, 1, returnedArray, 0, (data.length - 1));
-		return returnedArray;
+		byte[] result = new byte[data.length];
+		System.arraycopy(data, 0, result, 0, result.length);
+		return result;
 	}
 
 	@Override
 	public Object clone() {
-		byte[] result = new byte[data.length];
-		System.arraycopy(data, 0, result, 0, result.length);
-		return new SysexMessage(result);
+		return new SysexMessage(getData());
 	}
 }

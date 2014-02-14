@@ -18,9 +18,9 @@ import jp.kshoji.javax.sound.midi.Sequence;
 import jp.kshoji.javax.sound.midi.ShortMessage;
 import jp.kshoji.javax.sound.midi.SysexMessage;
 import jp.kshoji.javax.sound.midi.Track;
+import jp.kshoji.javax.sound.midi.Track.TrackUtils;
 import jp.kshoji.javax.sound.midi.spi.MidiFileReader;
 import android.content.res.AssetManager.AssetInputStream;
-import android.util.Log;
 
 public class StandardMidiFileReader extends MidiFileReader {
 	class ExtendedMidiFileFormat extends MidiFileFormat {
@@ -193,6 +193,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 			Sequence sequence = new Sequence(midiFileFormat.getDivisionType(), midiFileFormat.getResolution());
 	
 			int numberOfTracks = midiFileFormat.getNumberTracks();
+			
 			while (numberOfTracks-- > 0) {
 				Track track = sequence.createTrack();
 				if (midiDataInputStream.readInt() != MidiFileFormat.HEADER_MTrk) {
@@ -211,59 +212,26 @@ public class StandardMidiFileReader extends MidiFileReader {
 					ticks += midiDataInputStream.readVariableLengthInt(); // add deltaTime
 	
 					int data = midiDataInputStream.readUnsignedByte();
-					if (data < 0xf0) {
-						ShortMessage shortMessage;
-						switch (data & 0xf0) {
-						case ShortMessage.NOTE_OFF://80
-						case ShortMessage.NOTE_ON://90
-						case ShortMessage.POLY_PRESSURE://a0
-						case ShortMessage.CONTROL_CHANGE://b0
-						case ShortMessage.PITCH_BEND://e0
-							shortMessage = new ShortMessage();
-							shortMessage.setMessage(data, midiDataInputStream.readByte(), midiDataInputStream.readByte());
-							runningStatus = data;
-							break;
-	
-						case ShortMessage.PROGRAM_CHANGE://c0
-						case ShortMessage.CHANNEL_PRESSURE://d0
-							shortMessage = new ShortMessage();
-							shortMessage.setMessage(data, midiDataInputStream.readByte(), 0);
-							runningStatus = data;
-							break;
-	
-						default:
-							// data: 00-7f use runningStatus
-							if (runningStatus != -1) {
-								switch (runningStatus & ShortMessage.MASK_EVENT) {
-								case ShortMessage.NOTE_OFF:
-								case ShortMessage.NOTE_ON:
-								case ShortMessage.POLY_PRESSURE:
-								case ShortMessage.CONTROL_CHANGE:
-								case ShortMessage.PITCH_BEND:
-									shortMessage = new ShortMessage();
-									shortMessage.setMessage(runningStatus, data, midiDataInputStream.readByte());
-									break;
-	
-								case ShortMessage.PROGRAM_CHANGE:
-								case ShortMessage.CHANNEL_PRESSURE:
-									shortMessage = new ShortMessage();
-									shortMessage.setMessage(runningStatus, data, 0);
-									break;
-	
-								default:
-									throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", runningStatus, data));
-								}
-							} else {
-								throw new InvalidMidiDataException(String.format("Invalid data: %02x", data));
-							}
-							break;
+					if (data < 0x80) {
+						// data values
+						if (runningStatus >= 0 && runningStatus < 0xf0) {
+							message = processRunningMessage(runningStatus, data, midiDataInputStream);
+						} else if (runningStatus >= 0xf0 && runningStatus <= 0xff) {
+							message = processSystemMessage(runningStatus, data, midiDataInputStream);
+						} else {
+							throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", runningStatus, data));
 						}
-						message = shortMessage;
+					} else if (data < 0xf0) {
+						// Control messages
+						message = processRunningMessage(data, midiDataInputStream.readByte(), midiDataInputStream);
+
+						runningStatus = data;
 					} else if (data == ShortMessage.START_OF_EXCLUSIVE || data == ShortMessage.END_OF_EXCLUSIVE) {
 						// System Exclusive event
 						int sysexLength = midiDataInputStream.readVariableLengthInt();
 						byte sysexData[] = new byte[sysexLength];
 						midiDataInputStream.readFully(sysexData);
+						
 						SysexMessage sysexMessage = new SysexMessage();
 						sysexMessage.setMessage(data, sysexData, sysexLength);
 						message = sysexMessage;
@@ -276,6 +244,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 						int metaLength = midiDataInputStream.readVariableLengthInt();
 						byte metaData[] = new byte[metaLength];
 						midiDataInputStream.readFully(metaData);
+						
 						MetaMessage metaMessage = new MetaMessage();
 						metaMessage.setMessage(type, metaData, metaLength);
 						message = metaMessage;
@@ -287,80 +256,88 @@ public class StandardMidiFileReader extends MidiFileReader {
 						}
 					} else {
 						// f1-f6, f8-fe
-						ShortMessage shortMessage;
-						if (data > 0x7f) {
-							switch (data) {
-							case ShortMessage.SONG_POSITION_POINTER://f2
-								shortMessage = new ShortMessage();
-								shortMessage.setMessage(data, midiDataInputStream.readByte(), midiDataInputStream.readByte());
-								runningStatus = data;
-								break;
-								
-							case ShortMessage.SONG_SELECT://f3
-							case ShortMessage.BUS_SELECT://f5
-								shortMessage = new ShortMessage();
-								shortMessage.setMessage(data, midiDataInputStream.readByte(), 0);
-								runningStatus = data;
-								break;
-							
-							case ShortMessage.TUNE_REQUEST://f6
-							case ShortMessage.TIMING_CLOCK://f8
-							case ShortMessage.START://fa
-							case ShortMessage.CONTINUE://fb
-							case ShortMessage.STOP://fc
-							case ShortMessage.ACTIVE_SENSING://fe
-								shortMessage = new ShortMessage();
-								shortMessage.setMessage(data, 0, 0);
-								runningStatus = data;
-								break;
-							
-							default://f1, f9, fd
-								throw new InvalidMidiDataException(String.format("Invalid data: %02x", data));
-							}
-						} else {
-							// data: 00-7f use runningStatus
-							if (runningStatus != -1) {
-								switch (runningStatus) {
-								case ShortMessage.SONG_POSITION_POINTER://f2
-									shortMessage = new ShortMessage();
-									shortMessage.setMessage(runningStatus, data, midiDataInputStream.readByte());
-									break;
-		
-								case ShortMessage.SONG_SELECT://f3
-								case ShortMessage.BUS_SELECT://f5
-									shortMessage = new ShortMessage();
-									shortMessage.setMessage(runningStatus, data, 0);
-									break;
-		
-								case ShortMessage.TUNE_REQUEST://f6
-								case ShortMessage.TIMING_CLOCK://f8
-								case ShortMessage.START://fa
-								case ShortMessage.CONTINUE://fb
-								case ShortMessage.STOP://fc
-								case ShortMessage.ACTIVE_SENSING://fe
-									shortMessage = new ShortMessage();
-									shortMessage.setMessage(runningStatus, 0, 0);
-									break;
-		
-								default://f1, f9, fd
-									throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", runningStatus, data));
-								}
-							} else {
-								throw new InvalidMidiDataException(String.format("Invalid data: %02x", data));
-							}
-						}
+						message = processSystemMessage(data, null, midiDataInputStream);
 						
-						message = shortMessage;
+						runningStatus = data;
 					}
 
 					track.add(new MidiEvent(message, ticks));
 				}
+				
+				TrackUtils.sortEvents(track);
 			}
 	
 			return sequence;
 		} finally {
 			midiDataInputStream.close();
 		}
+	}
+
+	private static ShortMessage processSystemMessage(int data1, Integer data2, MidiDataInputStream midiDataInputStream) throws InvalidMidiDataException, IOException {
+		ShortMessage shortMessage;
+		switch (data1) {
+		case ShortMessage.SONG_POSITION_POINTER://f2
+			shortMessage = new ShortMessage();
+			if (data2 == null) {
+				shortMessage.setMessage(data1, midiDataInputStream.readByte(), midiDataInputStream.readByte());
+			} else {
+				shortMessage.setMessage(data1, data2, midiDataInputStream.readByte());
+			}
+			break;
+			
+		case ShortMessage.SONG_SELECT://f3
+		case ShortMessage.BUS_SELECT://f5
+			shortMessage = new ShortMessage();
+			if (data2 == null) {
+				shortMessage.setMessage(data1, midiDataInputStream.readByte(), 0);
+			} else {
+				shortMessage.setMessage(data1, data2, 0);
+			}
+			break;
+		
+		case ShortMessage.TUNE_REQUEST://f6
+		case ShortMessage.TIMING_CLOCK://f8
+		case ShortMessage.START://fa
+		case ShortMessage.CONTINUE://fb
+		case ShortMessage.STOP://fc
+		case ShortMessage.ACTIVE_SENSING://fe
+			if (data2 != null) {
+				// XXX must be ignored??
+				throw new InvalidMidiDataException(String.format("Invalid data: %02x", data2));
+			}
+			shortMessage = new ShortMessage();
+			shortMessage.setMessage(data1, 0, 0);
+			break;
+		
+		default://f1, f9, fd
+			throw new InvalidMidiDataException(String.format("Invalid data: %02x", data1));
+		}
+		return shortMessage;
+	}
+
+	private static ShortMessage processRunningMessage(int data1, int data2, MidiDataInputStream midiDataInputStream) throws InvalidMidiDataException, IOException {
+		ShortMessage shortMessage;
+		switch (data1 & ShortMessage.MASK_EVENT) {
+		case ShortMessage.NOTE_OFF://80
+		case ShortMessage.NOTE_ON://90
+		case ShortMessage.POLY_PRESSURE://a0
+		case ShortMessage.CONTROL_CHANGE://b0
+		case ShortMessage.PITCH_BEND://e0
+			shortMessage = new ShortMessage();
+			shortMessage.setMessage(data1, data2, midiDataInputStream.readByte());
+			break;
+
+		case ShortMessage.PROGRAM_CHANGE://c0
+		case ShortMessage.CHANNEL_PRESSURE://d0
+			shortMessage = new ShortMessage();
+			shortMessage.setMessage(data1, data2, 0);
+			break;
+
+		default:
+			throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", data1, data2));
+		}
+		
+		return shortMessage;
 	}
 
 	/**

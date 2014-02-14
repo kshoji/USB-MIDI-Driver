@@ -2,6 +2,8 @@ package jp.kshoji.javax.sound.midi;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.util.Log;
@@ -22,10 +24,93 @@ public class Track {
          * create an empty Track; new Track must contain only meta-event End of Track.
          */
         events = new ArrayList<MidiEvent>();
-        events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), 0));
     }
     
-    public boolean add(MidiEvent event) {
+    public interface IPredicate<T> { boolean apply(T type); }
+    
+	public static <T> List<T> filter(List<T> target, IPredicate<T> predicate) {
+	    List<T> result = new ArrayList<T>();
+	    for (T element: target) {
+	        if (predicate.apply(element)) {
+	            result.add(element);
+	        }
+	    }
+	    return result;
+	}
+	
+	public static class TrackUtils {
+		public static Sequence mergeSequenceTrack(Sequence source) throws InvalidMidiDataException {
+			Sequence merged = new Sequence(source.getDivisionType(), source.getResolution());
+			Track mergedTrack = merged.createTrack();
+
+			Track[] tracks = source.getTracks();
+			for (Track track : tracks) {
+				mergedTrack.events.addAll(track.events);
+			}
+			
+			sortEvents(mergedTrack);
+			
+			return merged;
+		}
+		
+		public static void sortEvents(Track track) {
+			synchronized (track.events) {
+	        	Collections.sort(track.events, new Comparator<MidiEvent>() {
+					@Override
+					public int compare(MidiEvent lhs, MidiEvent rhs) {
+						// sort by tick
+						int tickDifference = (int) (lhs.getTick() - rhs.getTick());
+						if (tickDifference != 0) {
+							return tickDifference;
+						}
+						
+						// same tick
+						// sort by MIDI priority order
+						// system message > control messages > note on > note off
+						
+						int lhsInt = (lhs.getMessage().getMessage()[0] & 0xf0);
+						int rhsInt = (rhs.getMessage().getMessage()[0] & 0xf0);
+						
+						if ((lhsInt & 0x90) == 0x80) {
+							lhsInt |= 0x10;
+						} else {
+							lhsInt &= ~0x10;
+						}
+						if ((rhsInt & 0x90) == 0x80) {
+							rhsInt |= 0x10;
+						} else {
+							rhsInt &= ~0x10;
+						}
+						
+						return - (lhsInt - rhsInt);
+					}
+				});
+	        	
+	        	List<MidiEvent> filtered = filter(track.events, new IPredicate<MidiEvent>() {
+					@Override
+					public boolean apply(MidiEvent event) {
+						return !Arrays.equals(END_OF_TRACK, event.getMessage().getMessage());
+					}
+				});
+	        	
+	        	track.events.clear();
+	        	track.events.addAll(filtered);
+	        	
+	        	// add to last
+	        	track.events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), track.events.get(track.events.size() - 1).getTick() + 1));
+			}
+		}
+	}
+
+	public boolean add(MidiEvent event) {
+        synchronized (events) {
+        	events.add(event);
+        }
+        
+        return true;
+    }
+    
+    public boolean nadd(MidiEvent event) {
         //FIXME
         /*
          * Some words about badEvent.

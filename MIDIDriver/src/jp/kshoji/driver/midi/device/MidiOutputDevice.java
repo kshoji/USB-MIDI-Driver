@@ -170,7 +170,7 @@ public final class MidiOutputDevice {
 							usbRequest.initialize(usbDeviceConnection, outputEndpoint);
 						}
 						
-						while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), 4) == false) {
+						while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), writeBuffer.length) == false) {
 							// loop until queue completed
 							try {
 								Thread.sleep(1);
@@ -277,7 +277,7 @@ public final class MidiOutputDevice {
 	@SuppressWarnings("incomplete-switch")
 	public void sendMidiSystemExclusive(int cable, byte[] systemExclusive) {
 		ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
-
+		
 		for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
 			if ((sysexIndex + 3 < systemExclusive.length)) {
 				// sysex starts or continues...

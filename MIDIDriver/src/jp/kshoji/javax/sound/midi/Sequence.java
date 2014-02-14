@@ -64,9 +64,9 @@ public class Sequence {
 		/*
 		 * new Tracks accrue to the end of vector
 		 */
-		Track tr = new Track();
-		tracks.add(tr);
-		return tr;
+		Track track = new Track();
+		tracks.add(track);
+		return track;
 	}
 
 	/**
