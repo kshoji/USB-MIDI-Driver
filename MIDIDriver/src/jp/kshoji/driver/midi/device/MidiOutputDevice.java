@@ -170,7 +170,7 @@ public final class MidiOutputDevice {
 							usbRequest.initialize(usbDeviceConnection, outputEndpoint);
 						}
 						
-						while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), 4) == false) {
+						while (usbRequest.queue(ByteBuffer.wrap(writeBuffer), writeBuffer.length) == false) {
 							// loop until queue completed
 							try {
 								Thread.sleep(1);
