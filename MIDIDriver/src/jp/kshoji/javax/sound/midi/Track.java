@@ -5,14 +5,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import android.util.Log;
+import java.util.Map;
+import java.util.Set;
 
 public class Track {
     // MetaMessage with MetaMessage.data contains -1, 47 and 0 is meta-event End of Track.
-    private static final byte[] END_OF_TRACK = new byte[] {-1, 47, 0};
+    static final byte[] END_OF_TRACK = new byte[] {-1, 47, 0};
 
-	private List<MidiEvent> events; //vector of events contain in the Track
+	List<MidiEvent> events; //vector of events contain in the Track
     
     private MidiEvent badEvent; //variable to save event which I try to add
                                 //to empty Track; see description below
@@ -39,13 +39,36 @@ public class Track {
 	}
 	
 	public static class TrackUtils {
-		public static Sequence mergeSequenceTrack(Sequence source) throws InvalidMidiDataException {
+		public static Sequence mergeSequenceTrack(Sequencer sequencer, Map<Track, Set<Integer>> recordEnable) throws InvalidMidiDataException {
+			Sequence source = sequencer.getSequence();
 			Sequence merged = new Sequence(source.getDivisionType(), source.getResolution());
 			Track mergedTrack = merged.createTrack();
 
+			// apply track mute and solo
 			Track[] tracks = source.getTracks();
-			for (Track track : tracks) {
-				mergedTrack.events.addAll(track.events);
+			boolean hasSoloTrack = false;
+			for (int trackIndex = 0; trackIndex < tracks.length; trackIndex++) {
+				if (sequencer.getTrackSolo(trackIndex)) {
+					hasSoloTrack = true;
+				}
+			}
+			
+			for (int trackIndex = 0; trackIndex < tracks.length; trackIndex++) {
+				if (sequencer.getTrackMute(trackIndex)) {
+					// muted track, ignore
+					continue;
+				}
+				if (hasSoloTrack && sequencer.getTrackSolo(trackIndex) == false) {
+					// not solo track, ignore
+					continue;
+				}
+				if (sequencer.isRecording() && //
+						(recordEnable.get(tracks[trackIndex]) != null && recordEnable.get(tracks[trackIndex]).size() > 0)) {
+					// recording track, ignore
+					continue;
+				}
+				
+				mergedTrack.events.addAll(tracks[trackIndex].events);
 			}
 			
 			sortEvents(mergedTrack);
@@ -108,110 +131,6 @@ public class Track {
         }
         
         return true;
-    }
-    
-    public boolean nadd(MidiEvent event) {
-        //FIXME
-        /*
-         * Some words about badEvent.
-         * When I write tests, I find following situation in the RI:
-         * if I want to add to empty Track new event that is not meta-event End of Track,
-         * I catch exception ArrayIndexOutOfBoundsException with meaning -1, and my
-         * event doesn't add to Track, but meta-event adds. If I try to add the same 
-         * event after it, method Track.add(MidiEvent) return 'false', and my event
-         * doesn't add again. So, I want to delete this event and use method 
-         * Track.remove(MidiEvent) for it, but it return 'false' too! And only after
-         * this "shamanism" I can add this event to Track normally. 
-         * And only for this situation I use variable badEvent. 
-         * 
-         * See test org.apache.harmony.sound.tests.javax.sound.midi.TrackTest 
-         * for more details
-         */
-        
-        /*
-         * if event equals null or badEvent, this method return 'false'
-         */
-        if (event == null || event == badEvent) {
-            return false;
-        }
-        
-        synchronized (events) {
-	        /*
-	         * If event equals meta-event End of Track and Track in this moment
-	         * doesn't contain some events, i.e. Track.size() return 0, this 
-	         * event accrue to Track; 
-	         * if Track is not empty, but it doesn't contain meta-event, 
-	         * this event accrue to the end of Track;
-	         * in any case addition of this meta-event is successful, this method 
-	         * return 'true' even if meta-event End of Track already contains in the Track
-	         */
-	        byte[] message = event.getMessage().getMessage();
-			if (Arrays.equals(END_OF_TRACK, message)) {
-	        	if (events.size() == 0) {
-		        	Log.i("USB MIDI Logger", "event added 66");
-	                return events.add(event);
-	            }
-	        	
-	            byte[] lastEvent = events.get(events.size() - 1).getMessage().getMessage();
-	            if (!Arrays.equals(END_OF_TRACK, lastEvent)) {
-		        	Log.i("USB MIDI Logger", "event added 72");
-	                return events.add(event);
-	            }         
-	        	Log.i("USB MIDI Logger", "event not added 75");
-	            return true;
-	        }
-	        /*
-	         * after use method Track.add(MidiEvent) Track must contain meta-event
-	         * End of Track; so, at first I add this event to Track if it doesn't 
-	         * contain meta-event and parameter 'event' is not meta-event
-	         */
-	        if (events.size() == 0) {
-	            events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), 0));
-	            badEvent = event;
-	            throw new ArrayIndexOutOfBoundsException("-1");
-	        }
-	        
-	        byte[] lastEvent = events.get(events.size() - 1).getMessage().getMessage();
-	        if (!Arrays.equals(END_OF_TRACK, lastEvent)) {
-	            events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), 0));
-	        }
-	        
-	        if (events.contains(event)) {
-	        	Log.i("USB MIDI Logger", "event not added 95");
-	            return false;
-	        } 
-	        
-	        /*
-	         * events in the Track must take up position in ascending ticks
-	         */
-	        if (events.size() == 1) {
-	            events.add(0, event);
-	        	Log.i("USB MIDI Logger", "event added 104");
-	        }
-
-	        boolean added = false;
-	        for (int i = 0; i < events.size() - 1; i++) {
-	            if (events.get(i).getTick() <= event.getTick()) {
-	                continue;
-	            }
-	            events.add(i, event);
-	            added = true;
-	        	Log.i("USB MIDI Logger", "event added 112");
-	            break;
-	        }
-	        if (!added) {
-	            events.add(events.size() - 1, event);
-	        }
-		}
-        
-        /*
-         * method Track.ticks() return the biggest value of tick of all events
-         * and save it even I remove event with the biggest values of tick
-         */
-        if (tick < event.getTick()) {
-            tick = event.getTick();
-        }
-        return true;           
     }
 
     public MidiEvent get(int index) throws ArrayIndexOutOfBoundsException {

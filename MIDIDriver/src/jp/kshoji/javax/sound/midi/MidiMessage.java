@@ -1,7 +1,5 @@
 package jp.kshoji.javax.sound.midi;
 
-import java.util.Arrays;
-
 public abstract class MidiMessage implements Cloneable {
 	protected byte[] data;
 

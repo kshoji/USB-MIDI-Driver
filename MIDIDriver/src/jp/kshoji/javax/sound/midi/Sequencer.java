@@ -92,8 +92,16 @@ public interface Sequencer extends MidiDevice {
 
     boolean getTrackSolo(int track);
 
+    /**
+     * Sequencer is recording
+     * @return
+     */
     boolean isRecording();
 
+    /**
+     * Sequencer is playing OR recording
+     * @return
+     */
     boolean isRunning();
 
     void recordDisable(Track track);
@@ -104,8 +112,21 @@ public interface Sequencer extends MidiDevice {
 
     void removeMetaEventListener(MetaEventListener listener);
 
+    /**
+     * Set count of loop
+     * 
+     * @param count
+     * <ul>
+     * <li>LOOP_CONTINUOUSLY: infinity loop </li>
+     * <li>0: play once </li>
+     * <li>1: play twice </li>
+     * </ul>
+     */
     void setLoopCount(int count);
 
+    /**
+     * @param tick -1: end of {@link Sequence}
+     */
     void setLoopEndPoint(long tick);
 
     void setLoopStartPoint(long tick);
@@ -132,11 +153,26 @@ public interface Sequencer extends MidiDevice {
 
     void setTrackSolo(int track, boolean solo);
 
+    /**
+     * Start playing (starting at current sequencer position)
+     */
     void start();
 
+    /**
+     * Start recording (starting at current sequencer position)
+     * 
+     * Current {@link Sequence}'s events are sent to the all {@link Transmitter}.
+     * Received events art also sent to the all {@link Transmitter}.
+     */
     void startRecording();
 
+    /**
+     * Stop playing AND recording.
+     */
     void stop();
 
+    /**
+     * Stop recording. Playing continues.
+     */
     void stopRecording();
 }

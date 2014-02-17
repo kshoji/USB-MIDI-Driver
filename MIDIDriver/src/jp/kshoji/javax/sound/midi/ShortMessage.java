@@ -23,6 +23,7 @@ public class ShortMessage extends MidiMessage {
 	public static final int SYSTEM_RESET = 0xff;
 	
 	public static final int MASK_EVENT = 0xf0;
+	public static final int MASK_CHANNEL = 0x0f;
 
 	public ShortMessage() {
 		this(new byte[] { (byte) NOTE_ON, 0x40, 0x7f });
