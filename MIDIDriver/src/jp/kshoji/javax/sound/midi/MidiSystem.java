@@ -340,23 +340,21 @@ public final class MidiSystem {
 	/**
 	 * get the default {@link Sequencer}, connected to a default device.
 	 * 
-	 * @return
+	 * @return {@link Sequencer} must call the {@link Sequencer#open()} method.
 	 * @throws MidiUnavailableException
 	 */
 	public static Sequencer	getSequencer() throws MidiUnavailableException {
-		// TODO connect to the device
 		return new UsbMidiSequencer();
 	}
 
 	/**
 	 * get the default {@link Sequencer}, optionally connected to a default device.
 	 * 
-	 * @param connected FIXME ignored
-	 * @return
+	 * @param connected ignored
+	 * @return {@link Sequencer} must call the {@link Sequencer#open()} method.
 	 * @throws MidiUnavailableException
 	 */
 	public static Sequencer	getSequencer(boolean connected) throws MidiUnavailableException {
-		// TODO connect to the device
 		return new UsbMidiSequencer();
 	}
 

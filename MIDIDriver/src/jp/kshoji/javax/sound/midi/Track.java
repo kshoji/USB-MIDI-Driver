@@ -8,27 +8,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents MIDI Track
+ * 
+ * @author K.Shoji
+ */
 public class Track {
-    // MetaMessage with MetaMessage.data contains -1, 47 and 0 is meta-event End of Track.
     static final byte[] END_OF_TRACK = new byte[] {-1, 47, 0};
 
-	List<MidiEvent> events; //vector of events contain in the Track
+	final List<MidiEvent> events = new ArrayList<MidiEvent>();
     
-    private MidiEvent badEvent; //variable to save event which I try to add
-                                //to empty Track; see description below
-    
-    private long tick; 
-    
-    Track() {
-        /*
-         * create an empty Track; new Track must contain only meta-event End of Track.
-         */
-        events = new ArrayList<MidiEvent>();
+    private interface Predicate<T> {
+    	/**
+    	 * Check if the type will be kept
+    	 * 
+    	 * @param type
+    	 * @return true if the type must be kept
+    	 */
+    	boolean apply(T type);
     }
     
-    public interface IPredicate<T> { boolean apply(T type); }
-    
-	public static <T> List<T> filter(List<T> target, IPredicate<T> predicate) {
+    /**
+     * Filter specified {@link List} with {@link Predicate} 
+     * 
+     * @param target
+     * @param predicate
+     * @return
+     */
+	static <T> List<T> filter(List<T> target, Predicate<T> predicate) {
 	    List<T> result = new ArrayList<T>();
 	    for (T element: target) {
 	        if (predicate.apply(element)) {
@@ -37,8 +44,21 @@ public class Track {
 	    }
 	    return result;
 	}
-	
+
+	/**
+	 * Utilities for {@link Track}
+	 * 
+	 * @author K.Shoji
+	 */
 	public static class TrackUtils {
+		/**
+		 * Merge the specified {@link Sequencer}'s {@link Track}s into one {@link Track}
+		 * 
+		 * @param sequencer
+		 * @param recordEnable
+		 * @return merged {@link Sequence}
+		 * @throws InvalidMidiDataException
+		 */
 		public static Sequence mergeSequenceTrack(Sequencer sequencer, Map<Track, Set<Integer>> recordEnable) throws InvalidMidiDataException {
 			Sequence source = sequencer.getSequence();
 			Sequence merged = new Sequence(source.getDivisionType(), source.getResolution());
@@ -75,7 +95,12 @@ public class Track {
 			
 			return merged;
 		}
-		
+
+		/**
+		 * Sort the {@link Track}'s {@link MidiEvent}, order by tick and events
+		 * 
+		 * @param track
+		 */
 		public static void sortEvents(Track track) {
 			synchronized (track.events) {
 	        	Collections.sort(track.events, new Comparator<MidiEvent>() {
@@ -109,9 +134,10 @@ public class Track {
 					}
 				});
 	        	
-	        	List<MidiEvent> filtered = filter(track.events, new IPredicate<MidiEvent>() {
+	        	List<MidiEvent> filtered = filter(track.events, new Predicate<MidiEvent>() {
 					@Override
 					public boolean apply(MidiEvent event) {
+						// remove END_OF_TRACK
 						return !Arrays.equals(END_OF_TRACK, event.getMessage().getMessage());
 					}
 				});
@@ -119,12 +145,22 @@ public class Track {
 	        	track.events.clear();
 	        	track.events.addAll(filtered);
 	        	
-	        	// add to last
-	        	track.events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), track.events.get(track.events.size() - 1).getTick() + 1));
+	        	// add END_OF_TRACK to last
+	        	if (track.events.size() == 0) {
+	        		track.events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), 0));
+	        	} else {
+	        		track.events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), track.events.get(track.events.size() - 1).getTick() + 1));
+	        	}
 			}
 		}
 	}
 
+	/**
+	 * Add {@link MidiEvent} to this {@link Track}
+	 * 
+	 * @param event to add
+	 * @return
+	 */
 	public boolean add(MidiEvent event) {
         synchronized (events) {
         	events.add(event);
@@ -133,6 +169,13 @@ public class Track {
         return true;
     }
 
+	/**
+	 * Get specified index of {@link MidiEvent}
+	 * 
+	 * @param index
+	 * @return
+	 * @throws ArrayIndexOutOfBoundsException
+	 */
     public MidiEvent get(int index) throws ArrayIndexOutOfBoundsException {
     	synchronized (events) {
 	        if (index < 0 || index >= events.size()) {
@@ -143,28 +186,18 @@ public class Track {
     }
 
     /**
+     * Remove {@link MidiEvent} from this {@link Track}
      * 
      * @param event to remove
      * @return true if the event was removed
      */
     public boolean remove(MidiEvent event) {
-        /*
-         * if I remove event that equals badEvent, I "delete" badEvent
-         */
-        if (event == badEvent) {
-            badEvent = null;
-            return false;
-        }
-        
         synchronized (events) {
 	        /*
 	         * method Track.ticks() always return the biggest value that ever has been
 	         * in the Track; so only when Track is empty Track.ticks() return 0 
 	         */
 	        if (events.remove(event)) {
-	            if (events.size() == 0) {
-	                tick = 0;
-	            }
 	            return true;
 	        }
         }
@@ -180,7 +213,19 @@ public class Track {
         return events.size();
     }
 
+    /**
+     * Get length of ticks for this {@link Track}
+     * @return
+     */
     public long ticks() {
-        return tick;
+    	TrackUtils.sortEvents(this);
+    
+    	synchronized (events) {
+            if (events.size() == 0) {
+                return 0L;
+            }
+            
+    		return events.get(events.size() - 1).getTick();
+		}
     }
 }

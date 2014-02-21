@@ -12,7 +12,16 @@ public class Sequence {
 	protected float divisionType;
 	protected int resolution;
 	protected Vector<Track> tracks;
-	private Vector<Patch> patches;
+
+	/**
+	 * Check if the divisionType supported
+	 * @param divisionType
+	 * @return
+	 */
+	private static boolean isSupportingDivisionType(float divisionType) {
+		return divisionType == Sequence.PPQ || divisionType == Sequence.SMPTE_24 || divisionType == Sequence.SMPTE_25 || divisionType == Sequence.SMPTE_30 || divisionType == Sequence.SMPTE_30DROP;
+	}
+
 
 	/**
 	 * Create {@link Sequence} with divisionType and resolution.
@@ -22,13 +31,12 @@ public class Sequence {
 	 * @throws InvalidMidiDataException
 	 */
 	public Sequence(float divisionType, int resolution) throws InvalidMidiDataException {
-		if (divisionType != Sequence.PPQ && divisionType != Sequence.SMPTE_24 && divisionType != Sequence.SMPTE_25 && divisionType != Sequence.SMPTE_30 && divisionType != Sequence.SMPTE_30DROP) {
+		if (isSupportingDivisionType(divisionType) == false) {
 			throw new InvalidMidiDataException("Unsupported division type: " + divisionType);
 		}
 		this.divisionType = divisionType;
 		this.resolution = resolution;
 		this.tracks = new Vector<Track>();
-		this.patches = new Vector<Patch>();
 
 	}
 
@@ -41,12 +49,11 @@ public class Sequence {
 	 * @throws InvalidMidiDataException
 	 */
 	public Sequence(float divisionType, int resolution, int numberOfTracks) throws InvalidMidiDataException {
-		if (divisionType != Sequence.PPQ && divisionType != Sequence.SMPTE_24 && divisionType != Sequence.SMPTE_25 && divisionType != Sequence.SMPTE_30 && divisionType != Sequence.SMPTE_30DROP) {
+		if (isSupportingDivisionType(divisionType) == false) {
 			throw new InvalidMidiDataException("Unsupported division type: " + divisionType);
 		}
 		this.divisionType = divisionType;
 		this.resolution = resolution;
-		this.patches = new Vector<Patch>();
 		this.tracks = new Vector<Track>();
 		if (numberOfTracks > 0) {
 			for (int i = 0; i < numberOfTracks; i++) {
@@ -88,23 +95,13 @@ public class Sequence {
 		return divisionType;
 	}
 
+	/**
+	 * Get the {@link Sequence} length in microseconds
+	 * 
+	 * @return {@link Sequence} length in microseconds
+	 */
 	public long getMicrosecondLength() {
 		return (long) (1000000.0f * getTickLength() / ((this.divisionType == 0.0f ? 2 : this.divisionType) * this.resolution * 1.0f));
-	}
-
-	/**
-	 * Get the array of {@link Patch}es
-	 * 
-	 * @return always empty array
-	 */
-	public Patch[] getPatchList() {
-		// FIXME
-		/*
-		 * I don't understand how to works this method, and so I simply return an empty array. 'patches' initializes in the constructor as empty vector
-		 */
-		Patch[] patch = new Patch[patches.size()];
-		patches.toArray(patch);
-		return patch;
 	}
 
 	/**

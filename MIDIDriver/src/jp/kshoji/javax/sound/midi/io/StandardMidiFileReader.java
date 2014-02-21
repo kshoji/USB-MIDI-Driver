@@ -36,7 +36,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 		}
 
 		/**
-		 * Create an ExtendedMidiFileFormat object from the given parameters.
+		 * Create an {@link ExtendedMidiFileFormat} object from the given parameters.
 		 * 
 		 * @param type
 		 *            the MIDI file type (0, 1, or 2)
@@ -180,13 +180,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getSequence(java.io.InputStream)
 	 */
 	public Sequence getSequence(InputStream inputStream) throws InvalidMidiDataException, IOException {
-		MidiDataInputStream midiDataInputStream;
-		if (inputStream instanceof AssetInputStream) {
-			// AssetInputStream can't read with DataInputStream
-			midiDataInputStream = new MidiDataInputStream(convertToByteArrayInputStream(inputStream));
-		} else {
-			midiDataInputStream = new MidiDataInputStream(inputStream);
-		}
+		MidiDataInputStream midiDataInputStream = new MidiDataInputStream(convertToByteArrayInputStream(inputStream));
 		
 		try {
 			ExtendedMidiFileFormat midiFileFormat = (ExtendedMidiFileFormat) getMidiFileFormat(midiDataInputStream);
@@ -217,9 +211,9 @@ public class StandardMidiFileReader extends MidiFileReader {
 						if (runningStatus >= 0 && runningStatus < 0xf0) {
 							message = processRunningMessage(runningStatus, data, midiDataInputStream);
 						} else if (runningStatus >= 0xf0 && runningStatus <= 0xff) {
-							message = processSystemMessage(runningStatus, data, midiDataInputStream);
+							message = processSystemMessage(runningStatus, Integer.valueOf(data), midiDataInputStream);
 						} else {
-							throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", runningStatus, data));
+							throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", Integer.valueOf(runningStatus), Integer.valueOf(data)));
 						}
 					} else if (data < 0xf0) {
 						// Control messages
@@ -281,7 +275,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 			if (data2 == null) {
 				shortMessage.setMessage(data1, midiDataInputStream.readByte(), midiDataInputStream.readByte());
 			} else {
-				shortMessage.setMessage(data1, data2, midiDataInputStream.readByte());
+				shortMessage.setMessage(data1, data2.intValue(), midiDataInputStream.readByte());
 			}
 			break;
 			
@@ -291,7 +285,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 			if (data2 == null) {
 				shortMessage.setMessage(data1, midiDataInputStream.readByte(), 0);
 			} else {
-				shortMessage.setMessage(data1, data2, 0);
+				shortMessage.setMessage(data1, data2.intValue(), 0);
 			}
 			break;
 		
@@ -310,7 +304,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 			break;
 		
 		default://f1, f9, fd
-			throw new InvalidMidiDataException(String.format("Invalid data: %02x", data1));
+			throw new InvalidMidiDataException(String.format("Invalid data: %02x", Integer.valueOf(data1)));
 		}
 		return shortMessage;
 	}
@@ -334,7 +328,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 			break;
 
 		default:
-			throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", data1, data2));
+			throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", Integer.valueOf(data1), Integer.valueOf(data2)));
 		}
 		
 		return shortMessage;

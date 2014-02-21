@@ -51,7 +51,7 @@ public abstract class MidiMessage implements Cloneable {
 			if (needComma) {
 				buffer.append(", ");
 			}
-			buffer.append(String.format("%02x", srcByte & 0xff));
+			buffer.append(String.format("%02x", Integer.valueOf(srcByte & 0xff)));
 			needComma = true;
 		}
 		buffer.append("]");

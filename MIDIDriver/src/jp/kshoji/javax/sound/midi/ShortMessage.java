@@ -1,5 +1,10 @@
 package jp.kshoji.javax.sound.midi;
 
+/**
+ * Represents MIDI Short Message
+ * 
+ * @author K.Shoji
+ */
 public class ShortMessage extends MidiMessage {
 	public static final int NOTE_OFF = 0x80;
 	public static final int NOTE_ON = 0x90;
@@ -25,14 +30,30 @@ public class ShortMessage extends MidiMessage {
 	public static final int MASK_EVENT = 0xf0;
 	public static final int MASK_CHANNEL = 0x0f;
 
+	private static final byte[] defaultMessage = { (byte) NOTE_ON, 0x40, 0x7f };
+
+	/**
+	 * Default constructor, set up 'note on' message.
+	 */
 	public ShortMessage() {
-		this(new byte[] { (byte) NOTE_ON, 0x40, 0x7f });
+		this(defaultMessage);
 	}
 
+	/**
+	 * Constructor with raw data.
+	 * 
+	 * @param data
+	 */
 	protected ShortMessage(byte[] data) {
 		super(data);
 	}
 
+	/**
+	 * Set the kind of message.
+	 * 
+	 * @param status
+	 * @throws InvalidMidiDataException
+	 */
 	public void setMessage(int status) throws InvalidMidiDataException {
 		int dataLength = getDataLength(status);
 		if (dataLength != 0) {
@@ -41,6 +62,14 @@ public class ShortMessage extends MidiMessage {
 		setMessage(status, 0, 0);
 	}
 
+	/**
+	 * Set the entire informations of message.
+	 * 
+	 * @param status
+	 * @param data1
+	 * @param data2
+	 * @throws InvalidMidiDataException
+	 */
 	public void setMessage(int status, int data1, int data2) throws InvalidMidiDataException {
 		int dataLength = getDataLength(status);
 		if (dataLength > 0) {
@@ -53,6 +82,7 @@ public class ShortMessage extends MidiMessage {
 				}
 			}
 		}
+		
 		if (data == null || data.length < dataLength + 1) {
 			data = new byte[dataLength + 1];
 		}
@@ -66,6 +96,15 @@ public class ShortMessage extends MidiMessage {
 		}
 	}
 
+	/**
+	 * Set the entire informations of message.
+	 * 
+	 * @param command
+	 * @param channel
+	 * @param data1
+	 * @param data2
+	 * @throws InvalidMidiDataException
+	 */
 	public void setMessage(int command, int channel, int data1, int data2) throws InvalidMidiDataException {
 		if (command >= 0xf0 || command < 0x80) {
 			throw new InvalidMidiDataException("command out of range: 0x" + Integer.toHexString(command));
@@ -76,14 +115,29 @@ public class ShortMessage extends MidiMessage {
 		setMessage((command & 0xf0) | (channel & 0x0f), data1, data2);
 	}
 
+	/**
+	 * Get the channel of this message.
+	 * 
+	 * @return
+	 */
 	public int getChannel() {
 		return (getStatus() & 0x0f);
 	}
 
+	/**
+	 * Get the kind of command for this message.
+	 * 
+	 * @return
+	 */
 	public int getCommand() {
 		return (getStatus() & 0xf0);
 	}
 
+	/**
+	 * Get the first data for this message.
+	 * 
+	 * @return
+	 */
 	public int getData1() {
 		if (data.length > 1) {
 			return (data[1] & 0xff);
@@ -91,6 +145,11 @@ public class ShortMessage extends MidiMessage {
 		return 0;
 	}
 
+	/**
+	 * Get the second data for this message.
+	 * 
+	 * @return
+	 */
 	public int getData2() {
 		if (data.length > 2) {
 			return (data[2] & 0xff);
@@ -98,6 +157,10 @@ public class ShortMessage extends MidiMessage {
 		return 0;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
 	@Override
 	public Object clone() {
 		byte[] result = new byte[data.length];
