@@ -26,8 +26,12 @@ public class Sequence {
 	/**
 	 * Create {@link Sequence} with divisionType and resolution.
 	 * 
-	 * @param divisionType
+	 * @param divisionType {@link #PPQ}, {@link #SMPTE_24}, {@link #SMPTE_25}, {@link #SMPTE_30DROP}, or {@link #SMPTE_30}.
 	 * @param resolution
+	 * <ul>
+	 * 	<li>divisionType == {@link #PPQ} : 0 - 0x7fff. typically 24, 480</li>
+	 * 	<li>divisionType == {@link #SMPTE_24}, {@link #SMPTE_25}, {@link #SMPTE_30DROP}, {@link #SMPTE_30} : 0 - 0xff</li>
+	 * </ul>
 	 * @throws InvalidMidiDataException
 	 */
 	public Sequence(float divisionType, int resolution) throws InvalidMidiDataException {
@@ -43,9 +47,13 @@ public class Sequence {
 	/**
 	 * Create {@link Sequence} with divisionType, resolution and numberOfTracks.
 	 * 
-	 * @param divisionType
+	 * @param divisionType {@link #PPQ}, {@link #SMPTE_24}, {@link #SMPTE_25}, {@link #SMPTE_30DROP}, or {@link #SMPTE_30}.
 	 * @param resolution
-	 * @param numberOfTracks
+	 * <ul>
+	 * 	<li>divisionType == {@link #PPQ} : 0 - 0x7fff. typically 24, 480</li>
+	 * 	<li>divisionType == {@link #SMPTE_24}, {@link #SMPTE_25}, {@link #SMPTE_30DROP}, {@link #SMPTE_30} : 0 - 0xff</li>
+	 * </ul>
+	 * @param numberOfTracks > 0
 	 * @throws InvalidMidiDataException
 	 */
 	public Sequence(float divisionType, int resolution, int numberOfTracks) throws InvalidMidiDataException {

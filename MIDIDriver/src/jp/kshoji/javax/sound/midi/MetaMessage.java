@@ -11,6 +11,7 @@ public class MetaMessage extends MidiMessage {
 	public static final int META = 0xff;
 	
 	public static final int TYPE_END_OF_TRACK = 0x2f;
+	public static final int TYPE_TEMPO = 0x51;
 	
 	private static final byte[] defaultMessage = { (byte) META, 0 };
 

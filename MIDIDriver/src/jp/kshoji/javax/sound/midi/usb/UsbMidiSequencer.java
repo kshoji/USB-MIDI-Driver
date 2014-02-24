@@ -21,6 +21,7 @@ import jp.kshoji.javax.sound.midi.Receiver;
 import jp.kshoji.javax.sound.midi.Sequence;
 import jp.kshoji.javax.sound.midi.Sequencer;
 import jp.kshoji.javax.sound.midi.ShortMessage;
+import jp.kshoji.javax.sound.midi.SysexMessage;
 import jp.kshoji.javax.sound.midi.Track;
 import jp.kshoji.javax.sound.midi.Track.TrackUtils;
 import jp.kshoji.javax.sound.midi.Transmitter;
@@ -34,29 +35,29 @@ import android.util.SparseBooleanArray;
  * @author K.Shoji
  */
 public class UsbMidiSequencer implements Sequencer {
-	List<Transmitter> transmitters = new ArrayList<Transmitter>();
-	List<Receiver> receivers = new ArrayList<Receiver>();
-	
-	Set<MetaEventListener> metaEventListeners = new HashSet<MetaEventListener>();
-	SparseArray<Set<ControllerEventListener>> controllerEventListenerMap = new SparseArray<Set<ControllerEventListener>>();
+	private static final SyncMode[] MASTER_SYNC_MODES = new SyncMode[] { SyncMode.INTERNAL_CLOCK };
+	private static final SyncMode[] SLAVE_SYNC_MODES = new SyncMode[] { SyncMode.NO_SYNC };
 
+	final List<Transmitter> transmitters = new ArrayList<Transmitter>();
+	final List<Receiver> receivers = new ArrayList<Receiver>();
+	final Set<MetaEventListener> metaEventListeners = new HashSet<MetaEventListener>();
+	final SparseArray<Set<ControllerEventListener>> controllerEventListenerMap = new SparseArray<Set<ControllerEventListener>>();
+	final Map<Track, Set<Integer>> recordEnable = new HashMap<Track, Set<Integer>>();
+	final SequencerThread sequencerThread = new SequencerThread();
 	Sequence sequence = null;
 	private boolean isOpen = false;
-	boolean isRunning = false;
+	volatile boolean isRunning = false;
 	boolean isRecording = false;
 	private int loopCount = 0;
+	private long loopStartPoint = 0;
+	private long loopEndPoint = -1;
 	private SyncMode masterSyncMode = SyncMode.INTERNAL_CLOCK;
 	private SyncMode slaveSyncMode = SyncMode.NO_SYNC;
 	float tempoFactor = 1.0f;
-	private long loopStartPoint = 0;
-	private long loopEndPoint = -1;
-	private SparseBooleanArray trackMute = new SparseBooleanArray();
-	private SparseBooleanArray trackSolo = new SparseBooleanArray();
-	private float tempoInBPM = 60f;
-	Map<Track, Set<Integer>> recordEnable = new HashMap<Track, Set<Integer>>();
+	private final SparseBooleanArray trackMute = new SparseBooleanArray();
+	private final SparseBooleanArray trackSolo = new SparseBooleanArray();
+	private float tempoInBPM = 120f;
 
-	SequencerThread sequencerThread = new SequencerThread();
-	
 	/**
 	 * Thread for this Sequencer
 	 * 
@@ -64,7 +65,7 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	private class SequencerThread extends Thread {
 		private long tickPosition = 0;
-		
+
 		// recording
 		long recordingStartedTime;
 		long recordStartedTick;
@@ -75,26 +76,28 @@ public class UsbMidiSequencer implements Sequencer {
 		long tickPositionSetTime;
 		long runningStoppedTime;
 		boolean needRefreshPlayingTrack = false;
-		
+
 		public SequencerThread() {
 		}
 
 		/**
 		 * Get current tick position
+		 * 
 		 * @param tick
 		 */
 		long getTickPosition() {
 			if (isRunning) {
 				// running
-				return tickPosition + (long) ((System.currentTimeMillis() - tickPositionSetTime) * 1000L * getTicksPerMicrosecond());
+				return (long) (tickPosition + ((System.currentTimeMillis() - tickPositionSetTime) * 1000f * getTicksPerMicrosecond()));
 			} else {
 				// stopping
-				return tickPosition + (long) ((runningStoppedTime - tickPositionSetTime) * 1000L * getTicksPerMicrosecond());
+				return (long) (tickPosition + ((runningStoppedTime - tickPositionSetTime) * 1000f * getTicksPerMicrosecond()));
 			}
 		}
 
 		/**
 		 * Set current tick position
+		 * 
 		 * @param tick
 		 */
 		public void setTickPosision(long tick) {
@@ -112,7 +115,7 @@ public class UsbMidiSequencer implements Sequencer {
 				// already recording
 				return;
 			}
-			
+
 			recordingTrack = sequence.createTrack();
 			recordingStartedTime = System.currentTimeMillis();
 			recordStartedTick = getTickPosition();
@@ -125,40 +128,40 @@ public class UsbMidiSequencer implements Sequencer {
 		 */
 		void stopRecording() {
 			if (isRecording == false) {
-				// already recording
+				// already stopped
 				return;
 			}
-			
+
 			long recordEndedTime = System.currentTimeMillis();
 			isRecording = false;
-			
+
 			for (Track track : sequence.getTracks()) {
 				Set<Integer> recordEnableChannels = recordEnable.get(track);
-				
+
 				// remove events while recorded time
 				Set<MidiEvent> eventToRemoval = new HashSet<MidiEvent>();
 				for (int trackIndex = 0; trackIndex < track.size(); trackIndex++) {
 					MidiEvent midiEvent = track.get(trackIndex);
-					if (isRecordable(recordEndedTime, recordEnableChannels, midiEvent) && // 
+					if (isRecordable(recordEndedTime, recordEnableChannels, midiEvent) && //
 							midiEvent.getTick() >= recordingStartedTime && midiEvent.getTick() <= recordEndedTime) { // recorded time
 						eventToRemoval.add(midiEvent);
 					}
 				}
-				
+
 				for (MidiEvent event : eventToRemoval) {
 					track.remove(event);
 				}
-				
+
 				// add recorded events
 				for (int eventIndex = 0; eventIndex < recordingTrack.size(); eventIndex++) {
 					if (isRecordable(recordEndedTime, recordEnableChannels, recordingTrack.get(eventIndex))) {
 						track.add(recordingTrack.get(eventIndex));
 					}
 				}
-				
+
 				TrackUtils.sortEvents(track);
 			}
-			
+
 			// refresh playingTrack
 			needRefreshPlayingTrack = true;
 		}
@@ -171,12 +174,12 @@ public class UsbMidiSequencer implements Sequencer {
 				// already playing
 				return;
 			}
-			
+
 			tickPosition = getLoopStartPoint();
 			tickPositionSetTime = System.currentTimeMillis();
 			isRunning = true;
 		}
-		
+
 		/**
 		 * Stop playing
 		 */
@@ -185,10 +188,10 @@ public class UsbMidiSequencer implements Sequencer {
 				// already stopping
 				return;
 			}
-			
+
 			isRunning = false;
 			runningStoppedTime = System.currentTimeMillis();
-			
+
 			// force stop sleeping
 			interrupt();
 		}
@@ -215,9 +218,10 @@ public class UsbMidiSequencer implements Sequencer {
 				}
 			}
 		}
-		
+
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Thread#run()
 		 */
 		@Override
@@ -225,97 +229,151 @@ public class UsbMidiSequencer implements Sequencer {
 			super.run();
 
 			refreshPlayingTrack();
-			
-			final float ticksPerMicrosecond = getTicksPerMicrosecond();
-			
+
 			// recording
 			Receiver midiEventRecordingReceiver = new Receiver() {
 				@Override
 				public void send(MidiMessage message, long timeStamp) {
 					if (isRecording) {
-						recordingTrack.add(new MidiEvent(message, recordStartedTick + (long) ((System.currentTimeMillis() - recordingStartedTime) * 1000L * ticksPerMicrosecond)));
+						recordingTrack.add(new MidiEvent(message, (long) (recordStartedTick + ((System.currentTimeMillis() - recordingStartedTime) * 1000f * getTicksPerMicrosecond()))));
 					}
-					
+
 					fireEventListeners(message);
 				}
-				
+
 				@Override
 				public void close() {
 					// do nothing
 				}
 			};
-			
+
 			for (Transmitter transmitter : transmitters) {
 				// receive from all transmitters
 				transmitter.setReceiver(midiEventRecordingReceiver);
 			}
-			
+
 			// playing
-			while (true) {
-				if (isRunning) {
-					if (playingTrack == null) {
-						continue;
-					}
-					
-					float microsecondsPerTick = 1.f / ticksPerMicrosecond;
+			while (isRunning) {
+				if (playingTrack == null) {
+					continue;
+				}
 
-					// process looping
-					for (int loop = 0; loop < getLoopCount() + 1; loop = (getLoopCount() == LOOP_CONTINUOUSLY ? loop : loop + 1)) {
+				// process looping
+				for (int loop = 0; loop < getLoopCount() + 1; loop = (getLoopCount() == LOOP_CONTINUOUSLY ? loop : loop + 1)) {
+					if (needRefreshPlayingTrack) {
+						refreshPlayingTrack();
+					}
+
+					for (int i = 0; i < playingTrack.size(); i++) {
+						MidiEvent midiEvent = playingTrack.get(i);
+
+						MidiMessage midiMessage = midiEvent.getMessage();
 						if (needRefreshPlayingTrack) {
-							refreshPlayingTrack();
-						}
-						
-						for (int i = 0; i < playingTrack.size(); i++) {
-							MidiEvent midiEvent = playingTrack.get(i);
-
-							if (needRefreshPlayingTrack) {
-								// skip to lastTick
-								if (midiEvent.getTick() < tickPosition) {
+							// skip to lastTick
+							if (midiEvent.getTick() < tickPosition) {
+								if (midiMessage instanceof MetaMessage) {
+									// process tempo change message
+									MetaMessage metaMessage = (MetaMessage) midiMessage;
+									if (processTempoChange(metaMessage) == false) {
+										// not tempo message, process the event
+										for (Receiver receiver : receivers) {
+											receiver.send(midiMessage, 0);
+										}
+									}
 									continue;
-								} else {
-									// refresh playingTrack completed
-									needRefreshPlayingTrack = false;
+								} else if (midiMessage instanceof SysexMessage) {
+									// process system messages
+									for (Receiver receiver : receivers) {
+										receiver.send(midiMessage, 0);
+									}
+								} else if (midiMessage instanceof ShortMessage) {
+									// process control change / program change messages
+									ShortMessage shortMessage = (ShortMessage) midiMessage;
+									switch (shortMessage.getCommand()) {
+									case ShortMessage.NOTE_ON:
+									case ShortMessage.NOTE_OFF:
+										break;
+									default:
+										for (Receiver receiver : receivers) {
+											receiver.send(midiMessage, 0);
+										}
+										break;
+									}
 								}
-							}
-							
-							if (midiEvent.getTick() < getLoopStartPoint() || (getLoopEndPoint() != -1 && midiEvent.getTick() > getLoopEndPoint())) {
-								// outer loop
-								tickPosition = midiEvent.getTick();
-								tickPositionSetTime = System.currentTimeMillis();
+
 								continue;
+							} else {
+								// refresh playingTrack completed
+								needRefreshPlayingTrack = false;
 							}
-							
-							try {
-								long sleepLength = (long) (microsecondsPerTick * (midiEvent.getTick() - tickPosition) / 1000f / tempoFactor);
-								if (sleepLength > 0) {
-									sleep(sleepLength);
-								}
-								tickPosition = midiEvent.getTick();
-								tickPositionSetTime = System.currentTimeMillis();
-							} catch (InterruptedException e) {
-								// ignore exception
-							}
-
-							if (isRunning == false) {
-								break;
-							}
-							
-							if (needRefreshPlayingTrack) {
-								break;
-							}
-
-							// send MIDI events
-							for (Receiver receiver : receivers) {
-								receiver.send(midiEvent.getMessage(), 0);
-							}
-							
-							fireEventListeners(midiEvent.getMessage());
 						}
+
+						if (midiEvent.getTick() < getLoopStartPoint() || (getLoopEndPoint() != -1 && midiEvent.getTick() > getLoopEndPoint())) {
+							// outer loop
+							tickPosition = midiEvent.getTick();
+							tickPositionSetTime = System.currentTimeMillis();
+							continue;
+						}
+
+						try {
+							long sleepLength = (long) ((1.0f / getTicksPerMicrosecond()) * (midiEvent.getTick() - tickPosition) / 1000f / tempoFactor);
+							if (sleepLength > 0) {
+								sleep(sleepLength);
+							}
+							tickPosition = midiEvent.getTick();
+							tickPositionSetTime = System.currentTimeMillis();
+						} catch (InterruptedException e) {
+							// ignore exception
+						}
+
+						if (isRunning == false) {
+							break;
+						}
+
+						if (needRefreshPlayingTrack) {
+							break;
+						}
+
+						// process tempo change message
+						if (midiMessage instanceof MetaMessage) {
+							MetaMessage metaMessage = (MetaMessage) midiMessage;
+							processTempoChange(metaMessage);
+						}
+
+						// send MIDI events
+						for (Receiver receiver : receivers) {
+							receiver.send(midiMessage, 0);
+						}
+
+						fireEventListeners(midiMessage);
 					}
-					isRunning = false;
-					runningStoppedTime = System.currentTimeMillis();
+				}
+				
+				// loop end
+				isRunning = false;
+				runningStoppedTime = System.currentTimeMillis();
+			}
+		}
+
+		/**
+		 * Processes the tempo change events
+		 * 
+		 * @param metaMessage
+		 * @return true if the tempo changed
+		 */
+		private boolean processTempoChange(MetaMessage metaMessage) {
+			if (metaMessage.getLength() == 6 && metaMessage.getStatus() == MetaMessage.META) {
+				byte[] message = metaMessage.getMessage();
+				if ((message[1] & 0xff) == MetaMessage.TYPE_TEMPO && message[2] == 3) {
+					int tempo = (message[5] & 0xff) | //
+							((message[4] & 0xff) << 8) | //
+							((message[3] & 0xff) << 16);
+
+					setTempoInMPQ(tempo);
+					return true;
 				}
 			}
+			return false;
 		}
 
 		/**
@@ -326,7 +384,7 @@ public class UsbMidiSequencer implements Sequencer {
 			if (tracks != null && tracks.length > 0) {
 				try {
 					// at first, merge all track into one track
-					playingTrack = TrackUtils.mergeSequenceTrack(UsbMidiSequencer.this, recordEnable).getTracks()[0];
+					playingTrack = TrackUtils.mergeSequenceToTrack(UsbMidiSequencer.this, recordEnable);
 				} catch (InvalidMidiDataException e) {
 					// ignore exception
 				}
@@ -345,11 +403,11 @@ public class UsbMidiSequencer implements Sequencer {
 			if (recordEnableChannels == null) {
 				return false;
 			}
-			
+
 			if (recordEnableChannels.contains(Integer.valueOf(-1))) {
 				return true;
 			}
-			
+
 			int status = midiEvent.getMessage().getStatus();
 			switch (status & ShortMessage.MASK_EVENT) {
 			// channel messages
@@ -362,13 +420,13 @@ public class UsbMidiSequencer implements Sequencer {
 			case ShortMessage.PITCH_BEND:
 				// recorded Track and channel
 				return recordEnableChannels.contains(Integer.valueOf(status & ShortMessage.MASK_CHANNEL));
-			// exclusive messages
+				// exclusive messages
 			default:
 				return true;
 			}
 		}
 	}
-	
+
 	/**
 	 * Create {@link UsbMidiSequencer} instance.
 	 * 
@@ -378,12 +436,22 @@ public class UsbMidiSequencer implements Sequencer {
 		transmitters.add(MidiSystem.getTransmitter());
 		receivers.add(MidiSystem.getReceiver());
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getDeviceInfo()
+	 */
 	@Override
 	public Info getDeviceInfo() {
 		return new Info("UsbMidiSequencer", "jp.kshoji", "Android USB MIDI Sequencer", "0.1");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#open()
+	 */
 	@Override
 	public void open() throws MidiUnavailableException {
 		// open devices
@@ -393,19 +461,24 @@ public class UsbMidiSequencer implements Sequencer {
 				usbMidiReceiver.open();
 			}
 		}
-		
+
 		for (Transmitter transmitter : transmitters) {
 			if (transmitter instanceof UsbMidiTransmitter) {
 				UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
 				usbMidiTransmitter.open();
 			}
 		}
-		
+
 		sequencerThread.start();
-		
+
 		isOpen = true;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#close()
+	 */
 	@Override
 	public void close() {
 		// close devices
@@ -415,54 +488,94 @@ public class UsbMidiSequencer implements Sequencer {
 				usbMidiReceiver.close();
 			}
 		}
-		
+
 		for (Transmitter transmitter : transmitters) {
 			if (transmitter instanceof UsbMidiTransmitter) {
 				UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
 				usbMidiTransmitter.close();
 			}
 		}
-		
+
 		sequencerThread.stop();
-		
+
 		isOpen = false;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#isOpen()
+	 */
 	@Override
 	public boolean isOpen() {
 		return isOpen;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getMaxReceivers()
+	 */
 	@Override
 	public int getMaxReceivers() {
 		return receivers.size();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getMaxTransmitters()
+	 */
 	@Override
 	public int getMaxTransmitters() {
 		return transmitters.size();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getReceiver()
+	 */
 	@Override
 	public Receiver getReceiver() throws MidiUnavailableException {
 		return receivers.get(0);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getReceivers()
+	 */
 	@Override
 	public List<Receiver> getReceivers() {
 		return receivers;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getTransmitter()
+	 */
 	@Override
 	public Transmitter getTransmitter() throws MidiUnavailableException {
 		return transmitters.get(0);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.MidiDevice#getTransmitters()
+	 */
 	@Override
 	public List<Transmitter> getTransmitters() {
 		return transmitters;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#addControllerEventListener(jp.kshoji.javax.sound.midi.ControllerEventListener, int[])
+	 */
 	@Override
 	public int[] addControllerEventListener(ControllerEventListener listener, int[] controllers) {
 		for (int controllerId : controllers) {
@@ -476,6 +589,11 @@ public class UsbMidiSequencer implements Sequencer {
 		return controllers;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#removeControllerEventListener(jp.kshoji.javax.sound.midi.ControllerEventListener, int[])
+	 */
 	@Override
 	public int[] removeControllerEventListener(ControllerEventListener listener, int[] controllers) {
 		List<Integer> resultList = new ArrayList<Integer>();
@@ -489,7 +607,7 @@ public class UsbMidiSequencer implements Sequencer {
 			}
 			controllerEventListenerMap.put(controllerId, listeners);
 		}
-		
+
 		// returns currently registered controller ids for the argument specified listener
 		int[] resultPrimitiveArray = new int[resultList.size()];
 		for (int i = 0; i < resultPrimitiveArray.length; i++) {
@@ -497,58 +615,108 @@ public class UsbMidiSequencer implements Sequencer {
 			if (resultValue == null) {
 				continue;
 			}
-			
+
 			resultPrimitiveArray[i] = resultValue.intValue();
 		}
 		return resultPrimitiveArray;
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#addMetaEventListener(jp.kshoji.javax.sound.midi.MetaEventListener)
+	 */
 	@Override
 	public boolean addMetaEventListener(MetaEventListener listener) {
 		// return true if registered successfully
 		return metaEventListeners.add(listener);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#removeMetaEventListener(jp.kshoji.javax.sound.midi.MetaEventListener)
+	 */
 	@Override
 	public void removeMetaEventListener(MetaEventListener listener) {
 		metaEventListeners.remove(listener);
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getLoopCount()
+	 */
 	@Override
 	public int getLoopCount() {
 		return loopCount;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setLoopCount(int)
+	 */
 	@Override
 	public void setLoopCount(int count) {
 		loopCount = count;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getLoopStartPoint()
+	 */
 	@Override
 	public long getLoopStartPoint() {
 		return this.loopStartPoint;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setLoopStartPoint(long)
+	 */
 	@Override
 	public void setLoopStartPoint(long tick) {
 		loopStartPoint = tick;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getLoopEndPoint()
+	 */
 	@Override
 	public long getLoopEndPoint() {
 		return loopEndPoint;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setLoopEndPoint(long)
+	 */
 	@Override
 	public void setLoopEndPoint(long tick) {
 		loopEndPoint = tick;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getMasterSyncMode()
+	 */
 	@Override
 	public SyncMode getMasterSyncMode() {
 		return masterSyncMode;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setMasterSyncMode(jp.kshoji.javax.sound.midi.Sequencer.SyncMode)
+	 */
 	@Override
 	public void setMasterSyncMode(SyncMode sync) {
 		for (SyncMode availableMode : getMasterSyncModes()) {
@@ -558,16 +726,31 @@ public class UsbMidiSequencer implements Sequencer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getMasterSyncModes()
+	 */
 	@Override
 	public SyncMode[] getMasterSyncModes() {
-		return new SyncMode[] { SyncMode.INTERNAL_CLOCK };
+		return MASTER_SYNC_MODES;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getMicrosecondPosition()
+	 */
 	@Override
 	public long getMicrosecondPosition() {
 		return (long) (getTickPosition() * getTicksPerMicrosecond());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setMicrosecondPosition(long)
+	 */
 	@Override
 	public void setMicrosecondPosition(long microseconds) {
 		setTickPosition((long) (getTicksPerMicrosecond() * microseconds));
@@ -581,40 +764,71 @@ public class UsbMidiSequencer implements Sequencer {
 	float getTicksPerMicrosecond() {
 		float ticksPerMicrosecond;
 		if (sequence.getDivisionType() == Sequence.PPQ) {
-			// PPQ : 2 * resolution / 1000000 ticks per microsecond
-			ticksPerMicrosecond = 2f * sequence.getResolution() / 1000000f;
+			// PPQ : tempoInBPM / 60f * resolution / 1000000 ticks per microsecond
+			ticksPerMicrosecond = tempoInBPM / 60f * sequence.getResolution() / 1000000f;
 		} else {
 			// SMPTE : divisionType * resolution / 1000000 ticks per microsecond
 			ticksPerMicrosecond = sequence.getDivisionType() * sequence.getResolution() / 1000000f;
 		}
+
 		return ticksPerMicrosecond;
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getMicrosecondLength()
+	 */
 	@Override
 	public long getMicrosecondLength() {
 		return sequence.getMicrosecondLength();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getSequence()
+	 */
 	@Override
 	public Sequence getSequence() {
 		return sequence;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setSequence(java.io.InputStream)
+	 */
 	@Override
 	public void setSequence(InputStream stream) throws IOException, InvalidMidiDataException {
 		setSequence(new StandardMidiFileReader().getSequence(stream));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setSequence(jp.kshoji.javax.sound.midi.Sequence)
+	 */
 	@Override
 	public void setSequence(Sequence sequence) throws InvalidMidiDataException {
 		this.sequence = sequence;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getSlaveSyncMode()
+	 */
 	@Override
 	public SyncMode getSlaveSyncMode() {
 		return slaveSyncMode;
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setSlaveSyncMode(jp.kshoji.javax.sound.midi.Sequencer.SyncMode)
+	 */
 	@Override
 	public void setSlaveSyncMode(SyncMode sync) {
 		for (SyncMode availableMode : getSlaveSyncModes()) {
@@ -624,45 +838,85 @@ public class UsbMidiSequencer implements Sequencer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getSlaveSyncModes()
+	 */
 	@Override
 	public SyncMode[] getSlaveSyncModes() {
-		return new SyncMode[] { SyncMode.NO_SYNC };
+		return SLAVE_SYNC_MODES;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTempoFactor()
+	 */
 	@Override
 	public float getTempoFactor() {
 		return tempoFactor;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setTempoFactor(float)
+	 */
 	@Override
 	public void setTempoFactor(float factor) {
 		if (factor <= 0f) {
 			throw new IllegalArgumentException("The tempo factor must be larger than 0f.");
 		}
-		
-		tempoFactor  = factor;
+
+		tempoFactor = factor;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTempoInBPM()
+	 */
 	@Override
 	public float getTempoInBPM() {
 		return tempoInBPM;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setTempoInBPM(float)
+	 */
 	@Override
 	public void setTempoInBPM(float bpm) {
 		tempoInBPM = bpm;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTempoInMPQ()
+	 */
 	@Override
 	public float getTempoInMPQ() {
 		return 60000000f / tempoInBPM;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setTempoInMPQ(float)
+	 */
 	@Override
 	public void setTempoInMPQ(float mpq) {
 		tempoInBPM = 60000000f / mpq;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTickLength()
+	 */
 	@Override
 	public long getTickLength() {
 		if (sequence == null) {
@@ -671,41 +925,71 @@ public class UsbMidiSequencer implements Sequencer {
 		return sequence.getTickLength();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTickPosition()
+	 */
 	@Override
 	public long getTickPosition() {
-		if (sequencerThread == null) {
-			return 0L;
-		}
 		return sequencerThread.getTickPosition();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setTickPosition(long)
+	 */
 	@Override
 	public void setTickPosition(long tick) {
-		if (sequencerThread != null) {
-			sequencerThread.setTickPosision(tick);
-		}
+		sequencerThread.setTickPosision(tick);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTrackMute(int)
+	 */
 	@Override
 	public boolean getTrackMute(int track) {
 		return trackMute.get(track);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setTrackMute(int, boolean)
+	 */
 	@Override
 	public void setTrackMute(int track, boolean mute) {
 		trackMute.put(track, mute);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#getTrackSolo(int)
+	 */
 	@Override
 	public boolean getTrackSolo(int track) {
 		return trackMute.get(track);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#setTrackSolo(int, boolean)
+	 */
 	@Override
 	public void setTrackSolo(int track, boolean solo) {
 		trackSolo.put(track, solo);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#recordDisable(jp.kshoji.javax.sound.midi.Track)
+	 */
 	@Override
 	public void recordDisable(Track track) {
 		if (track == null) {
@@ -720,13 +1004,18 @@ public class UsbMidiSequencer implements Sequencer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#recordEnable(jp.kshoji.javax.sound.midi.Track, int)
+	 */
 	@Override
 	public void recordEnable(Track track, int channel) {
 		Set<Integer> trackRecordEnable = recordEnable.get(track);
 		if (trackRecordEnable == null) {
 			trackRecordEnable = new HashSet<Integer>();
 		}
-		
+
 		if (channel == -1) {
 			for (int i = 0; i < 16; i++) {
 				// record to the all channels
@@ -739,56 +1028,68 @@ public class UsbMidiSequencer implements Sequencer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#startRecording()
+	 */
 	@Override
 	public void startRecording() {
 		// start playing AND recording
-		if (isRunning == false) {
-			isRunning = true;
-		}
-		if (isRecording == false) {
-			isRecording = true;
-			sequencerThread.startRecording();
-		}
+		sequencerThread.startRecording();
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#isRecording()
+	 */
 	@Override
 	public boolean isRecording() {
 		return isRecording;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#stopRecording()
+	 */
 	@Override
 	public void stopRecording() {
 		// stop recording
-		if (isRecording) {
-			isRecording = false;
-			sequencerThread.stopRecording();
-		}
+		sequencerThread.stopRecording();
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#start()
+	 */
 	@Override
 	public void start() {
 		// start playing
-		if (isRunning == false) {
-			isRunning = true;
-		}
 		sequencerThread.startPlaying();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#isRunning()
+	 */
 	@Override
 	public boolean isRunning() {
 		return isRunning;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jp.kshoji.javax.sound.midi.Sequencer#stop()
+	 */
 	@Override
 	public void stop() {
 		// stop playing AND recording
-		if (isRecording) {
-			sequencerThread.stopRecording();
-			isRecording = false;
-		}
-		if (isRunning) {
-			sequencerThread.stopPlaying();
-			isRunning = false;
-		}
+		sequencerThread.stopRecording();
+		sequencerThread.stopPlaying();
 	}
 }
