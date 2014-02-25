@@ -48,10 +48,8 @@ public class SysexMessage extends MidiMessage {
 			throw new InvalidMidiDataException("Invalid status byte for SysexMessage: 0x" + Integer.toHexString(status));
 		}
 
-		if (this.data == null || this.data.length < data.length + 1) {
-			// extend 1 byte
-			this.data = new byte[data.length + 1];
-		}
+		// extend 1 byte
+		this.data = new byte[data.length + 1];
 
 		this.data[0] = (byte) (status & 0xff);
 		if (data.length > 0) {

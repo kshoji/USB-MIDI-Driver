@@ -27,7 +27,7 @@ public class Track {
 			// sort by tick
 			int tickDifference = (int) (lhs.getTick() - rhs.getTick());
 			if (tickDifference != 0) {
-				return tickDifference;
+				return tickDifference * 256;
 			}
 
 			// same timing
@@ -78,7 +78,7 @@ public class Track {
 					hasSoloTrack = true;
 				}
 			}
-
+			
 			for (int trackIndex = 0; trackIndex < tracks.length; trackIndex++) {
 				if (sequencer.getTrackMute(trackIndex)) {
 					// muted track, ignore
@@ -97,7 +97,7 @@ public class Track {
 			}
 
 			sortEvents(mergedTrack);
-
+			
 			return mergedTrack;
 		}
 
@@ -108,9 +108,6 @@ public class Track {
 		 */
 		public static void sortEvents(Track track) {
 			synchronized (track.events) {
-				// sort the events
-				Collections.sort(track.events, midiEventComparator);
-
 				// remove all of END_OF_TRACK
 				List<MidiEvent> filtered = new ArrayList<MidiEvent>();
 				for (MidiEvent event : track.events) {
@@ -120,7 +117,10 @@ public class Track {
 				}
 				track.events.clear();
 				track.events.addAll(filtered);
-
+				
+				// sort the events
+				Collections.sort(track.events, midiEventComparator);
+				
 				// add END_OF_TRACK to last
 				if (track.events.size() == 0) {
 					track.events.add(new MidiEvent(new MetaMessage(END_OF_TRACK), 0));
@@ -140,10 +140,8 @@ public class Track {
 	 */
 	public boolean add(MidiEvent event) {
 		synchronized (events) {
-			events.add(event);
+			return events.add(event);
 		}
-
-		return true;
 	}
 
 	/**
@@ -155,9 +153,6 @@ public class Track {
 	 */
 	public MidiEvent get(int index) throws ArrayIndexOutOfBoundsException {
 		synchronized (events) {
-			if (index < 0 || index >= events.size()) {
-				throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Size: " + events.size());
-			}
 			return events.get(index);
 		}
 	}
@@ -171,15 +166,8 @@ public class Track {
 	 */
 	public boolean remove(MidiEvent event) {
 		synchronized (events) {
-			/*
-			 * method Track.ticks() always return the biggest value that ever has been in the Track; so only when Track is empty Track.ticks() return 0
-			 */
-			if (events.remove(event)) {
-				return true;
-			}
+			return events.remove(event);
 		}
-
-		return false;
 	}
 
 	/**
@@ -188,7 +176,9 @@ public class Track {
 	 * @return
 	 */
 	public int size() {
-		return events.size();
+		synchronized (events) {
+			return events.size();
+		}
 	}
 
 	/**

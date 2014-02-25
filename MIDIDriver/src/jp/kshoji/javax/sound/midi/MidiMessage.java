@@ -44,7 +44,7 @@ public abstract class MidiMessage implements Cloneable {
 	}
 
 	static String toHexString(byte[] src) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append("[");
 		boolean needComma = false;
 		for (byte srcByte : src) {

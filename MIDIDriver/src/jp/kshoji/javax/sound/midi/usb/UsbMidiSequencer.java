@@ -46,18 +46,19 @@ public class UsbMidiSequencer implements Sequencer {
 	final SequencerThread sequencerThread = new SequencerThread();
 	Sequence sequence = null;
 	private boolean isOpen = false;
-	volatile boolean isRunning = false;
-	boolean isRecording = false;
 	private int loopCount = 0;
 	private long loopStartPoint = 0;
 	private long loopEndPoint = -1;
+	volatile float tempoFactor = 1.0f;
 	private SyncMode masterSyncMode = SyncMode.INTERNAL_CLOCK;
 	private SyncMode slaveSyncMode = SyncMode.NO_SYNC;
-	float tempoFactor = 1.0f;
 	private final SparseBooleanArray trackMute = new SparseBooleanArray();
 	private final SparseBooleanArray trackSolo = new SparseBooleanArray();
 	private float tempoInBPM = 120f;
 
+	volatile boolean isRunning = false;
+	volatile boolean isRecording = false;
+	
 	/**
 	 * Thread for this Sequencer
 	 * 
@@ -77,7 +78,7 @@ public class UsbMidiSequencer implements Sequencer {
 		long runningStoppedTime;
 		boolean needRefreshPlayingTrack = false;
 
-		public SequencerThread() {
+		SequencerThread() {
 		}
 
 		/**
@@ -120,7 +121,6 @@ public class UsbMidiSequencer implements Sequencer {
 			recordingStartedTime = System.currentTimeMillis();
 			recordStartedTick = getTickPosition();
 			isRecording = true;
-			startPlaying();
 		}
 
 		/**
@@ -178,6 +178,10 @@ public class UsbMidiSequencer implements Sequencer {
 			tickPosition = getLoopStartPoint();
 			tickPositionSetTime = System.currentTimeMillis();
 			isRunning = true;
+			
+			synchronized (sequencerThread) {
+				sequencerThread.notify();
+			}
 		}
 
 		/**
@@ -253,11 +257,28 @@ public class UsbMidiSequencer implements Sequencer {
 			}
 
 			// playing
-			while (isRunning) {
-				if (playingTrack == null) {
-					continue;
+			while (true) {
+				synchronized (this) {
+					try {
+						// wait for being notified
+						if (!isRunning) {
+							this.wait();
+						}
+					} catch (InterruptedException e) {
+						// ignore exception
+					}
 				}
-
+				
+				if (playingTrack == null) {
+					if (needRefreshPlayingTrack) {
+						refreshPlayingTrack();
+					}
+					
+					if (playingTrack == null) {
+						continue;
+					}
+				}
+				
 				// process looping
 				for (int loop = 0; loop < getLoopCount() + 1; loop = (getLoopCount() == LOOP_CONTINUOUSLY ? loop : loop + 1)) {
 					if (needRefreshPlayingTrack) {
@@ -266,8 +287,8 @@ public class UsbMidiSequencer implements Sequencer {
 
 					for (int i = 0; i < playingTrack.size(); i++) {
 						MidiEvent midiEvent = playingTrack.get(i);
-
 						MidiMessage midiMessage = midiEvent.getMessage();
+
 						if (needRefreshPlayingTrack) {
 							// skip to lastTick
 							if (midiEvent.getTick() < tickPosition) {
@@ -316,7 +337,7 @@ public class UsbMidiSequencer implements Sequencer {
 						}
 
 						try {
-							long sleepLength = (long) ((1.0f / getTicksPerMicrosecond()) * (midiEvent.getTick() - tickPosition) / 1000f / tempoFactor);
+							long sleepLength = (long) ((1.0f / getTicksPerMicrosecond()) * (midiEvent.getTick() - tickPosition) / 1000f / getTempoFactor());
 							if (sleepLength > 0) {
 								sleep(sleepLength);
 							}
@@ -659,6 +680,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public void setLoopCount(int count) {
+		if (count != LOOP_CONTINUOUSLY && count < 0) {
+			throw new IllegalArgumentException("Invalid loop count value:" + count);
+		}
 		loopCount = count;
 	}
 
@@ -679,6 +703,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public void setLoopStartPoint(long tick) {
+		if (tick > getTickLength() || (loopEndPoint != -1 && tick > loopEndPoint) || tick < 0) {
+			throw new IllegalArgumentException("Invalid loop start point value:" + tick);
+		}
 		loopStartPoint = tick;
 	}
 
@@ -699,6 +726,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public void setLoopEndPoint(long tick) {
+		if (tick > getTickLength() || (tick != -1 && loopStartPoint > tick) || tick < -1) {
+			throw new IllegalArgumentException("Invalid loop end point value:" + tick);
+		}
 		loopEndPoint = tick;
 	}
 
@@ -812,6 +842,7 @@ public class UsbMidiSequencer implements Sequencer {
 	@Override
 	public void setSequence(Sequence sequence) throws InvalidMidiDataException {
 		this.sequence = sequence;
+		sequencerThread.needRefreshPlayingTrack = true;
 	}
 
 	/*
@@ -1037,6 +1068,7 @@ public class UsbMidiSequencer implements Sequencer {
 	public void startRecording() {
 		// start playing AND recording
 		sequencerThread.startRecording();
+		sequencerThread.startPlaying();
 	}
 
 	/*

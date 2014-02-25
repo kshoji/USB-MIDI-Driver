@@ -189,10 +189,11 @@ public class StandardMidiFileReader extends MidiFileReader {
 			int numberOfTracks = midiFileFormat.getNumberTracks();
 			
 			while (numberOfTracks-- > 0) {
-				Track track = sequence.createTrack();
+				final Track track = sequence.createTrack();
 				if (midiDataInputStream.readInt() != MidiFileFormat.HEADER_MTrk) {
 					throw new InvalidMidiDataException("Invalid track header");
 				}
+				// track length: ignored
 				midiDataInputStream.readInt();
 	
 				int runningStatus = -1;
@@ -201,7 +202,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	
 				// Read all of the events.
 				while (!isEndOfTrack) {
-					MidiMessage message;
+					final MidiMessage message;
 
 					ticks += midiDataInputStream.readVariableLengthInt(); // add deltaTime
 	
@@ -217,7 +218,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 						}
 					} else if (data < 0xf0) {
 						// Control messages
-						message = processRunningMessage(data, midiDataInputStream.readByte(), midiDataInputStream);
+						message = processRunningMessage(data, midiDataInputStream.readUnsignedByte(), midiDataInputStream);
 
 						runningStatus = data;
 					} else if (data == ShortMessage.START_OF_EXCLUSIVE || data == ShortMessage.END_OF_EXCLUSIVE) {
@@ -233,7 +234,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 						runningStatus = -1;
 					} else if (data == MetaMessage.META) {
 						// Meta Message
-						byte type = midiDataInputStream.readByte();
+						int type = midiDataInputStream.readUnsignedByte();
 						
 						int metaLength = midiDataInputStream.readVariableLengthInt();
 						byte metaData[] = new byte[metaLength];
@@ -273,9 +274,9 @@ public class StandardMidiFileReader extends MidiFileReader {
 		case ShortMessage.SONG_POSITION_POINTER://f2
 			shortMessage = new ShortMessage();
 			if (data2 == null) {
-				shortMessage.setMessage(data1, midiDataInputStream.readByte(), midiDataInputStream.readByte());
+				shortMessage.setMessage(data1, midiDataInputStream.readUnsignedByte(), midiDataInputStream.readUnsignedByte());
 			} else {
-				shortMessage.setMessage(data1, data2.intValue(), midiDataInputStream.readByte());
+				shortMessage.setMessage(data1, data2.intValue(), midiDataInputStream.readUnsignedByte());
 			}
 			break;
 			
@@ -283,7 +284,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 		case ShortMessage.BUS_SELECT://f5
 			shortMessage = new ShortMessage();
 			if (data2 == null) {
-				shortMessage.setMessage(data1, midiDataInputStream.readByte(), 0);
+				shortMessage.setMessage(data1, midiDataInputStream.readUnsignedByte(), 0);
 			} else {
 				shortMessage.setMessage(data1, data2.intValue(), 0);
 			}
@@ -309,26 +310,26 @@ public class StandardMidiFileReader extends MidiFileReader {
 		return shortMessage;
 	}
 
-	private static ShortMessage processRunningMessage(int data1, int data2, MidiDataInputStream midiDataInputStream) throws InvalidMidiDataException, IOException {
+	private static ShortMessage processRunningMessage(int status, int data1, MidiDataInputStream midiDataInputStream) throws InvalidMidiDataException, IOException {
 		ShortMessage shortMessage;
-		switch (data1 & ShortMessage.MASK_EVENT) {
+		switch (status & ShortMessage.MASK_EVENT) {
 		case ShortMessage.NOTE_OFF://80
 		case ShortMessage.NOTE_ON://90
 		case ShortMessage.POLY_PRESSURE://a0
 		case ShortMessage.CONTROL_CHANGE://b0
 		case ShortMessage.PITCH_BEND://e0
 			shortMessage = new ShortMessage();
-			shortMessage.setMessage(data1, data2, midiDataInputStream.readByte());
+			shortMessage.setMessage(status, data1, midiDataInputStream.readUnsignedByte());
 			break;
 
 		case ShortMessage.PROGRAM_CHANGE://c0
 		case ShortMessage.CHANNEL_PRESSURE://d0
 			shortMessage = new ShortMessage();
-			shortMessage.setMessage(data1, data2, 0);
+			shortMessage.setMessage(status, data1, 0);
 			break;
 
 		default:
-			throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", Integer.valueOf(data1), Integer.valueOf(data2)));
+			throw new InvalidMidiDataException(String.format("Invalid data: %02x %02x", Integer.valueOf(status), Integer.valueOf(data1)));
 		}
 		
 		return shortMessage;

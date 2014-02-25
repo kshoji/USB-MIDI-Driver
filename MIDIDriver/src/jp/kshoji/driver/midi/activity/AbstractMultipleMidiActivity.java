@@ -86,7 +86,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 					inputDevices.add(midiInputDevice);
 					midiInputDevices.put(attachedDevice, inputDevices);
 				} catch (IllegalArgumentException iae) {
-					Log.i(Constants.TAG, "This device didn't have any input endpoints.", iae);
+					Log.d(Constants.TAG, "This device didn't have any input endpoints.", iae);
 				}
 			}
 
@@ -100,7 +100,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 					outputDevices.add(midiOutputDevice);
 					midiOutputDevices.put(attachedDevice, outputDevices);
 				} catch (IllegalArgumentException iae) {
-					Log.i(Constants.TAG, "This device didn't have any output endpoints.", iae);
+					Log.d(Constants.TAG, "This device didn't have any output endpoints.", iae);
 				}
 			}
 
@@ -211,7 +211,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 			 */
 			@Override
 			public boolean handleMessage(Message msg) {
-				Log.i(Constants.TAG, "(handleMessage) detached device:" + msg.obj);
+				Log.d(Constants.TAG, "(handleMessage) detached device:" + msg.obj);
 				UsbDevice usbDevice = (UsbDevice) msg.obj;
 				onDeviceDetached(usbDevice);
 				return true;

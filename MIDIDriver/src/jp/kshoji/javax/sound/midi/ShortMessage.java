@@ -30,13 +30,11 @@ public class ShortMessage extends MidiMessage {
 	public static final int MASK_EVENT = 0xf0;
 	public static final int MASK_CHANNEL = 0x0f;
 
-	private static final byte[] defaultMessage = { (byte) NOTE_ON, 0x40, 0x7f };
-
 	/**
 	 * Default constructor, set up 'note on' message.
 	 */
 	public ShortMessage() {
-		this(defaultMessage);
+		this(new byte[] { (byte) NOTE_ON, 0x40, 0x7f });
 	}
 
 	/**
@@ -189,7 +187,7 @@ public class ShortMessage extends MidiMessage {
 			default:
 		}
 
-		switch (status & 0xf0) {
+		switch (status & MASK_EVENT) {
 			case NOTE_OFF:
 			case NOTE_ON:
 			case POLY_PRESSURE:
