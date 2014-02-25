@@ -3,6 +3,7 @@ package jp.kshoji.javax.sound.midi.usb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +16,7 @@ import jp.kshoji.javax.sound.midi.MetaEventListener;
 import jp.kshoji.javax.sound.midi.MetaMessage;
 import jp.kshoji.javax.sound.midi.MidiEvent;
 import jp.kshoji.javax.sound.midi.MidiMessage;
-import jp.kshoji.javax.sound.midi.MidiSystem;
+import jp.kshoji.javax.sound.midi.MidiSystem.MidiSystemUtils;
 import jp.kshoji.javax.sound.midi.MidiUnavailableException;
 import jp.kshoji.javax.sound.midi.Receiver;
 import jp.kshoji.javax.sound.midi.Sequence;
@@ -58,7 +59,7 @@ public class UsbMidiSequencer implements Sequencer {
 
 	volatile boolean isRunning = false;
 	volatile boolean isRecording = false;
-	
+
 	/**
 	 * Thread for this Sequencer
 	 * 
@@ -178,7 +179,7 @@ public class UsbMidiSequencer implements Sequencer {
 			tickPosition = getLoopStartPoint();
 			tickPositionSetTime = System.currentTimeMillis();
 			isRunning = true;
-			
+
 			synchronized (sequencerThread) {
 				sequencerThread.notify();
 			}
@@ -207,16 +208,20 @@ public class UsbMidiSequencer implements Sequencer {
 		 */
 		void fireEventListeners(MidiMessage message) {
 			if (message instanceof MetaMessage) {
-				for (MetaEventListener metaEventListener : metaEventListeners) {
-					metaEventListener.meta((MetaMessage) message);
+				synchronized (metaEventListeners) {
+					for (MetaEventListener metaEventListener : metaEventListeners) {
+						metaEventListener.meta((MetaMessage) message);
+					}
 				}
 			} else if (message instanceof ShortMessage) {
 				ShortMessage shortMessage = (ShortMessage) message;
 				if (shortMessage.getCommand() == ShortMessage.CONTROL_CHANGE) {
-					Set<ControllerEventListener> eventListeners = controllerEventListenerMap.get(shortMessage.getData1());
-					if (eventListeners != null) {
-						for (ControllerEventListener eventListener : eventListeners) {
-							eventListener.controlChange(shortMessage);
+					synchronized (controllerEventListenerMap) {
+						Set<ControllerEventListener> eventListeners = controllerEventListenerMap.get(shortMessage.getData1());
+						if (eventListeners != null) {
+							for (ControllerEventListener eventListener : eventListeners) {
+								eventListener.controlChange(shortMessage);
+							}
 						}
 					}
 				}
@@ -251,9 +256,11 @@ public class UsbMidiSequencer implements Sequencer {
 				}
 			};
 
-			for (Transmitter transmitter : transmitters) {
-				// receive from all transmitters
-				transmitter.setReceiver(midiEventRecordingReceiver);
+			synchronized (transmitters) {
+				for (Transmitter transmitter : transmitters) {
+					// receive from all transmitters
+					transmitter.setReceiver(midiEventRecordingReceiver);
+				}
 			}
 
 			// playing
@@ -268,17 +275,17 @@ public class UsbMidiSequencer implements Sequencer {
 						// ignore exception
 					}
 				}
-				
+
 				if (playingTrack == null) {
 					if (needRefreshPlayingTrack) {
 						refreshPlayingTrack();
 					}
-					
+
 					if (playingTrack == null) {
 						continue;
 					}
 				}
-				
+
 				// process looping
 				for (int loop = 0; loop < getLoopCount() + 1; loop = (getLoopCount() == LOOP_CONTINUOUSLY ? loop : loop + 1)) {
 					if (needRefreshPlayingTrack) {
@@ -297,8 +304,10 @@ public class UsbMidiSequencer implements Sequencer {
 									MetaMessage metaMessage = (MetaMessage) midiMessage;
 									if (processTempoChange(metaMessage) == false) {
 										// not tempo message, process the event
-										for (Receiver receiver : receivers) {
-											receiver.send(midiMessage, 0);
+										synchronized (receivers) {
+											for (Receiver receiver : receivers) {
+												receiver.send(midiMessage, 0);
+											}
 										}
 									}
 									continue;
@@ -315,8 +324,10 @@ public class UsbMidiSequencer implements Sequencer {
 									case ShortMessage.NOTE_OFF:
 										break;
 									default:
-										for (Receiver receiver : receivers) {
-											receiver.send(midiMessage, 0);
+										synchronized (receivers) {
+											for (Receiver receiver : receivers) {
+												receiver.send(midiMessage, 0);
+											}
 										}
 										break;
 									}
@@ -362,14 +373,16 @@ public class UsbMidiSequencer implements Sequencer {
 						}
 
 						// send MIDI events
-						for (Receiver receiver : receivers) {
-							receiver.send(midiMessage, 0);
+						synchronized (receivers) {
+							for (Receiver receiver : receivers) {
+								receiver.send(midiMessage, 0);
+							}
 						}
 
 						fireEventListeners(midiMessage);
 					}
 				}
-				
+
 				// loop end
 				isRunning = false;
 				runningStoppedTime = System.currentTimeMillis();
@@ -454,8 +467,6 @@ public class UsbMidiSequencer implements Sequencer {
 	 * @throws MidiUnavailableException
 	 */
 	public UsbMidiSequencer() throws MidiUnavailableException {
-		transmitters.add(MidiSystem.getTransmitter());
-		receivers.add(MidiSystem.getReceiver());
 	}
 
 	/*
@@ -476,17 +487,25 @@ public class UsbMidiSequencer implements Sequencer {
 	@Override
 	public void open() throws MidiUnavailableException {
 		// open devices
-		for (Receiver receiver : receivers) {
-			if (receiver instanceof UsbMidiReceiver) {
-				UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
-				usbMidiReceiver.open();
+		synchronized (receivers) {
+			receivers.clear();
+			receivers.addAll(MidiSystemUtils.getReceivers());
+			for (Receiver receiver : receivers) {
+				if (receiver instanceof UsbMidiReceiver) {
+					UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
+					usbMidiReceiver.open();
+				}
 			}
 		}
 
-		for (Transmitter transmitter : transmitters) {
-			if (transmitter instanceof UsbMidiTransmitter) {
-				UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
-				usbMidiTransmitter.open();
+		synchronized (transmitters) {
+			transmitters.clear();
+			transmitters.addAll(MidiSystemUtils.getTransmitters());
+			for (Transmitter transmitter : transmitters) {
+				if (transmitter instanceof UsbMidiTransmitter) {
+					UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
+					usbMidiTransmitter.open();
+				}
 			}
 		}
 
@@ -503,18 +522,24 @@ public class UsbMidiSequencer implements Sequencer {
 	@Override
 	public void close() {
 		// close devices
-		for (Receiver receiver : receivers) {
-			if (receiver instanceof UsbMidiReceiver) {
-				UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
-				usbMidiReceiver.close();
+		synchronized (receivers) {
+			for (Receiver receiver : receivers) {
+				if (receiver instanceof UsbMidiReceiver) {
+					UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
+					usbMidiReceiver.close();
+				}
 			}
+			receivers.clear();
 		}
 
-		for (Transmitter transmitter : transmitters) {
-			if (transmitter instanceof UsbMidiTransmitter) {
-				UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
-				usbMidiTransmitter.close();
+		synchronized (transmitters) {
+			for (Transmitter transmitter : transmitters) {
+				if (transmitter instanceof UsbMidiTransmitter) {
+					UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
+					usbMidiTransmitter.close();
+				}
 			}
+			transmitters.clear();
 		}
 
 		sequencerThread.stop();
@@ -539,7 +564,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public int getMaxReceivers() {
-		return receivers.size();
+		synchronized (receivers) {
+			return receivers.size();
+		}
 	}
 
 	/*
@@ -549,7 +576,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public int getMaxTransmitters() {
-		return transmitters.size();
+		synchronized (transmitters) {
+			return transmitters.size();
+		}
 	}
 
 	/*
@@ -559,7 +588,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public Receiver getReceiver() throws MidiUnavailableException {
-		return receivers.get(0);
+		synchronized (receivers) {
+			return receivers.get(0);
+		}
 	}
 
 	/*
@@ -569,7 +600,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public List<Receiver> getReceivers() {
-		return receivers;
+		synchronized (receivers) {
+			return Collections.unmodifiableList(receivers);
+		}
 	}
 
 	/*
@@ -579,7 +612,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public Transmitter getTransmitter() throws MidiUnavailableException {
-		return transmitters.get(0);
+		synchronized (transmitters) {
+			return transmitters.get(0);
+		}
 	}
 
 	/*
@@ -589,7 +624,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public List<Transmitter> getTransmitters() {
-		return transmitters;
+		synchronized (transmitters) {
+			return Collections.unmodifiableList(transmitters);
+		}
 	}
 
 	/*
@@ -599,15 +636,17 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public int[] addControllerEventListener(ControllerEventListener listener, int[] controllers) {
-		for (int controllerId : controllers) {
-			Set<ControllerEventListener> listeners = controllerEventListenerMap.get(controllerId);
-			if (listeners == null) {
-				listeners = new HashSet<ControllerEventListener>();
+		synchronized (controllerEventListenerMap) {
+			for (int controllerId : controllers) {
+				Set<ControllerEventListener> listeners = controllerEventListenerMap.get(controllerId);
+				if (listeners == null) {
+					listeners = new HashSet<ControllerEventListener>();
+				}
+				listeners.add(listener);
+				controllerEventListenerMap.put(controllerId, listeners);
 			}
-			listeners.add(listener);
-			controllerEventListenerMap.put(controllerId, listeners);
+			return controllers;
 		}
-		return controllers;
 	}
 
 	/*
@@ -617,29 +656,31 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public int[] removeControllerEventListener(ControllerEventListener listener, int[] controllers) {
-		List<Integer> resultList = new ArrayList<Integer>();
-		for (int controllerId : controllers) {
-			Set<ControllerEventListener> listeners = controllerEventListenerMap.get(controllerId);
-			if (listeners != null && listeners.contains(listener)) {
-				listeners.remove(listener);
-			} else {
-				// remaining controller id
-				resultList.add(Integer.valueOf(controllerId));
-			}
-			controllerEventListenerMap.put(controllerId, listeners);
-		}
-
-		// returns currently registered controller ids for the argument specified listener
-		int[] resultPrimitiveArray = new int[resultList.size()];
-		for (int i = 0; i < resultPrimitiveArray.length; i++) {
-			Integer resultValue = resultList.get(i);
-			if (resultValue == null) {
-				continue;
+		synchronized (controllerEventListenerMap) {
+			List<Integer> resultList = new ArrayList<Integer>();
+			for (int controllerId : controllers) {
+				Set<ControllerEventListener> listeners = controllerEventListenerMap.get(controllerId);
+				if (listeners != null && listeners.contains(listener)) {
+					listeners.remove(listener);
+				} else {
+					// remaining controller id
+					resultList.add(Integer.valueOf(controllerId));
+				}
+				controllerEventListenerMap.put(controllerId, listeners);
 			}
 
-			resultPrimitiveArray[i] = resultValue.intValue();
+			// returns currently registered controller ids for the argument specified listener
+			int[] resultPrimitiveArray = new int[resultList.size()];
+			for (int i = 0; i < resultPrimitiveArray.length; i++) {
+				Integer resultValue = resultList.get(i);
+				if (resultValue == null) {
+					continue;
+				}
+
+				resultPrimitiveArray[i] = resultValue.intValue();
+			}
+			return resultPrimitiveArray;
 		}
-		return resultPrimitiveArray;
 	}
 
 	/*
@@ -650,7 +691,9 @@ public class UsbMidiSequencer implements Sequencer {
 	@Override
 	public boolean addMetaEventListener(MetaEventListener listener) {
 		// return true if registered successfully
-		return metaEventListeners.add(listener);
+		synchronized (metaEventListeners) {
+			return metaEventListeners.add(listener);
+		}
 	}
 
 	/*
@@ -660,7 +703,9 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public void removeMetaEventListener(MetaEventListener listener) {
-		metaEventListeners.remove(listener);
+		synchronized (metaEventListeners) {
+			metaEventListeners.remove(listener);
+		}
 	}
 
 	/*
@@ -693,7 +738,7 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public long getLoopStartPoint() {
-		return this.loopStartPoint;
+		return loopStartPoint;
 	}
 
 	/*

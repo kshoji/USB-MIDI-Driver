@@ -19,6 +19,7 @@ import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
+import jp.kshoji.javax.sound.midi.MidiDevice.Info;
 import jp.kshoji.javax.sound.midi.io.StandardMidiFileReader;
 import jp.kshoji.javax.sound.midi.io.StandardMidiFileWriter;
 import jp.kshoji.javax.sound.midi.usb.UsbMidiDevice;
@@ -46,6 +47,45 @@ public final class MidiSystem {
 	static OnMidiDeviceDetachedListener deviceDetachedListener = null;
 	static MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 	static OnMidiSystemEventListener systemEventListener = null;
+	
+	/**
+	 * Utilities for {@link MidiSystem}
+	 *
+	 * @author K.Shoji
+	 */
+	public static class MidiSystemUtils {
+		/**
+		 * Get currently connected {@link Receiver}s
+		 * 
+		 * @return
+		 * @throws MidiUnavailableException
+		 */
+		public static List<Receiver> getReceivers() throws MidiUnavailableException {
+			List<Receiver> result = new ArrayList<Receiver>();
+			Info[] midiDeviceInfos = MidiSystem.getMidiDeviceInfo();
+			for (Info midiDeviceInfo : midiDeviceInfos) {
+				result.addAll(MidiSystem.getMidiDevice(midiDeviceInfo).getReceivers());
+			}
+			
+			return result;
+		}
+
+		/**
+		 * Get currently connected {@link Transmitter}s
+		 * 
+		 * @return
+		 * @throws MidiUnavailableException
+		 */
+		public static List<Transmitter> getTransmitters() throws MidiUnavailableException {
+			List<Transmitter> result = new ArrayList<Transmitter>();
+			Info[] midiDeviceInfos = MidiSystem.getMidiDeviceInfo();
+			for (Info midiDeviceInfo : midiDeviceInfos) {
+				result.addAll(MidiSystem.getMidiDevice(midiDeviceInfo).getTransmitters());
+			}
+			
+			return result;
+		}
+	}
 	
 	/**
 	 * Find {@link Set<UsbMidiDevice>} from {@link UsbDevice}<br />
