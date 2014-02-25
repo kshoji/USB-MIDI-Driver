@@ -32,6 +32,7 @@ public final class MidiDeviceConnectionWatcher {
 	private final MidiDeviceConnectionWatchThread thread;
 	final HashMap<String, UsbDevice> grantedDeviceMap;
 	final Queue<UsbDevice> deviceGrantQueue;
+	final Context context;
 	volatile boolean isGranting;
 
 	/**
@@ -43,10 +44,11 @@ public final class MidiDeviceConnectionWatcher {
 	 * @param deviceDetachedListener
 	 */
 	public MidiDeviceConnectionWatcher(Context context, UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
+		this.context = context;
 		deviceGrantQueue = new LinkedList<UsbDevice>();
 		isGranting = false;
 		grantedDeviceMap = new HashMap<String, UsbDevice>();
-		thread = new MidiDeviceConnectionWatchThread(context, usbManager, deviceAttachedListener, deviceDetachedListener);
+		thread = new MidiDeviceConnectionWatchThread(usbManager, deviceAttachedListener, deviceDetachedListener);
 		thread.start();
 	}
 	
@@ -100,7 +102,7 @@ public final class MidiDeviceConnectionWatcher {
 		 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
 		 */
 		@Override
-		public void onReceive(Context context, Intent intent) {
+		public void onReceive(Context receiverContext, Intent intent) {
 			String action = intent.getAction();
 			if (USB_PERMISSION_GRANTED_ACTION.equals(action)) {
 				boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
@@ -123,7 +125,6 @@ public final class MidiDeviceConnectionWatcher {
 	 * @author K.Shoji
 	 */
 	private final class MidiDeviceConnectionWatchThread extends Thread {
-		private Context context;
 		private UsbManager usbManager;
 		private OnMidiDeviceAttachedListener deviceAttachedListener;
 		private OnMidiDeviceDetachedListener deviceDetachedListener;
@@ -131,17 +132,15 @@ public final class MidiDeviceConnectionWatcher {
 		private Set<String> removedDeviceNames;
 		boolean stopFlag;
 		private List<DeviceFilter> deviceFilters;
+		UsbMidiGrantedReceiver usbMidiGrantedReceiver;
 
 		/**
 		 * constructor
-		 * 
-		 * @param context
 		 * @param usbManager
 		 * @param deviceAttachedListener
 		 * @param deviceDetachedListener
 		 */
-		MidiDeviceConnectionWatchThread(Context context, UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
-			this.context = context;
+		MidiDeviceConnectionWatchThread(UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, OnMidiDeviceDetachedListener deviceDetachedListener) {
 			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedListener = deviceDetachedListener;
@@ -168,7 +167,8 @@ public final class MidiDeviceConnectionWatcher {
 						UsbDevice device = deviceGrantQueue.remove();
 						
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
-						context.registerReceiver(new UsbMidiGrantedReceiver(device.getDeviceName(), device, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
+						usbMidiGrantedReceiver = new UsbMidiGrantedReceiver(device.getDeviceName(), device, deviceAttachedListener);
+						context.registerReceiver(usbMidiGrantedReceiver, new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
 						usbManager.requestPermission(device, permissionIntent);
 					}
 				}
@@ -228,6 +228,9 @@ public final class MidiDeviceConnectionWatcher {
 	 * notifies the 'current granting device' has successfully granted.
 	 */
 	public void notifyDeviceGranted() {
+		if (thread.usbMidiGrantedReceiver != null) {
+			context.unregisterReceiver(thread.usbMidiGrantedReceiver);
+		}
 		isGranting = false;
 	}
 }

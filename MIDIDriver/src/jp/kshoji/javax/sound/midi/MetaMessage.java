@@ -2,17 +2,30 @@ package jp.kshoji.javax.sound.midi;
 
 import java.util.Arrays;
 
+/**
+ * Represents MIDI Meta Message
+ * 
+ * @author K.Shoji
+ */
 public class MetaMessage extends MidiMessage {
 	public static final int META = 0xff;
-	private static byte[] defaultMessage = { (byte) META, 0 };
+	
+	public static final int TYPE_END_OF_TRACK = 0x2f;
+	public static final int TYPE_TEMPO = 0x51;
+	
+	private static final byte[] defaultMessage = { (byte) META, 0 };
 
 	private int dataLength = 0;
 
+	/**
+	 * Default constructor.
+	 */
 	public MetaMessage() {
 		this(defaultMessage);
 	}
 
 	/**
+	 * Constructor with raw data.
 	 * 
 	 * @param data
 	 * @throws NegativeArraySizeException MUST be caught. We can't throw {@link InvalidMidiDataException} because of API compatibility.
@@ -36,6 +49,8 @@ public class MetaMessage extends MidiMessage {
 	}
 
 	/**
+	 * Set the entire informations of message.
+	 * 
 	 * @param type
 	 * @param data
 	 * @param length unused parameter. Use always data.length
@@ -56,6 +71,11 @@ public class MetaMessage extends MidiMessage {
 		}
 	}
 
+	/**
+	 * Get the type of {@link MetaMessage}
+	 * 
+	 * @return
+	 */
 	public int getType() {
 		if (data.length >= 2) {
 			return data[1] & 0xff;
@@ -63,12 +83,21 @@ public class MetaMessage extends MidiMessage {
 		return 0;
 	}
 
+	/**
+	 * Get the data of {@link MetaMessage}
+	 * 
+	 * @return
+	 */
 	public byte[] getData() {
 		byte[] returnedArray = new byte[dataLength];
 		System.arraycopy(data, (data.length - dataLength), returnedArray, 0, dataLength);
 		return returnedArray;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
 	@Override
 	public Object clone() {
 		byte[] result = new byte[data.length];

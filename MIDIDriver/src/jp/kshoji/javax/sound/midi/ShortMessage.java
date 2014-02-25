@@ -1,5 +1,10 @@
 package jp.kshoji.javax.sound.midi;
 
+/**
+ * Represents MIDI Short Message
+ * 
+ * @author K.Shoji
+ */
 public class ShortMessage extends MidiMessage {
 	public static final int NOTE_OFF = 0x80;
 	public static final int NOTE_ON = 0x90;
@@ -8,9 +13,11 @@ public class ShortMessage extends MidiMessage {
 	public static final int PROGRAM_CHANGE = 0xc0;
 	public static final int CHANNEL_PRESSURE = 0xd0;
 	public static final int PITCH_BEND = 0xe0;
+	public static final int START_OF_EXCLUSIVE = 0xf0;
 	public static final int MIDI_TIME_CODE = 0xf1;
 	public static final int SONG_POSITION_POINTER = 0xf2;
 	public static final int SONG_SELECT = 0xf3;
+	public static final int BUS_SELECT = 0xf5;
 	public static final int TUNE_REQUEST = 0xf6;
 	public static final int END_OF_EXCLUSIVE = 0xf7;
 	public static final int TIMING_CLOCK = 0xf8;
@@ -19,15 +26,32 @@ public class ShortMessage extends MidiMessage {
 	public static final int STOP = 0xfc;
 	public static final int ACTIVE_SENSING = 0xfe;
 	public static final int SYSTEM_RESET = 0xff;
+	
+	public static final int MASK_EVENT = 0xf0;
+	public static final int MASK_CHANNEL = 0x0f;
 
+	/**
+	 * Default constructor, set up 'note on' message.
+	 */
 	public ShortMessage() {
 		this(new byte[] { (byte) NOTE_ON, 0x40, 0x7f });
 	}
 
+	/**
+	 * Constructor with raw data.
+	 * 
+	 * @param data
+	 */
 	protected ShortMessage(byte[] data) {
 		super(data);
 	}
 
+	/**
+	 * Set the kind of message.
+	 * 
+	 * @param status
+	 * @throws InvalidMidiDataException
+	 */
 	public void setMessage(int status) throws InvalidMidiDataException {
 		int dataLength = getDataLength(status);
 		if (dataLength != 0) {
@@ -36,6 +60,14 @@ public class ShortMessage extends MidiMessage {
 		setMessage(status, 0, 0);
 	}
 
+	/**
+	 * Set the entire informations of message.
+	 * 
+	 * @param status
+	 * @param data1
+	 * @param data2
+	 * @throws InvalidMidiDataException
+	 */
 	public void setMessage(int status, int data1, int data2) throws InvalidMidiDataException {
 		int dataLength = getDataLength(status);
 		if (dataLength > 0) {
@@ -48,6 +80,7 @@ public class ShortMessage extends MidiMessage {
 				}
 			}
 		}
+		
 		if (data == null || data.length < dataLength + 1) {
 			data = new byte[dataLength + 1];
 		}
@@ -61,6 +94,15 @@ public class ShortMessage extends MidiMessage {
 		}
 	}
 
+	/**
+	 * Set the entire informations of message.
+	 * 
+	 * @param command
+	 * @param channel
+	 * @param data1
+	 * @param data2
+	 * @throws InvalidMidiDataException
+	 */
 	public void setMessage(int command, int channel, int data1, int data2) throws InvalidMidiDataException {
 		if (command >= 0xf0 || command < 0x80) {
 			throw new InvalidMidiDataException("command out of range: 0x" + Integer.toHexString(command));
@@ -71,14 +113,29 @@ public class ShortMessage extends MidiMessage {
 		setMessage((command & 0xf0) | (channel & 0x0f), data1, data2);
 	}
 
+	/**
+	 * Get the channel of this message.
+	 * 
+	 * @return
+	 */
 	public int getChannel() {
 		return (getStatus() & 0x0f);
 	}
 
+	/**
+	 * Get the kind of command for this message.
+	 * 
+	 * @return
+	 */
 	public int getCommand() {
 		return (getStatus() & 0xf0);
 	}
 
+	/**
+	 * Get the first data for this message.
+	 * 
+	 * @return
+	 */
 	public int getData1() {
 		if (data.length > 1) {
 			return (data[1] & 0xff);
@@ -86,6 +143,11 @@ public class ShortMessage extends MidiMessage {
 		return 0;
 	}
 
+	/**
+	 * Get the second data for this message.
+	 * 
+	 * @return
+	 */
 	public int getData2() {
 		if (data.length > 2) {
 			return (data[2] & 0xff);
@@ -93,6 +155,10 @@ public class ShortMessage extends MidiMessage {
 		return 0;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
 	@Override
 	public Object clone() {
 		byte[] result = new byte[data.length];
@@ -121,7 +187,7 @@ public class ShortMessage extends MidiMessage {
 			default:
 		}
 
-		switch (status & 0xf0) {
+		switch (status & MASK_EVENT) {
 			case NOTE_OFF:
 			case NOTE_ON:
 			case POLY_PRESSURE:

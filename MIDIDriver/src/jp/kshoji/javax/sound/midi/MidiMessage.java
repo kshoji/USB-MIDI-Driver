@@ -42,4 +42,25 @@ public abstract class MidiMessage implements Cloneable {
 		}
 		return data.length;
 	}
+
+	static String toHexString(byte[] src) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("[");
+		boolean needComma = false;
+		for (byte srcByte : src) {
+			if (needComma) {
+				buffer.append(", ");
+			}
+			buffer.append(String.format("%02x", Integer.valueOf(srcByte & 0xff)));
+			needComma = true;
+		}
+		buffer.append("]");
+		
+		return buffer.toString();
+	}
+	
+	@Override
+	public String toString() {
+		return getClass().getName() + ":" + toHexString(data);
+	}
 }
