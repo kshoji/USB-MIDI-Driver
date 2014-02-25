@@ -5,26 +5,80 @@ import java.util.List;
 public interface MidiDevice {
 	Info getDeviceInfo();
 
+	/**
+	 * Open the {@link MidiDevice}. This method must be called at getting the new instance.
+	 * 
+	 * @throws MidiUnavailableException
+	 */
 	void open() throws MidiUnavailableException;
 
+	/**
+	 * Close the {@link MidiDevice}. This method must be called at finishing to use the instance.
+	 */
 	void close();
 
+	/**
+	 * Check if the {@link MidiDevice} opened.
+	 * 
+	 * @return
+	 */
 	boolean isOpen();
 
+	/**
+	 * Get the {@link MidiDevice}'s timeStamp.
+	 * @return -1 if the timeStamp not supported.
+	 */
 	long getMicrosecondPosition();
 
+	/**
+	 * Get the number of the {@link Receiver}s. 
+	 * 
+	 * @return
+	 */
 	int getMaxReceivers();
 
+	/**
+	 * Get the number of the {@link Transmitter}s. 
+	 * 
+	 * @return
+	 */
 	int getMaxTransmitters();
 
+	/**
+	 * Get the default {@link Receiver}
+	 * 
+	 * @return
+	 * @throws MidiUnavailableException
+	 */
 	Receiver getReceiver() throws MidiUnavailableException;
 
+	/**
+	 * Get the all of {@link Receiver}s
+	 * 
+	 * @return
+	 */
 	List<Receiver> getReceivers();
 
+	/**
+	 * Get the default {@link Transmitter}
+	 * 
+	 * @return
+	 * @throws MidiUnavailableException
+	 */
 	Transmitter getTransmitter() throws MidiUnavailableException;
 
+	/**
+	 * Get the all of {@link Transmitter}s
+	 * 
+	 * @return
+	 */
 	List<Transmitter> getTransmitters();
 
+	/**
+	 * Represents {@link MidiDevice}'s informations
+	 *
+	 * @author K.Shoji
+	 */
 	public static class Info {
 		private String name;
 		private String vendor;
@@ -38,18 +92,38 @@ public interface MidiDevice {
 			this.version = version;
 		}
 
+		/**
+		 * Get the name of {@link MidiDevice}
+		 * 
+		 * @return
+		 */
 		public final String getName() {
 			return name;
 		}
 
+		/**
+		 * Get the vendor of {@link MidiDevice}
+		 * 
+		 * @return
+		 */
 		public final String getVendor() {
 			return vendor;
 		}
 
+		/**
+		 * Get the description of {@link MidiDevice}
+		 * 
+		 * @return
+		 */
 		public final String getDescription() {
 			return description;
 		}
 
+		/**
+		 * Get the version of {@link MidiDevice}
+		 * 
+		 * @return
+		 */
 		public final String getVersion() {
 			return version;
 		}

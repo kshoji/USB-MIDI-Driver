@@ -99,8 +99,6 @@ public final class MidiInputDevice {
 	 * @author K.Shoji
 	 */
 	final class WaiterThread extends Thread {
-		private static final int BUFFER_LENGTH = 64;
-
 		boolean stopFlag;
 
 		/**
@@ -121,16 +119,16 @@ public final class MidiInputDevice {
 			final UsbEndpoint usbEndpoint = inputEndpoint;
 			final MidiInputDevice sender = MidiInputDevice.this;
 			final OnMidiInputEventListener eventListener = midiEventListener;
-			
+			final int maxPacketSize = inputEndpoint.getMaxPacketSize();
 			// prepare buffer variables
-			final byte[] bulkReadBuffer = new byte[BUFFER_LENGTH];
-			byte[] readBuffer = new byte[BUFFER_LENGTH * 2]; // *2 for safety (BUFFER_LENGTH+4 would be enough)
+			final byte[] bulkReadBuffer = new byte[maxPacketSize];
+			byte[] readBuffer = new byte[maxPacketSize * 2]; // *2 for safety (BUFFER_LENGTH+4 would be enough)
 			int readBufferSize = 0;
-			byte[] read = new byte[BUFFER_LENGTH * 2];
+			byte[] read = new byte[maxPacketSize * 2];
 			ByteArrayOutputStream systemExclusive = null;
 
 			while (!stopFlag) {
-				int length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, BUFFER_LENGTH, 0);
+				int length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 0);
 				if (length > 0) {
 					System.arraycopy(bulkReadBuffer, 0, readBuffer, readBufferSize, length);
 					readBufferSize += length;
@@ -282,7 +280,6 @@ public final class MidiInputDevice {
 							break;
 						}
 					}
-
 				}
 			}
 		}

@@ -66,7 +66,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(new byte[] {(byte) (byte1 & 0xff), (byte) (byte2 & 0xff), (byte) (byte3 & 0xff)}, 3);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -79,7 +79,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(new byte[] {(byte) (byte1 & 0xff), (byte) (byte2 & 0xff), (byte) (byte3 & 0xff)}, 3);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -92,7 +92,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(bytes, bytes.length);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -105,7 +105,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(systemExclusive, systemExclusive.length);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 }
 			}
 		}
@@ -118,7 +118,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.NOTE_OFF, channel, note, velocity);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -131,7 +131,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -144,7 +144,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.POLY_PRESSURE, channel, note, pressure);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -157,7 +157,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.CONTROL_CHANGE, channel, function, value);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -170,7 +170,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.PROGRAM_CHANGE, channel, program, 0);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -183,7 +183,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.CHANNEL_PRESSURE, channel, pressure, 0);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -196,7 +196,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(ShortMessage.PITCH_BEND, channel, (amount >> 7) & 0x7f, amount & 0x7f);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
@@ -209,7 +209,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 					message.setMessage(new byte[] {(byte) (byte1 & 0xff)}, 1);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
-					Log.i(Constants.TAG, "InvalidMidiDataException", e);
+					Log.d(Constants.TAG, "InvalidMidiDataException", e);
 				}
 			}
 		}
