@@ -39,6 +39,9 @@ public final class UsbMidiTransmitter implements Transmitter {
 	@Override
 	public void setReceiver(Receiver receiver) {
 		this.receiver = receiver;
+		if (inputDevice == null) {
+			open();
+		}
 	}
 
 	@Override

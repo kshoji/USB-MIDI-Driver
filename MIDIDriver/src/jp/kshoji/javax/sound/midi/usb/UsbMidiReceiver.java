@@ -38,7 +38,7 @@ public final class UsbMidiReceiver implements Receiver {
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
 		if (outputDevice == null) {
-			throw new IllegalStateException("Receiver not opened.");
+			open();
 		}
 
 		if (message instanceof MetaMessage) {
