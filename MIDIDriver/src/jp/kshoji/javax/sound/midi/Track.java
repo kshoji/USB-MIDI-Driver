@@ -76,6 +76,7 @@ public class Track {
 			for (int trackIndex = 0; trackIndex < tracks.length; trackIndex++) {
 				if (sequencer.getTrackSolo(trackIndex)) {
 					hasSoloTrack = true;
+					break;
 				}
 			}
 			
