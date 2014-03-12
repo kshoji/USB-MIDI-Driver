@@ -1048,7 +1048,7 @@ public class UsbMidiSequencer implements Sequencer {
 	 */
 	@Override
 	public boolean getTrackSolo(int track) {
-		return trackMute.get(track);
+		return trackSolo.get(track);
 	}
 
 	/*
