@@ -220,6 +220,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
+	@Override
 	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
@@ -235,6 +236,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
+	@Override
 	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}

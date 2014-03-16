@@ -81,6 +81,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getMidiFileFormat(java.io.InputStream)
 	 */
+	@Override
 	public MidiFileFormat getMidiFileFormat(InputStream inputStream) throws InvalidMidiDataException, IOException {
 		DataInputStream dataInputStream;
 		if (inputStream instanceof DataInputStream) {
@@ -153,6 +154,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getMidiFileFormat(java.net.URL)
 	 */
+	@Override
 	public MidiFileFormat getMidiFileFormat(URL url) throws InvalidMidiDataException, IOException {
 		InputStream inputStream = url.openStream();
 		try {
@@ -166,6 +168,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getMidiFileFormat(java.io.File)
 	 */
+	@Override
 	public MidiFileFormat getMidiFileFormat(File file) throws InvalidMidiDataException, IOException {
 		InputStream inputStram = new FileInputStream(file);
 		try {
@@ -179,6 +182,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getSequence(java.io.InputStream)
 	 */
+	@Override
 	public Sequence getSequence(InputStream inputStream) throws InvalidMidiDataException, IOException {
 		MidiDataInputStream midiDataInputStream = new MidiDataInputStream(convertToByteArrayInputStream(inputStream));
 		
@@ -363,6 +367,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getSequence(java.net.URL)
 	 */
+	@Override
 	public Sequence getSequence(URL url) throws InvalidMidiDataException, IOException {
 		InputStream inputStream = url.openStream();
 		try {
@@ -376,6 +381,7 @@ public class StandardMidiFileReader extends MidiFileReader {
 	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.spi.MidiFileReader#getSequence(java.io.File)
 	 */
+	@Override
 	public Sequence getSequence(File file) throws InvalidMidiDataException, IOException {
 		InputStream inputStream = new FileInputStream(file);
 		try {

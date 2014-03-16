@@ -33,7 +33,7 @@ import android.os.Message;
 import android.util.Log;
 
 /**
- * base Activity for using USB MIDI interface.
+ * base Activity for using {@link AbstractMidiFragment}s.
  * In this implement, each devices will be detected on connect.
  * launchMode must be "singleTask" or "singleInstance".
  * 
@@ -301,6 +301,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 	
 	/**
+	 * Get attached {@link AbstractMidiFragment}s. Invisible Fragments are also included.
 	 * 
 	 * @return {@link AbstractMidiFragment}s attached with this Activity
 	 */

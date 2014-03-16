@@ -1,9 +1,20 @@
 package jp.kshoji.driver.midi.fragment;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import jp.kshoji.driver.midi.activity.MidiFragmentHostActivity;
+import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
+import jp.kshoji.driver.midi.util.Constants;
+import android.app.Activity;
 import android.app.Fragment;
+import android.hardware.usb.UsbDevice;
+import android.os.Bundle;
+import android.util.Log;
 
 /**
  * Base {@link Fragment} for using USB MIDI interface.
@@ -11,4 +22,49 @@ import android.app.Fragment;
  * @author K.Shoji
  */
 public abstract class AbstractMidiFragment extends Fragment implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
+	private MidiFragmentHostActivity hostActivity;
+
+	/*
+	 * (non-Javadoc)
+	 * @see android.app.Fragment#onCreate(android.os.Bundle)
+	 */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		Activity activity = getActivity();
+		if (!(activity instanceof MidiFragmentHostActivity)) {
+			Log.i(Constants.TAG, "activity:" + activity);
+			throw new IllegalArgumentException("Parent Activity is not MidiFragmentHostActivity.");
+		}
+		
+		this.hostActivity = (MidiFragmentHostActivity) activity;
+	}
+	
+	/**
+	 * Get {@link MidiOutputDevice} attached with {@link MidiFragmentHostActivity}
+	 * 
+	 * @param usbDevice
+	 * @return {@link Set<MidiOutputDevice>} unmodifiable
+	 */
+	public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {
+		if (hostActivity == null) {
+			return Collections.unmodifiableSet(new HashSet<MidiOutputDevice>());
+		}
+		
+		return hostActivity.getMidiOutputDevices(usbDevice);
+	}
+	
+	/**
+	 * Get {@link UsbDevice} attached with {@link MidiFragmentHostActivity}
+	 * 
+	 * @return {@link Set<UsbDevice>} unmodifiable
+	 */
+	public final Set<UsbDevice> getConnectedUsbDevices() {
+		if (hostActivity == null) {
+			return Collections.unmodifiableSet(new HashSet<UsbDevice>());
+		}
+		
+		return hostActivity.getConnectedUsbDevices();
+	}
 }
