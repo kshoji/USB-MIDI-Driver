@@ -59,7 +59,7 @@ public final class MidiInputDevice {
 	public void stop() {
 		usbDeviceConnection.releaseInterface(usbInterface);
 		
-		waiterThread.suspendFlag = false;
+		resume();
 		waiterThread.stopFlag = true;
 
 		// blocks while the thread will stop
@@ -76,14 +76,19 @@ public final class MidiInputDevice {
 	 * Suspends event listening
 	 */
 	public void suspend() {
-		waiterThread.suspendFlag = true;
+		synchronized (waiterThread.suspendSignal) {
+			waiterThread.suspendFlag = true;
+		}
 	}
 
 	/**
 	 * Resumes event listening
 	 */
 	public void resume() {
-		waiterThread.suspendFlag = false;
+		synchronized (waiterThread.suspendSignal) {
+			waiterThread.suspendFlag = false;
+			waiterThread.suspendSignal.notifyAll();
+		}
 	}
 
 	/**
@@ -115,6 +120,7 @@ public final class MidiInputDevice {
 	 */
 	final class WaiterThread extends Thread {
 		volatile boolean stopFlag;
+		final Object suspendSignal = new Object();
 		volatile boolean suspendFlag;
 
 		/**
@@ -147,8 +153,17 @@ public final class MidiInputDevice {
 			while (!stopFlag) {
 				int length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 0);
 				if (length > 0) {
-					if (suspendFlag) {
-						continue;
+					synchronized (suspendSignal) {
+						if (suspendFlag) {
+							try {
+								// check the deviceConnection to ignore events while suspending.
+								// Note: Events received within last sleeping(100msec) will be sent to the eventListener.
+								suspendSignal.wait(100);
+							} catch (InterruptedException e) {
+								// ignore exception
+							}
+							continue;
+						}
 					}
 					
 					System.arraycopy(bulkReadBuffer, 0, readBuffer, readBufferSize, length);

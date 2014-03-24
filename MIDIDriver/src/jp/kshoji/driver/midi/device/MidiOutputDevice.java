@@ -59,7 +59,7 @@ public final class MidiOutputDevice {
 	public void stop() {
 		usbDeviceConnection.releaseInterface(usbInterface);
 
-		waiterThread.suspendFlag = false;
+		resume();
 		waiterThread.stopFlag = true;
 		waiterThread.interrupt();
 
@@ -177,7 +177,7 @@ public final class MidiOutputDevice {
 				if (suspendFlag) {
 					try {
 						// sleep until interrupted
-						Thread.sleep(500);
+						sleep(500);
 					} catch (InterruptedException e) {
 						// interrupted: event queued, or stopFlag/suspendFlag changed.
 					}
@@ -226,7 +226,7 @@ public final class MidiOutputDevice {
 				if (queueSize == 0 && !interrupted()) {
 					try {
 						// sleep until interrupted
-						Thread.sleep(500);
+						sleep(500);
 					} catch (InterruptedException e) {
 						// interrupted: event queued, or stopFlag changed.
 					}
