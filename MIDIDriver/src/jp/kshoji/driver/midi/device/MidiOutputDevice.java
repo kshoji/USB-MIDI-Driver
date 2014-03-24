@@ -71,6 +71,22 @@ public final class MidiOutputDevice {
 			}
 		}
 	}
+	
+	/**
+	 * Suspends event sending
+	 */
+	public void suspend() {
+		waiterThread.suspendFlag = true;
+		waiterThread.interrupt();
+	}
+
+	/**
+	 * Resumes event sending
+	 */
+	public void resume() {
+		waiterThread.suspendFlag = false;
+		waiterThread.interrupt();
+	}
 
 	/**
 	 * @return the usbDevice
@@ -101,7 +117,8 @@ public final class MidiOutputDevice {
 	private final class WaiterThread extends Thread {
 		final Queue<byte[]> queue = new LinkedList<byte[]>();
 
-		boolean stopFlag;
+		volatile boolean stopFlag;
+		volatile boolean suspendFlag;
 
 		private UsbRequest usbRequest;
 
@@ -112,6 +129,7 @@ public final class MidiOutputDevice {
 		 */
 		WaiterThread() {
 			stopFlag = false;
+			suspendFlag = false;
 		}
 
 		private final Handler handler = new Handler(new Callback() {
@@ -155,6 +173,16 @@ public final class MidiOutputDevice {
 			int dequedDataBufferLength;
 			
 			while (stopFlag == false) {
+				if (suspendFlag) {
+					try {
+						// sleep until interrupted
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						// interrupted: event queued, or stopFlag/suspendFlag changed.
+					}
+					continue;
+				}
+				
 				dequedDataBuffer = null;
 				synchronized (queue) {
 					queueSize = queue.size();
@@ -162,7 +190,6 @@ public final class MidiOutputDevice {
 						dequedDataBuffer = queue.poll();
 					}
 				}
-				
 
 				if (dequedDataBuffer != null) {
 					dequedDataBufferLength = dequedDataBuffer.length;
@@ -197,7 +224,7 @@ public final class MidiOutputDevice {
 				// no more data in queue, sleep.
 				if (queueSize == 0 && !interrupted()) {
 					try {
-						// sleep until interrupted by handler
+						// sleep until interrupted
 						Thread.sleep(500);
 					} catch (InterruptedException e) {
 						// interrupted: event queued, or stopFlag changed.

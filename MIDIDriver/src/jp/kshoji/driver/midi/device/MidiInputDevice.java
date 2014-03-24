@@ -70,6 +70,20 @@ public final class MidiInputDevice {
 			}
 		}
 	}
+	
+	/**
+	 * Suspends event listening
+	 */
+	public void suspend() {
+		waiterThread.suspendFlag = true;
+	}
+
+	/**
+	 * Resumes event listening
+	 */
+	public void resume() {
+		waiterThread.suspendFlag = false;
+	}
 
 	/**
 	 * @return the usbDevice
@@ -99,13 +113,15 @@ public final class MidiInputDevice {
 	 * @author K.Shoji
 	 */
 	final class WaiterThread extends Thread {
-		boolean stopFlag;
+		volatile boolean stopFlag;
+		volatile boolean suspendFlag;
 
 		/**
 		 * constructor
 		 */
 		WaiterThread() {
 			stopFlag = false;
+			suspendFlag = false;
 		}
 
 		/*
@@ -130,6 +146,10 @@ public final class MidiInputDevice {
 			while (!stopFlag) {
 				int length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 0);
 				if (length > 0) {
+					if (suspendFlag) {
+						continue;
+					}
+					
 					System.arraycopy(bulkReadBuffer, 0, readBuffer, readBufferSize, length);
 					readBufferSize += length;
 

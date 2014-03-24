@@ -194,7 +194,35 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		
 		deviceConnection = null;
 	}
+
+
+	/**
+	 * Suspends receiving/transmitting MIDI messages.
+	 * All events will be discarded until the devices being resumed.
+	 */
+	protected final void suspendMidiDevices() {
+		if (midiInputDevice != null) {
+			midiInputDevice.suspend();
+		}
+		
+		if (midiOutputDevice != null) {
+			midiOutputDevice.suspend();
+		}
+	}
 	
+	/**
+	 * Resumes from {@link #suspendMidiDevices()}
+	 */
+	protected final void resumeMidiDevices() {
+		if (midiInputDevice != null) {
+			midiInputDevice.resume();
+		}
+		
+		if (midiOutputDevice != null) {
+			midiOutputDevice.resume();
+		}
+	}
+
 	/**
 	 * Get MIDI output device, if available.
 	 * 

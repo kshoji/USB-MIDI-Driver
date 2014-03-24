@@ -255,6 +255,66 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 		deviceConnections = null;
 	}
 
+
+	/**
+	 * Suspends receiving/transmitting MIDI messages.
+	 * All events will be discarded until the devices being resumed.
+	 */
+	protected final void suspendMidiDevices() {
+		if (midiInputDevices != null) {
+			for (Set<MidiInputDevice> inputDevices : midiInputDevices.values()) {
+				if (inputDevices != null) {
+					for (MidiInputDevice inputDevice : inputDevices) {
+						if (inputDevice != null) {
+							inputDevice.suspend();
+						}
+					}
+				}
+			}
+		}
+		
+		if (midiOutputDevices != null) {
+			for (Set<MidiOutputDevice> outputDevices : midiOutputDevices.values()) {
+				if (outputDevices != null) {
+					for (MidiOutputDevice outputDevice : outputDevices) {
+						if (outputDevice != null) {
+							outputDevice.suspend();
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Resumes from {@link #suspendMidiDevices()}
+	 */
+	protected final void resumeMidiDevices() {
+		if (midiInputDevices != null) {
+			for (Set<MidiInputDevice> inputDevices : midiInputDevices.values()) {
+				if (inputDevices != null) {
+					for (MidiInputDevice inputDevice : inputDevices) {
+						if (inputDevice != null) {
+							inputDevice.resume();
+						}
+					}
+				}
+			}
+		}		
+		
+		if (midiOutputDevices != null) {
+			for (Set<MidiOutputDevice> outputDevices : midiOutputDevices.values()) {
+				if (outputDevices != null) {
+					for (MidiOutputDevice outputDevice : outputDevices) {
+						if (outputDevice != null) {
+							outputDevice.resume();
+						}
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Get connected USB MIDI devices.
 	 * 
