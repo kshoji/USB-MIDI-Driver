@@ -1,5 +1,7 @@
 package jp.kshoji.driver.midi.activity;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +11,7 @@ import java.util.Set;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
+import jp.kshoji.driver.midi.fragment.AbstractMidiFragment;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
@@ -17,6 +20,7 @@ import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -29,13 +33,13 @@ import android.os.Message;
 import android.util.Log;
 
 /**
- * base Activity for using USB MIDI interface.
+ * base Activity for using {@link AbstractMidiFragment}s.
  * In this implement, each devices will be detected on connect.
  * launchMode must be "singleTask" or "singleInstance".
  * 
  * @author K.Shoji
  */
-public abstract class AbstractMultipleMidiActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
+public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
 	/**
 	 * Implementation for multiple device connections.
 	 * 
@@ -76,7 +80,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 
 			List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
 
-			Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters, AbstractMultipleMidiActivity.this);
+			Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters, MidiFragmentHostActivity.this);
 			for (MidiInputDevice midiInputDevice : foundInputDevices) {
 				try {
 					Set<MidiInputDevice> inputDevices = midiInputDevices.get(attachedDevice);
@@ -106,7 +110,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 
 			Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
 
-			AbstractMultipleMidiActivity.this.onDeviceAttached(attachedDevice);
+			MidiFragmentHostActivity.this.onDeviceAttached(attachedDevice);
 		}
 	}
 
@@ -288,35 +292,221 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 		return Collections.unmodifiableSet(new HashSet<MidiOutputDevice>());
 	}
 
+	List<WeakReference<Fragment>> attachedFragments = new ArrayList<WeakReference<Fragment>>();
+	
+	@Override
+	public void onAttachFragment(Fragment fragment) {
+		super.onAttachFragment(fragment);
+		attachedFragments.add(new WeakReference<Fragment>(fragment));
+	}
+	
 	/**
-	 * RPN message
-	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
+	 * Get attached {@link AbstractMidiFragment}s. Invisible Fragments are also included.
 	 * 
-	 * @param sender
-	 * @param cable
-	 * @param channel
-	 * @param function 14bits
-	 * @param valueMSB higher 7bits
-	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 * @return {@link AbstractMidiFragment}s attached with this Activity
+	 */
+	private final List<AbstractMidiFragment> getMidiFragments() {
+	    ArrayList<AbstractMidiFragment> midiFragments = new ArrayList<AbstractMidiFragment>();
+
+	    for(WeakReference<Fragment> reference : attachedFragments) {
+	        Fragment fragment = reference.get();
+	        if(fragment != null && fragment instanceof AbstractMidiFragment) {
+	        	midiFragments.add((AbstractMidiFragment) fragment);
+	        }
+	    }
+	    
+	    return midiFragments;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiMiscellaneousFunctionCodes(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
+	 */
+	@Override
+	public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiCableEvents(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
+	 */
+	@Override
+	public void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiSystemCommonMessage(jp.kshoji.driver.midi.device.MidiInputDevice, int, byte[])
+	 */
+	@Override
+	public void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiSystemCommonMessage(sender, cable, bytes);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiSystemExclusive(jp.kshoji.driver.midi.device.MidiInputDevice, int, byte[])
+	 */
+	@Override
+	public void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiSystemExclusive(sender, cable, systemExclusive);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNoteOff(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
+	 */
+	@Override
+	public void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiNoteOff(sender, cable, channel, note, velocity);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNoteOn(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
+	 */
+	@Override
+	public void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiNoteOn(sender, cable, channel, note, velocity);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiPolyphonicAftertouch(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
+	 */
+	@Override
+	public void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiPolyphonicAftertouch(sender, cable, channel, note, pressure);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiControlChange(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
+	 */
+	@Override
+	public void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiControlChange(sender, cable, channel, function, value);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiProgramChange(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int)
+	 */
+	@Override
+	public void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiProgramChange(sender, cable, channel, program);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiChannelAftertouch(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int)
+	 */
+	@Override
+	public void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiChannelAftertouch(sender, cable, channel, pressure);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiPitchWheel(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int)
+	 */
+	@Override
+	public void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiPitchWheel(sender, cable, channel, amount);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiSingleByte(jp.kshoji.driver.midi.device.MidiInputDevice, int, int)
+	 */
+	@Override
+	public void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiSingleByte(sender, cable, byte1);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice)
+	 */
+	@Override
+	public void onDeviceAttached(UsbDevice usbDevice) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onDeviceAttached(usbDevice);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
+	 */
+	@Override
+	public void onDeviceDetached(UsbDevice usbDevice) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onDeviceDetached(usbDevice);
+		}
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiRPNReceived(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int, int)
 	 */
 	@Override
 	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
-		// do nothing in this implementation
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
+		}
 	}
 
-	/**
-	 * NRPN message
-	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
-	 * 
-	 * @param sender
-	 * @param cable
-	 * @param channel
-	 * @param function 14bits
-	 * @param valueMSB higher 7bits
-	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	/*
+	 * (non-Javadoc)
+	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNRPNReceived(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int, int)
 	 */
 	@Override
 	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
-		// do nothing in this implementation
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiNRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
+		}
 	}
 }
