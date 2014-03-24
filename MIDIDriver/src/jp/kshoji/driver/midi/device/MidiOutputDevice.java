@@ -59,6 +59,7 @@ public final class MidiOutputDevice {
 	public void stop() {
 		usbDeviceConnection.releaseInterface(usbInterface);
 
+		waiterThread.suspendFlag = false;
 		waiterThread.stopFlag = true;
 		waiterThread.interrupt();
 
