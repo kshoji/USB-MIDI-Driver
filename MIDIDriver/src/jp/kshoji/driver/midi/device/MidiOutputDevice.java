@@ -174,6 +174,14 @@ public final class MidiOutputDevice {
 			int dequedDataBufferLength;
 			
 			while (stopFlag == false) {
+				dequedDataBuffer = null;
+				synchronized (queue) {
+					queueSize = queue.size();
+					if (queueSize > 0) {
+						dequedDataBuffer = queue.poll();
+					}
+				}
+
 				if (suspendFlag) {
 					try {
 						// sleep until interrupted
@@ -184,14 +192,6 @@ public final class MidiOutputDevice {
 					continue;
 				}
 				
-				dequedDataBuffer = null;
-				synchronized (queue) {
-					queueSize = queue.size();
-					if (queueSize > 0) {
-						dequedDataBuffer = queue.poll();
-					}
-				}
-
 				if (dequedDataBuffer != null) {
 					dequedDataBufferLength = dequedDataBuffer.length;
 					
