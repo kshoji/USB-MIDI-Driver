@@ -194,7 +194,35 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		
 		deviceConnection = null;
 	}
+
+
+	/**
+	 * Suspends receiving/transmitting MIDI messages.
+	 * All events will be discarded until the devices being resumed.
+	 */
+	protected final void suspendMidiDevices() {
+		if (midiInputDevice != null) {
+			midiInputDevice.suspend();
+		}
+		
+		if (midiOutputDevice != null) {
+			midiOutputDevice.suspend();
+		}
+	}
 	
+	/**
+	 * Resumes from {@link #suspendMidiDevices()}
+	 */
+	protected final void resumeMidiDevices() {
+		if (midiInputDevice != null) {
+			midiInputDevice.resume();
+		}
+		
+		if (midiOutputDevice != null) {
+			midiOutputDevice.resume();
+		}
+	}
+
 	/**
 	 * Get MIDI output device, if available.
 	 * 
@@ -220,6 +248,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
+	@Override
 	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
@@ -235,6 +264,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
+	@Override
 	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}

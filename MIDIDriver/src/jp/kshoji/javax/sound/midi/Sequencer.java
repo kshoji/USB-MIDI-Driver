@@ -310,6 +310,7 @@ public interface Sequencer extends MidiDevice {
     /**
      * Get current microsecond position.
      */
+    @Override
     long getMicrosecondPosition();
 
     /**
