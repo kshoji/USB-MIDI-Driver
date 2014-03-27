@@ -42,6 +42,25 @@ public abstract class AbstractMidiFragment extends Fragment implements OnMidiDev
 	}
 	
 	/**
+	 * Suspends receiving/transmitting MIDI messages.
+	 * All events will be discarded until the devices being resumed.
+	 */
+	public final void suspendMidiDevices() {
+		if (hostActivity != null) {
+			hostActivity.suspendMidiDevices();
+		}
+	}
+	
+	/**
+	 * Resumes from {@link #suspendMidiDevices()}
+	 */
+	public final void resumeMidiDevices() {
+		if (hostActivity != null) {
+			hostActivity.resumeMidiDevices();
+		}
+	}
+
+	/**
 	 * Get {@link MidiOutputDevice} attached with {@link MidiFragmentHostActivity}
 	 * 
 	 * @param usbDevice
