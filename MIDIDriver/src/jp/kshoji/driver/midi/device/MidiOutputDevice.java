@@ -1,10 +1,5 @@
 package jp.kshoji.driver.midi.device;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.Queue;
-
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
@@ -14,9 +9,14 @@ import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.Queue;
+
 /**
  * MIDI Output Device stop() method must be called when the application will be destroyed.
- * 
+ *
  * @author K.Shoji
  */
 public final class MidiOutputDevice {
@@ -30,7 +30,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * constructor
-	 * 
+	 *
 	 * @param usbDevice
 	 * @param usbDeviceConnection
 	 * @param usbInterface
@@ -50,6 +50,7 @@ public final class MidiOutputDevice {
 
 		this.usbDeviceConnection.claimInterface(this.usbInterface, true);
 
+        waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
 		waiterThread.start();
 	}
 
@@ -61,18 +62,18 @@ public final class MidiOutputDevice {
 
 		resume();
 		waiterThread.stopFlag = true;
-		waiterThread.interrupt();
 
 		// blocks while the thread will stop
 		while (waiterThread.isAlive()) {
 			try {
+                waiterThread.interrupt();
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// ignore
 			}
 		}
 	}
-	
+
 	/**
 	 * Suspends event sending
 	 */
@@ -112,7 +113,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Sending thread for output data. Loops infinitely while stopFlag == false.
-	 * 
+	 *
 	 * @author K.Shoji
 	 */
 	private final class WaiterThread extends Thread {
@@ -125,8 +126,6 @@ public final class MidiOutputDevice {
 
 		/**
 		 * constructor
-		 * 
-		 * @param handler
 		 */
 		WaiterThread() {
 			stopFlag = false;
@@ -160,7 +159,7 @@ public final class MidiOutputDevice {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see java.lang.Thread#run()
 		 */
 		@Override
@@ -172,7 +171,8 @@ public final class MidiOutputDevice {
 			int endpointBufferLength = 0;
 			int bufferPosition;
 			int dequedDataBufferLength;
-			
+            int usbRequestFailCount;
+
 			while (stopFlag == false) {
 				dequedDataBuffer = null;
 				synchronized (queue) {
@@ -191,10 +191,10 @@ public final class MidiOutputDevice {
 					}
 					continue;
 				}
-				
+
 				if (dequedDataBuffer != null) {
 					dequedDataBufferLength = dequedDataBuffer.length;
-					
+
 					// usbRequest.queue() is not thread-safe
 					synchronized (usbDeviceConnection) {
 						if (usbRequest == null) {
@@ -210,13 +210,33 @@ public final class MidiOutputDevice {
 								endpointBufferLength = maxPacketSize;
 							}
 							System.arraycopy(dequedDataBuffer, bufferPosition, endpointBuffer, 0, endpointBufferLength);
-							
+
+                            usbRequestFailCount = 0;
+                            // if device disconnected, usbRequest.queue returns false
 							while (usbRequest.queue(ByteBuffer.wrap(endpointBuffer), endpointBufferLength) == false) {
 								// loop until queue completed
+
+                                usbRequestFailCount++;
+                                if (usbRequestFailCount > 10) {
+                                    // maybe disconnected
+                                    stopFlag = true;
+                                    break;
+                                }
 							}
-							
+
+                            if (stopFlag) {
+                                break;
+                            }
+
+                            usbRequestFailCount = 0;
 							while (usbRequest.equals(usbDeviceConnection.requestWait()) == false) {
 								// loop until result received
+                                usbRequestFailCount++;
+                                if (usbRequestFailCount > 10) {
+                                    // maybe disconnected
+                                    stopFlag = true;
+                                    break;
+                                }
 							}
 						}
 					}
@@ -241,7 +261,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Sends MIDI message to output device.
-	 * 
+	 *
 	 * @param codeIndexNumber
 	 * @param cable
 	 * @param byte1
@@ -262,7 +282,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Miscellaneous function codes. Reserved for future extensions. Code Index Number : 0x0
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param byte1
@@ -275,7 +295,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Cable events. Reserved for future expansion. Code Index Number : 0x1
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param byte1
@@ -288,7 +308,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * System Common messages, or SysEx ends with following single byte. Code Index Number : 0x2 0x3 0x5
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param bytes
@@ -316,7 +336,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * SysEx Code Index Number : 0x4, 0x5, 0x6, 0x7
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param systemExclusive
@@ -361,14 +381,14 @@ public final class MidiOutputDevice {
 		}
 
 		byte[] buffer = transferDataStream.toByteArray();
-		
+
 		Handler handler = waiterThread.getHandler();
 		handler.sendMessage(Message.obtain(handler, 0, buffer));
 	}
 
 	/**
 	 * Note-off Code Index Number : 0x8
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -384,7 +404,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Note-on Code Index Number : 0x9
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -400,7 +420,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Poly-KeyPress Code Index Number : 0xa
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -416,7 +436,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Control Change Code Index Number : 0xb
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -432,7 +452,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Program Change Code Index Number : 0xc
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -446,7 +466,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Channel Pressure Code Index Number : 0xd
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -460,7 +480,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * PitchBend Change Code Index Number : 0xe
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -474,7 +494,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * Single Byte Code Index Number : 0xf
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param byte1
@@ -485,7 +505,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * RPN message
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -501,7 +521,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * RPN message
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -533,7 +553,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * NRPN message
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
@@ -549,7 +569,7 @@ public final class MidiOutputDevice {
 
 	/**
 	 * NRPN message
-	 * 
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel

@@ -1,16 +1,17 @@
 package jp.kshoji.javax.sound.midi.usb;
 
 
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.javax.sound.midi.MetaMessage;
 import jp.kshoji.javax.sound.midi.MidiMessage;
 import jp.kshoji.javax.sound.midi.Receiver;
 import jp.kshoji.javax.sound.midi.ShortMessage;
 import jp.kshoji.javax.sound.midi.SysexMessage;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbEndpoint;
-import android.hardware.usb.UsbInterface;
 
 /**
  * {@link jp.kshoji.javax.sound.midi.Receiver} implementation
@@ -33,13 +34,16 @@ public final class UsbMidiReceiver implements Receiver {
 		this.usbInterface = usbInterface;
 		this.outputEndpoint = outputEndpoint;
 		cableId = 0;
-	}
+
+        open();
+    }
 
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
-		if (outputDevice == null) {
-			open();
-		}
+        if (outputDevice == null) {
+            // already closed
+            return;
+        }
 
 		if (message instanceof MetaMessage) {
 			final MetaMessage metaMessage = (MetaMessage) message;
@@ -76,8 +80,13 @@ public final class UsbMidiReceiver implements Receiver {
 		}
 	}
 
+    /**
+     * must be called from UI thread.
+     */
 	public void open() {
-		outputDevice = new MidiOutputDevice(usbDevice, usbDeviceConnection, usbInterface, outputEndpoint);
+        if (outputDevice == null) {
+            outputDevice = new MidiOutputDevice(usbDevice, usbDeviceConnection, usbInterface, outputEndpoint);
+        }
 	}
 	
 	@Override
@@ -85,6 +94,7 @@ public final class UsbMidiReceiver implements Receiver {
 		if (outputDevice != null) {
 			outputDevice.stop();
 		}
+        outputDevice = null;
 	}
 
 	public int getCableId() {

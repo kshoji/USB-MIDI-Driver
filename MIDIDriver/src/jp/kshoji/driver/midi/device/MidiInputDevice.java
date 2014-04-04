@@ -1,11 +1,12 @@
 package jp.kshoji.driver.midi.device;
 
-import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
-import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+
+import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
+import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 
 /**
  * MIDI Input Device
@@ -49,6 +50,7 @@ public final class MidiInputDevice {
 
 		usbDeviceConnection.claimInterface(usbInterface, true);
 		waiterThread.setPriority(8);
+        waiterThread.setName("MidiInputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
 		waiterThread.start();
 	}
 
@@ -56,10 +58,10 @@ public final class MidiInputDevice {
 	 * stops the watching thread
 	 */
 	public void stop() {
-		usbDeviceConnection.releaseInterface(usbInterface);
-		
-		resume();
-		waiterThread.stopFlag = true;
+        usbDeviceConnection.releaseInterface(usbInterface);
+
+        waiterThread.stopFlag = true;
+        resume();
 
 		// blocks while the thread will stop
 		while (waiterThread.isAlive()) {
