@@ -1,17 +1,20 @@
 package jp.kshoji.javax.sound.midi.usb;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import jp.kshoji.javax.sound.midi.MidiDevice;
-import jp.kshoji.javax.sound.midi.MidiUnavailableException;
-import jp.kshoji.javax.sound.midi.Receiver;
-import jp.kshoji.javax.sound.midi.Transmitter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.javax.sound.midi.MidiDevice;
+import jp.kshoji.javax.sound.midi.MidiUnavailableException;
+import jp.kshoji.javax.sound.midi.Receiver;
+import jp.kshoji.javax.sound.midi.Transmitter;
 
 /**
  * {@link jp.kshoji.javax.sound.midi.MidiDevice} implementation
@@ -37,7 +40,13 @@ public final class UsbMidiDevice implements MidiDevice {
 		transmitters.add(new UsbMidiTransmitter(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
 
 		isOpened = false;
-	}
+
+        try {
+            open();
+        } catch (MidiUnavailableException e) {
+            Log.e(Constants.TAG, e.getMessage(), e);
+        }
+    }
 
 	@SuppressWarnings("boxing")
 	@Override
@@ -76,7 +85,7 @@ public final class UsbMidiDevice implements MidiDevice {
 		if (!isOpened) {
 			return;
 		}
-		
+
 		for (final Transmitter transmitter : transmitters) {
 			transmitter.close();
 		}

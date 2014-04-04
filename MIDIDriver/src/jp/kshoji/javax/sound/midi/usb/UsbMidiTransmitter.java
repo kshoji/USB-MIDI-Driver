@@ -1,6 +1,12 @@
 package jp.kshoji.javax.sound.midi.usb;
 
 
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+import android.util.Log;
+
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.Constants;
@@ -9,11 +15,6 @@ import jp.kshoji.javax.sound.midi.Receiver;
 import jp.kshoji.javax.sound.midi.ShortMessage;
 import jp.kshoji.javax.sound.midi.SysexMessage;
 import jp.kshoji.javax.sound.midi.Transmitter;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbEndpoint;
-import android.hardware.usb.UsbInterface;
-import android.util.Log;
 
 /**
  * {@link jp.kshoji.javax.sound.midi.Transmitter} implementation
@@ -34,14 +35,12 @@ public final class UsbMidiTransmitter implements Transmitter {
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
 		this.inputEndpoint = inputEndpoint;
+        open();
 	}
 
 	@Override
 	public void setReceiver(Receiver receiver) {
 		this.receiver = receiver;
-		if (inputDevice == null) {
-			open();
-		}
 	}
 
 	@Override
@@ -50,7 +49,9 @@ public final class UsbMidiTransmitter implements Transmitter {
 	}
 	
 	public void open() {
-		inputDevice = new MidiInputDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, new OnMidiInputEventListenerImpl());
+        if (inputDevice == null) {
+            inputDevice = new MidiInputDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, new OnMidiInputEventListenerImpl());
+        }
 	}
 
 	@Override
@@ -58,6 +59,7 @@ public final class UsbMidiTransmitter implements Transmitter {
 		if (inputDevice != null) {
 			inputDevice.stop();
 		}
+        inputDevice = null;
 	}
 	
 	class OnMidiInputEventListenerImpl implements OnMidiInputEventListener{
