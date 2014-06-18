@@ -3,7 +3,7 @@ package jp.kshoji.javax.sound.midi;
 public interface Synthesizer extends MidiDevice {
     Instrument[] getAvailableInstruments();
 
-    MidiChannel getChannels();
+    MidiChannel[] getChannels();
 
     Soundbank getDefaultSoundbank();
 

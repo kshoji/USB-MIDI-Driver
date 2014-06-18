@@ -558,7 +558,7 @@ public final class MidiSystem {
 	 * @param sequence
 	 * @return
 	 */
-	static boolean isFileTypeSupported(int fileType, Sequence sequence) {
+	public static boolean isFileTypeSupported(int fileType, Sequence sequence) {
 		StandardMidiFileWriter standardMidiFileWriter = new StandardMidiFileWriter();
 		return standardMidiFileWriter.isFileTypeSupported(fileType, sequence);
 	}
@@ -572,7 +572,7 @@ public final class MidiSystem {
 	 * @return
 	 * @throws IOException
 	 */
-	static int write(Sequence sequence, int fileType, File file) throws IOException {
+    public static int write(Sequence sequence, int fileType, File file) throws IOException {
 		StandardMidiFileWriter standardMidiFileWriter = new StandardMidiFileWriter();
 		return standardMidiFileWriter.write(sequence, fileType, file);
 	}
@@ -586,7 +586,7 @@ public final class MidiSystem {
 	 * @return
 	 * @throws IOException
 	 */
-	static int write(Sequence sequence, int fileType, OutputStream outputStream) throws IOException {
+    public static int write(Sequence sequence, int fileType, OutputStream outputStream) throws IOException {
 		StandardMidiFileWriter standardMidiFileWriter = new StandardMidiFileWriter();
 		return standardMidiFileWriter.write(sequence, fileType, outputStream);
 	}
