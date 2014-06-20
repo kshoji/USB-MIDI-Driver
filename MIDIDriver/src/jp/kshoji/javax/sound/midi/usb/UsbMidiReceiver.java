@@ -8,8 +8,9 @@ import android.hardware.usb.UsbInterface;
 
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.javax.sound.midi.MetaMessage;
+import jp.kshoji.javax.sound.midi.MidiDevice;
+import jp.kshoji.javax.sound.midi.MidiDeviceReceiver;
 import jp.kshoji.javax.sound.midi.MidiMessage;
-import jp.kshoji.javax.sound.midi.Receiver;
 import jp.kshoji.javax.sound.midi.ShortMessage;
 import jp.kshoji.javax.sound.midi.SysexMessage;
 
@@ -19,7 +20,8 @@ import jp.kshoji.javax.sound.midi.SysexMessage;
  * @author K.Shoji
  *
  */
-public final class UsbMidiReceiver implements Receiver {
+public final class UsbMidiReceiver implements MidiDeviceReceiver {
+    private final UsbMidiDevice usbMidiDevice;
 	private final UsbDevice usbDevice;
 	private final UsbDeviceConnection usbDeviceConnection;
 	private final UsbInterface usbInterface;
@@ -28,7 +30,8 @@ public final class UsbMidiReceiver implements Receiver {
 	
 	private MidiOutputDevice outputDevice = null;
 	
-	public UsbMidiReceiver(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint outputEndpoint) {
+	public UsbMidiReceiver(UsbMidiDevice usbMidiDevice, UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint outputEndpoint) {
+        this.usbMidiDevice = usbMidiDevice;
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -104,4 +107,9 @@ public final class UsbMidiReceiver implements Receiver {
 	public void setCableId(int cableId) {
 		this.cableId = cableId;
 	}
+
+    @Override
+    public MidiDevice getMidiDevice() {
+        return usbMidiDevice;
+    }
 }

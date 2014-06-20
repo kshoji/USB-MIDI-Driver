@@ -36,8 +36,8 @@ public final class UsbMidiDevice implements MidiDevice {
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
 
-		receivers.add(new UsbMidiReceiver(usbDevice, usbDeviceConnection, usbInterface, outputEndpoint));
-		transmitters.add(new UsbMidiTransmitter(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
+		receivers.add(new UsbMidiReceiver(this, usbDevice, usbDeviceConnection, usbInterface, outputEndpoint));
+		transmitters.add(new UsbMidiTransmitter(this, usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
 
 		isOpened = false;
 
