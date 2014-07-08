@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -215,19 +216,27 @@ public class UsbMidiSequencer implements Sequencer {
         void fireEventListeners(MidiMessage message) {
             if (message instanceof MetaMessage) {
                 synchronized (metaEventListeners) {
-                    for (MetaEventListener metaEventListener : metaEventListeners) {
-                        metaEventListener.meta((MetaMessage) message);
+                    try {
+                        for (MetaEventListener metaEventListener : metaEventListeners) {
+                            metaEventListener.meta((MetaMessage) message);
+                        }
+                    } catch (ConcurrentModificationException cme) {
+                        // FIXME why this exception will be thrown? ... ignore it.
                     }
                 }
             } else if (message instanceof ShortMessage) {
                 ShortMessage shortMessage = (ShortMessage) message;
                 if (shortMessage.getCommand() == ShortMessage.CONTROL_CHANGE) {
                     synchronized (controllerEventListenerMap) {
-                        Set<ControllerEventListener> eventListeners = controllerEventListenerMap.get(shortMessage.getData1());
-                        if (eventListeners != null) {
-                            for (ControllerEventListener eventListener : eventListeners) {
-                                eventListener.controlChange(shortMessage);
+                        try {
+                            Set<ControllerEventListener> eventListeners = controllerEventListenerMap.get(shortMessage.getData1());
+                            if (eventListeners != null) {
+                                for (ControllerEventListener eventListener : eventListeners) {
+                                    eventListener.controlChange(shortMessage);
+                                }
                             }
+                        } catch (ConcurrentModificationException cme) {
+                            // ignore exception
                         }
                     }
                 }
@@ -375,7 +384,12 @@ public class UsbMidiSequencer implements Sequencer {
                         // process tempo change message
                         if (midiMessage instanceof MetaMessage) {
                             MetaMessage metaMessage = (MetaMessage) midiMessage;
-                            processTempoChange(metaMessage);
+                            if (processTempoChange(metaMessage)) {
+                                fireEventListeners(midiMessage);
+
+                                // do not send tempo message to the receivers.
+                                continue;
+                            }
                         }
 
                         // send MIDI events
@@ -571,6 +585,14 @@ public class UsbMidiSequencer implements Sequencer {
             isOpen = false;
             sequencerThread = null;
         }
+
+        synchronized (metaEventListeners) {
+            metaEventListeners.clear();
+        }
+
+        synchronized (controllerEventListenerMap) {
+            controllerEventListenerMap.clear();
+        }
     }
 
     /*
@@ -615,7 +637,11 @@ public class UsbMidiSequencer implements Sequencer {
     @Override
     public Receiver getReceiver() throws MidiUnavailableException {
         synchronized (receivers) {
-            return receivers.get(0);
+            if (receivers.size() > 0) {
+                return receivers.get(0);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -639,7 +665,11 @@ public class UsbMidiSequencer implements Sequencer {
     @Override
     public Transmitter getTransmitter() throws MidiUnavailableException {
         synchronized (transmitters) {
-            return transmitters.get(0);
+            if (transmitters.size() > 0) {
+                return transmitters.get(0);
+            } else {
+                return null;
+            }
         }
     }
 

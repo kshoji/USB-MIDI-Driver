@@ -1,13 +1,12 @@
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 dependencies {
-    compile fileTree(dir: 'libs', include: '*.jar')
     compile project(':MIDIDriver')
 }
 
 android {
     compileSdkVersion 12
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "19.1.0"
 
     sourceSets {
         main {
