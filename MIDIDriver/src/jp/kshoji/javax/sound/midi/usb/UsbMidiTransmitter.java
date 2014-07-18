@@ -1,26 +1,29 @@
 package jp.kshoji.javax.sound.midi.usb;
 
 
-import jp.kshoji.driver.midi.device.MidiInputDevice;
-import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
-import jp.kshoji.driver.midi.util.Constants;
-import jp.kshoji.javax.sound.midi.InvalidMidiDataException;
-import jp.kshoji.javax.sound.midi.Receiver;
-import jp.kshoji.javax.sound.midi.ShortMessage;
-import jp.kshoji.javax.sound.midi.SysexMessage;
-import jp.kshoji.javax.sound.midi.Transmitter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.util.Log;
 
+import jp.kshoji.driver.midi.device.MidiInputDevice;
+import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
+import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.javax.sound.midi.InvalidMidiDataException;
+import jp.kshoji.javax.sound.midi.MidiDevice;
+import jp.kshoji.javax.sound.midi.MidiDeviceTransmitter;
+import jp.kshoji.javax.sound.midi.Receiver;
+import jp.kshoji.javax.sound.midi.ShortMessage;
+import jp.kshoji.javax.sound.midi.SysexMessage;
+
 /**
  * {@link jp.kshoji.javax.sound.midi.Transmitter} implementation
  * 
  * @author K.Shoji
  */
-public final class UsbMidiTransmitter implements Transmitter {
+public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
+    private final UsbMidiDevice usbMidiDevice;
 	private final UsbDevice usbDevice;
 	private final UsbDeviceConnection usbDeviceConnection;
 	private final UsbInterface usbInterface;
@@ -29,19 +32,18 @@ public final class UsbMidiTransmitter implements Transmitter {
 	private MidiInputDevice inputDevice;
 	Receiver receiver;
 
-	public UsbMidiTransmitter(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint inputEndpoint) {
+	public UsbMidiTransmitter(UsbMidiDevice usbMidiDevice, UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint inputEndpoint) {
+        this.usbMidiDevice = usbMidiDevice;
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
 		this.inputEndpoint = inputEndpoint;
+        open();
 	}
 
 	@Override
 	public void setReceiver(Receiver receiver) {
 		this.receiver = receiver;
-		if (inputDevice == null) {
-			open();
-		}
 	}
 
 	@Override
@@ -50,7 +52,9 @@ public final class UsbMidiTransmitter implements Transmitter {
 	}
 	
 	public void open() {
-		inputDevice = new MidiInputDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, new OnMidiInputEventListenerImpl());
+        if (inputDevice == null) {
+            inputDevice = new MidiInputDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, new OnMidiInputEventListenerImpl());
+        }
 	}
 
 	@Override
@@ -58,9 +62,15 @@ public final class UsbMidiTransmitter implements Transmitter {
 		if (inputDevice != null) {
 			inputDevice.stop();
 		}
+        inputDevice = null;
 	}
-	
-	class OnMidiInputEventListenerImpl implements OnMidiInputEventListener{
+
+    @Override
+    public MidiDevice getMidiDevice() {
+        return usbMidiDevice;
+    }
+
+    class OnMidiInputEventListenerImpl implements OnMidiInputEventListener{
 		@Override
 		public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 			if (receiver != null) {

@@ -1,5 +1,14 @@
 package jp.kshoji.javax.sound.midi;
 
+import android.content.Context;
+import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
+import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,14 +33,6 @@ import jp.kshoji.javax.sound.midi.io.StandardMidiFileReader;
 import jp.kshoji.javax.sound.midi.io.StandardMidiFileWriter;
 import jp.kshoji.javax.sound.midi.usb.UsbMidiDevice;
 import jp.kshoji.javax.sound.midi.usb.UsbMidiSequencer;
-import android.content.Context;
-import android.hardware.usb.UsbConstants;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbEndpoint;
-import android.hardware.usb.UsbInterface;
-import android.hardware.usb.UsbManager;
-import android.util.Log;
 
 /**
  * MidiSystem porting for Android USB MIDI.<br />
@@ -41,13 +42,13 @@ import android.util.Log;
  */
 public final class MidiSystem {
 	static List<DeviceFilter> deviceFilters = null;
-	static Set<UsbMidiDevice> midiDevices = null;
+	static Map<UsbDevice, Set<UsbMidiDevice>> midiDevices = null;
 	static Map<UsbDevice, UsbDeviceConnection> deviceConnections;
 	static OnMidiDeviceAttachedListener deviceAttachedListener = null;
 	static OnMidiDeviceDetachedListener deviceDetachedListener = null;
 	static MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 	static OnMidiSystemEventListener systemEventListener = null;
-	
+
 	/**
 	 * Utilities for {@link MidiSystem}
 	 *
@@ -56,7 +57,7 @@ public final class MidiSystem {
 	public static class MidiSystemUtils {
 		/**
 		 * Get currently connected {@link Receiver}s
-		 * 
+		 *
 		 * @return
 		 * @throws MidiUnavailableException
 		 */
@@ -66,13 +67,13 @@ public final class MidiSystem {
 			for (Info midiDeviceInfo : midiDeviceInfos) {
 				result.addAll(MidiSystem.getMidiDevice(midiDeviceInfo).getReceivers());
 			}
-			
+
 			return result;
 		}
 
 		/**
 		 * Get currently connected {@link Transmitter}s
-		 * 
+		 *
 		 * @return
 		 * @throws MidiUnavailableException
 		 */
@@ -82,37 +83,37 @@ public final class MidiSystem {
 			for (Info midiDeviceInfo : midiDeviceInfos) {
 				result.addAll(MidiSystem.getMidiDevice(midiDeviceInfo).getTransmitters());
 			}
-			
+
 			return result;
 		}
 	}
-	
+
 	/**
 	 * Find {@link Set<UsbMidiDevice>} from {@link UsbDevice}<br />
 	 * method for jp.kshoji.javax.sound.midi package.
-	 * 
+	 *
 	 * @param usbDevice
-	 * @param usbDeviceConnection 
+	 * @param usbDeviceConnection
 	 * @return {@link Set<UsbMidiDevice>}, always not null
 	 */
 	static Set<UsbMidiDevice> findAllUsbMidiDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection) {
 		Set<UsbMidiDevice> result = new HashSet<UsbMidiDevice>();
-		
+
 		Set<UsbInterface> interfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(usbDevice, deviceFilters);
 		for (UsbInterface usbInterface : interfaces) {
 			UsbEndpoint inputEndpoint = UsbMidiDeviceUtils.findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_IN, deviceFilters);
 			UsbEndpoint outputEndpoint = UsbMidiDeviceUtils.findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_OUT, deviceFilters);
-			
+
 			result.add(new UsbMidiDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, outputEndpoint));
 		}
-		
+
 		return Collections.unmodifiableSet(result);
 	}
 
-	
+
 	/**
 	 * Implementation for multiple device connections.
-	 * 
+	 *
 	 * @author K.Shoji
 	 */
 	static final class OnMidiDeviceAttachedListenerImpl implements OnMidiDeviceAttachedListener {
@@ -120,7 +121,7 @@ public final class MidiSystem {
 
 		/**
 		 * constructor
-		 * 
+		 *
 		 * @param usbManager
 		 */
 		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
@@ -134,8 +135,8 @@ public final class MidiSystem {
 		@Override
 		public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
 			deviceConnectionWatcher.notifyDeviceGranted();
-			
-			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);			
+
+			UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);
 			if (deviceConnection == null) {
 				return;
 			}
@@ -145,11 +146,11 @@ public final class MidiSystem {
 			}
 
 			synchronized (midiDevices) {
-				midiDevices.addAll(findAllUsbMidiDevices(attachedDevice, deviceConnection));
+				midiDevices.put(attachedDevice, findAllUsbMidiDevices(attachedDevice, deviceConnection));
 			}
 
 			Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
-			
+
 			if (systemEventListener != null) {
 				systemEventListener.onMidiSystemChanged();
 			}
@@ -158,7 +159,7 @@ public final class MidiSystem {
 
 	/**
 	 * Implementation for multiple device connections.
-	 * 
+	 *
 	 * @author K.Shoji
 	 */
 	static final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
@@ -177,17 +178,19 @@ public final class MidiSystem {
 				return;
 			}
 
-			Set<UsbMidiDevice> detachedMidiDevices = findAllUsbMidiDevices(detachedDevice, usbDeviceConnection);
-			for (UsbMidiDevice usbMidiDevice : detachedMidiDevices) {
-				usbMidiDevice.close();
-			}
+			Set<UsbMidiDevice> detachedMidiDevices = midiDevices.get(detachedDevice);
+            if (detachedMidiDevices != null) {
+                for (UsbMidiDevice usbMidiDevice : detachedMidiDevices) {
+                    usbMidiDevice.close();
+                }
+            }
 
 			synchronized (midiDevices) {
-				midiDevices.removeAll(detachedMidiDevices);
+				midiDevices.remove(detachedDevice);
 			}
 
 			Log.d(Constants.TAG, "Device " + detachedDevice.getDeviceName() + " has been detached.");
-			
+
 			if (systemEventListener != null) {
 				systemEventListener.onMidiSystemChanged();
 			}
@@ -196,7 +199,7 @@ public final class MidiSystem {
 
 	/**
 	 * Listener for MidiSystem event listener
-	 * 
+	 *
 	 * @author K.Shoji
 	 */
 	public interface OnMidiSystemEventListener {
@@ -206,7 +209,7 @@ public final class MidiSystem {
 		 */
 		void onMidiSystemChanged();
 	}
-	
+
 	/**
 	 * Set the listener of Device connection/disconnection
 	 * @param listener
@@ -214,10 +217,10 @@ public final class MidiSystem {
 	public static void setOnMidiSystemEventListener(OnMidiSystemEventListener listener) {
 		systemEventListener = listener;
 	}
-	
+
 	/**
 	 * Initializes MidiSystem
-	 * 
+	 *
 	 * @param context
 	 * @throws NullPointerException
 	 */
@@ -232,7 +235,7 @@ public final class MidiSystem {
 		}
 
 		deviceFilters = DeviceFilter.getDeviceFilters(context);
-		midiDevices = new HashSet<UsbMidiDevice>();
+		midiDevices = new HashMap<UsbDevice, Set<UsbMidiDevice>>();
 		deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
 		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl(usbManager);
 		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
@@ -245,8 +248,10 @@ public final class MidiSystem {
 	public static void terminate() {
 		if (midiDevices != null) {
 			synchronized (midiDevices) {
-				for (UsbMidiDevice midiDevice : midiDevices) {
-					midiDevice.close();
+				for (UsbDevice device : midiDevices.keySet()) {
+                    for (UsbMidiDevice midiDevice : midiDevices.get(device)) {
+                        midiDevice.close();
+                    }
 				}
 				midiDevices.clear();
 			}
@@ -271,33 +276,37 @@ public final class MidiSystem {
 
 	/**
 	 * get all connected {@link MidiDevice.Info} as array
-	 * 
+	 *
 	 * @return device informations
 	 */
 	public static MidiDevice.Info[] getMidiDeviceInfo() {
 		List<MidiDevice.Info> result = new ArrayList<MidiDevice.Info>();
 		if (midiDevices != null) {
-			for (MidiDevice midiDevice : midiDevices) {
-				result.add(midiDevice.getDeviceInfo());
-			}
+            for (UsbDevice device : midiDevices.keySet()) {
+                for (UsbMidiDevice midiDevice : midiDevices.get(device)) {
+                    result.add(midiDevice.getDeviceInfo());
+                }
+            }
 		}
 		return result.toArray(new MidiDevice.Info[0]);
 	}
 
 	/**
 	 * get {@link MidiDevice} by device information
-	 * 
+	 *
 	 * @param info
 	 * @return {@link MidiDevice}
 	 * @throws MidiUnavailableException
 	 */
 	public static MidiDevice getMidiDevice(MidiDevice.Info info) throws MidiUnavailableException {
 		if (midiDevices != null) {
-			for (MidiDevice midiDevice : midiDevices) {
-				if (info.equals(midiDevice.getDeviceInfo())) {
-					return midiDevice;
-				}
-			}
+            for (UsbDevice device : midiDevices.keySet()) {
+                for (UsbMidiDevice midiDevice : midiDevices.get(device)) {
+                    if (info.equals(midiDevice.getDeviceInfo())) {
+                        return midiDevice;
+                    }
+                }
+            }
 		}
 
 		throw new IllegalArgumentException("Requested device not installed: " + info);
@@ -305,43 +314,47 @@ public final class MidiSystem {
 
 	/**
 	 * get the first detected Receiver
-	 * 
+	 *
 	 * @return {@link Receiver}
 	 * @throws MidiUnavailableException
 	 */
 	public static Receiver getReceiver() throws MidiUnavailableException {
 		if (midiDevices != null) {
-			for (MidiDevice midiDevice : midiDevices) {
-				Receiver receiver = midiDevice.getReceiver();
-				if (receiver != null) {
-					return receiver;
-				}
-			}
+            for (UsbDevice device : midiDevices.keySet()) {
+                for (UsbMidiDevice midiDevice : midiDevices.get(device)) {
+                    Receiver receiver = midiDevice.getReceiver();
+                    if (receiver != null) {
+                        return receiver;
+                    }
+                }
+            }
 		}
 		return null;
 	}
 
 	/**
 	 * get the first detected Transmitter
-	 * 
+	 *
 	 * @return {@link Transmitter}
 	 * @throws MidiUnavailableException
 	 */
 	public static Transmitter getTransmitter() throws MidiUnavailableException {
 		if (midiDevices != null) {
-			for (MidiDevice midiDevice : midiDevices) {
-				Transmitter transmitter = midiDevice.getTransmitter();
-				if (transmitter != null) {
-					return transmitter;
-				}
-			}
+            for (UsbDevice device : midiDevices.keySet()) {
+                for (UsbMidiDevice midiDevice : midiDevices.get(device)) {
+                    Transmitter transmitter = midiDevice.getTransmitter();
+                    if (transmitter != null) {
+                        return transmitter;
+                    }
+                }
+            }
 		}
 		return null;
 	}
-	
+
 	/**
 	 * get a {@link Sequence} from the specified File.
-	 * 
+	 *
 	 * @param file
 	 * @return
 	 * @throws InvalidMidiDataException
@@ -354,7 +367,7 @@ public final class MidiSystem {
 
 	/**
 	 * get a {@link Sequence} from the specified input stream.
-	 * 
+	 *
 	 * @param stream
 	 * @return
 	 * @throws InvalidMidiDataException
@@ -379,7 +392,7 @@ public final class MidiSystem {
 
 	/**
 	 * get the default {@link Sequencer}, connected to a default device.
-	 * 
+	 *
 	 * @return {@link Sequencer} must call the {@link Sequencer#open()} method.
 	 * @throws MidiUnavailableException
 	 */
@@ -389,7 +402,7 @@ public final class MidiSystem {
 
 	/**
 	 * get the default {@link Sequencer}, optionally connected to a default device.
-	 * 
+	 *
 	 * @param connected ignored
 	 * @return {@link Sequencer} must call the {@link Sequencer#open()} method.
 	 * @throws MidiUnavailableException
@@ -397,6 +410,75 @@ public final class MidiSystem {
 	public static Sequencer	getSequencer(boolean connected) throws MidiUnavailableException {
 		return new UsbMidiSequencer();
 	}
+
+    /**
+     * Obtain {@link jp.kshoji.javax.sound.midi.Soundbank} from File<br />
+     * not implemented.
+     *
+     * @param file
+     * @return
+     * @throws InvalidMidiDataException
+     * @throws IOException
+     */
+    public static Soundbank getSoundbank(File file) throws InvalidMidiDataException, IOException {
+        throw new UnsupportedOperationException("not implemented.");
+    }
+
+    /**
+     * Obtain {@link jp.kshoji.javax.sound.midi.Soundbank} from InputStream<br />
+     * not implemented.
+     *
+     * @param stream
+     * @return
+     * @throws InvalidMidiDataException
+     * @throws IOException
+     */
+    public static Soundbank getSoundbank(InputStream stream) throws InvalidMidiDataException, IOException {
+        throw new UnsupportedOperationException("not implemented.");
+    }
+
+    /**
+     * Obtain {@link jp.kshoji.javax.sound.midi.Soundbank} from URL<br />
+     * not implemented.
+     *
+     * @param url
+     * @return
+     * @throws InvalidMidiDataException
+     * @throws IOException
+     */
+    public static Soundbank getSoundbank(URL url) throws InvalidMidiDataException, IOException {
+        throw new UnsupportedOperationException("not implemented.");
+    }
+
+    private static final Set<Synthesizer> synthesizers = new HashSet<Synthesizer>();
+
+    /**
+     * Obtains {@link jp.kshoji.javax.sound.midi.Synthesizer} registered by {@link #registerSynthesizer(Synthesizer)}
+     * @return a Synthesizer, null if instance has not registered
+     * @throws MidiUnavailableException
+     */
+    public static Synthesizer getSynthesizer() throws MidiUnavailableException {
+        if (synthesizers.size() == 0) {
+            return null;
+        }
+
+        for (Synthesizer synthesizer : synthesizers) {
+            // returns the first one
+            return synthesizer;
+        }
+
+        return null;
+    }
+
+    /**
+     * Registers a {@link jp.kshoji.javax.sound.midi.Synthesizer} instance.
+     * @param synthesizer
+     */
+    public static void registerSynthesizer(Synthesizer synthesizer) {
+        if (synthesizer != null) {
+            synthesizers.add(synthesizer);
+        }
+    }
 
 	/**
 	 * get the {@link MidiFileFormat} information of the specified File.
@@ -476,7 +558,7 @@ public final class MidiSystem {
 	 * @param sequence
 	 * @return
 	 */
-	static boolean isFileTypeSupported(int fileType, Sequence sequence) {
+	public static boolean isFileTypeSupported(int fileType, Sequence sequence) {
 		StandardMidiFileWriter standardMidiFileWriter = new StandardMidiFileWriter();
 		return standardMidiFileWriter.isFileTypeSupported(fileType, sequence);
 	}
@@ -490,7 +572,7 @@ public final class MidiSystem {
 	 * @return
 	 * @throws IOException
 	 */
-	static int write(Sequence sequence, int fileType, File file) throws IOException {
+    public static int write(Sequence sequence, int fileType, File file) throws IOException {
 		StandardMidiFileWriter standardMidiFileWriter = new StandardMidiFileWriter();
 		return standardMidiFileWriter.write(sequence, fileType, file);
 	}
@@ -504,7 +586,7 @@ public final class MidiSystem {
 	 * @return
 	 * @throws IOException
 	 */
-	static int write(Sequence sequence, int fileType, OutputStream outputStream) throws IOException {
+    public static int write(Sequence sequence, int fileType, OutputStream outputStream) throws IOException {
 		StandardMidiFileWriter standardMidiFileWriter = new StandardMidiFileWriter();
 		return standardMidiFileWriter.write(sequence, fileType, outputStream);
 	}

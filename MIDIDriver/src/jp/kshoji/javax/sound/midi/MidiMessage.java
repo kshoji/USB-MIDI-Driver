@@ -14,7 +14,7 @@ public abstract class MidiMessage implements Cloneable {
 	 * @throws InvalidMidiDataException
 	 */
 	protected void setMessage(byte[] data, int length) throws InvalidMidiDataException {
-		if (this.data == null) {
+		if (this.data == null || this.data.length != data.length) {
 			this.data = new byte[data.length];
 		}
 		System.arraycopy(data, 0, this.data, 0, data.length);
