@@ -13,4 +13,6 @@
     <usb-device vendor-id="5840" />
     <!-- korg -->
     <usb-device vendor-id="0944" />
+    <!-- CME -->
+    <usb-device vendor-id="9615" />
 </resources>
