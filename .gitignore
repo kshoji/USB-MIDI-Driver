@@ -12,3 +12,4 @@ MIDIDriver/build
 .gradle
 *.iml
 local.properties
+build
