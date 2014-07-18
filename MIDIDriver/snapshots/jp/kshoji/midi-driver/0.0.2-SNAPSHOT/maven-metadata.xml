@@ -2,12 +2,12 @@
 <metadata>
   <groupId>jp.kshoji</groupId>
   <artifactId>midi-driver</artifactId>
+  <version>0.0.2-SNAPSHOT</version>
   <versioning>
-    <versions>
-      <version>0.0.1-SNAPSHOT</version>
-      <version>0.0.1</version>
-      <version>0.0.2-SNAPSHOT</version>
-    </versions>
+    <snapshot>
+      <timestamp>20140718.091351</timestamp>
+      <buildNumber>1</buildNumber>
+    </snapshot>
     <lastUpdated>20140718091351</lastUpdated>
   </versioning>
 </metadata>

@@ -33,3 +33,14 @@ android {
         release.setRoot('build-types/release')
     }
 }
+
+apply plugin: 'maven'
+group = 'jp.kshoji'
+uploadArchives {
+    repositories.mavenDeployer {
+        repository url: 'file://' + file('snapshots').absolutePath
+        pom.version = '0.0.2-SNAPSHOT'
+        pom.artifactId = 'midi-driver'
+    }
+}
+task install(dependsOn: uploadArchives)
