@@ -30,6 +30,7 @@ import jp.kshoji.driver.usb.util.DeviceFilter;
  * @author K.Shoji
  */
 public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
+    private boolean isOpen = false;
 
     /**
      * Implementation for multiple device connections.
@@ -200,6 +201,12 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      * Starts the USB device watching and communicating thread.
      */
     public final void open() {
+        if (isOpen) {
+            // already opened
+            return;
+        }
+        isOpen = true;
+
         deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
         midiInputDevices = new HashMap<UsbDevice, Set<MidiInputDevice>>();
         midiOutputDevices = new HashMap<UsbDevice, Set<MidiOutputDevice>>();
@@ -232,6 +239,12 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      * The all connected devices will be closed.
      */
     public final void close() {
+        if (!isOpen) {
+            // already closed
+            return;
+        }
+        isOpen = false;
+
         deviceConnectionWatcher.stop();
         deviceConnectionWatcher = null;
 
