@@ -4,5 +4,6 @@
     <string name="app_name">MIDIDriverSample</string>
     <string name="app_name_single">MIDIDriverSample(Single Device)</string>
     <string name="app_name_multiple">MIDIDriverSample(Multiple Devices)</string>
+    <string name="app_name_driver">MIDIDriverSample(using Driver class)</string>
 
 </resources>	
