@@ -1,5 +1,6 @@
 Android USB MIDI Driver
 ====
+[![Build Status](https://travis-ci.org/kshoji/USB-MIDI-Driver.svg?branch=master)](https://travis-ci.org/kshoji/USB-MIDI-Driver)
 
 USB MIDI Driver using Android USB Host API
 
