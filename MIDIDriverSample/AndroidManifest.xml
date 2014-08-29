@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="jp.kshoji.driver.midi.sample"
-    android:versionCode="4"
-    android:versionName="1.3" >
+    android:versionCode="9"
+    android:versionName="1.8" >
 
     <uses-feature android:name="android.hardware.usb.host" /> 
     <uses-sdk android:minSdkVersion="12" />
