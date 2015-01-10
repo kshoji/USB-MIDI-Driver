@@ -24,6 +24,16 @@ public class SysexMessage extends MidiMessage {
 
 	/*
 	 * (non-Javadoc)
+	 * @see #setMessage(byte[], int)
+	 */
+	public SysexMessage(byte[] data, int length)
+			throws InvalidMidiDataException {
+		super(null);
+		setMessage(data, length);
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see jp.kshoji.javax.sound.midi.MidiMessage#setMessage(byte[], int)
 	 */
 	@Override

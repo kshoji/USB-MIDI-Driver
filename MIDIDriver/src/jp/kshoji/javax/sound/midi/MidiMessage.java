@@ -63,4 +63,10 @@ public abstract class MidiMessage implements Cloneable {
 	public String toString() {
 		return getClass().getName() + ":" + toHexString(data);
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	public abstract Object clone();
 }
