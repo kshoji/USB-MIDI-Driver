@@ -99,7 +99,15 @@
 		</plugins>
 	</build>
 
-	<dependencies>
+    <repositories>
+        <repository>
+            <id>javax-sound-midi-repo</id>
+            <name>javax.sound.midi Repository</name>
+            <url>https://github.com/kshoji/javax.sound.midi-for-Android/raw/develop/javax.sound.midi/repository</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
 		<dependency>
 			<groupId>jp.kshoji</groupId>
 			<artifactId>midi-driver-library</artifactId>
