@@ -3,13 +3,13 @@ apply plugin: 'com.android.library'
 
 repositories {
     maven {
-        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/develop/javax.sound.midi/repository'
+        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository'
     }
     mavenCentral()
 }
 
 dependencies {
-    compile 'jp.kshoji:javax-sound-midi:0.0.1-SNAPSHOT:@aar'
+    compile 'jp.kshoji:javax-sound-midi:0.0.1:@aar'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
 
@@ -47,7 +47,7 @@ group = 'jp.kshoji'
 uploadArchives {
     repositories.mavenDeployer {
         repository url: 'file://' + file('snapshots').absolutePath
-        pom.version = '0.0.4-SNAPSHOT'
+        pom.version = '0.1.1'
         pom.artifactId = 'midi-driver'
     }
 }
