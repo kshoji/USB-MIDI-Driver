@@ -1,0 +1,13 @@
+language: android
+jdk: openjdk7
+android:
+  components:
+    - build-tools-21.1.2
+    - extra-android-m2repository
+    - android-12
+  licenses:
+    - '.+'
+before_install:
+ - chmod +x gradlew
+script:
+  - ./gradlew check
