@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.kshoji</groupId>
 	<artifactId>midi-driver-sample</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<packaging>apk</packaging>
 	<name>Android USB MIDI Driver sample</name>
 	<description>Android USB MIDI Driver's sample application</description>
@@ -99,11 +99,19 @@
 		</plugins>
 	</build>
 
-	<dependencies>
+    <repositories>
+        <repository>
+            <id>javax-sound-midi-repo</id>
+            <name>javax.sound.midi Repository</name>
+            <url>https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
 		<dependency>
 			<groupId>jp.kshoji</groupId>
 			<artifactId>midi-driver-library</artifactId>
-			<version>0.0.3-SNAPSHOT</version>
+			<version>0.1.1</version>
 			<type>apklib</type>
 		</dependency>
 

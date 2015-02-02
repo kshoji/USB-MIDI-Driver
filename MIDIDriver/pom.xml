@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.kshoji</groupId>
 	<artifactId>midi-driver</artifactId>
-	<version>0.0.3</version>
+	<version>0.1.1</version>
 	<packaging>aar</packaging>
 	<name>Android USB MIDI Driver Library</name>
 	<description>USB MIDI Driver for Android tablets(3.1 or higher)</description>
@@ -102,6 +102,14 @@
 		</plugins>
 	</build>
 
+    <repositories>
+        <repository>
+            <id>javax-sound-midi-repo</id>
+            <name>javax.sound.midi Repository</name>
+            <url>https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository</url>
+        </repository>
+    </repositories>
+
 	<dependencies>
 		<!-- install dependency using https://github.com/mosabua/maven-android-sdk-deployer -->
 		<!-- mvn install -P 3.1 -->
@@ -111,5 +119,12 @@
 			<version>3.1_r3</version>
 			<scope>provided</scope>
 		</dependency>
+
+        <dependency>
+            <groupId>jp.kshoji</groupId>
+            <artifactId>javax-sound-midi</artifactId>
+            <version>0.0.1</version>
+            <type>aar</type>
+        </dependency>
 	</dependencies>
 </project>

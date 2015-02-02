@@ -1,13 +1,20 @@
 apply plugin: 'com.android.application'
 //apply plugin: 'android' // Android Studio < 0.8.0
 
+repositories {
+    maven {
+        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository'
+    }
+    mavenCentral()
+}
+
 dependencies {
     compile project(':MIDIDriver')
 }
 
 android {
     compileSdkVersion 12
-    buildToolsVersion "20"
+    buildToolsVersion "21.1.2"
 
     sourceSets {
         main {
