@@ -49,10 +49,6 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             this.usbManager = usbManager;
         }
 
-        /*
-         * (non-Javadoc)
-         * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice)
-         */
         @Override
         public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
             // these fields are null; when this event fired while Activity destroying.
@@ -112,10 +108,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      * @author K.Shoji
      */
     final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
-        /*
-         * (non-Javadoc)
-         * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
-         */
+
         @Override
         public synchronized void onDeviceDetached(UsbDevice detachedDevice) {
             // these fields are null; when this event fired while Activity destroying.
@@ -216,10 +209,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
 
         deviceDetachedHandler = new Handler(new Handler.Callback() {
-            /*
-             * (non-Javadoc)
-             * @see android.os.Handler.Callback#handleMessage(android.os.Message)
-             */
+
             @Override
             public boolean handleMessage(Message msg) {
                 Log.d(Constants.TAG, "(handleMessage) detached device:" + msg.obj);

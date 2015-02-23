@@ -1,5 +1,11 @@
 package jp.kshoji.driver.midi.fragment;
 
+import android.app.Activity;
+import android.app.Fragment;
+import android.hardware.usb.UsbDevice;
+import android.os.Bundle;
+import android.util.Log;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,11 +16,6 @@ import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.Constants;
-import android.app.Activity;
-import android.app.Fragment;
-import android.hardware.usb.UsbDevice;
-import android.os.Bundle;
-import android.util.Log;
 
 /**
  * Base {@link Fragment} for using USB MIDI interface.
@@ -24,10 +25,6 @@ import android.util.Log;
 public abstract class AbstractMidiFragment extends Fragment implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
 	private MidiFragmentHostActivity hostActivity;
 
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Fragment#onCreate(android.os.Bundle)
-	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -63,7 +60,7 @@ public abstract class AbstractMidiFragment extends Fragment implements OnMidiDev
 	/**
 	 * Get {@link MidiOutputDevice} attached with {@link MidiFragmentHostActivity}
 	 * 
-	 * @param usbDevice
+	 * @param usbDevice the UsbDevice
 	 * @return {@link Set<MidiOutputDevice>} unmodifiable
 	 */
 	public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {

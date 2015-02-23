@@ -227,19 +227,11 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 			}
 		}
 		
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiRPNReceived(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-		 */
 		@Override
 		public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
 			// do nothing in this implementation
 		}
 		
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNRPNReceived(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-		 */
 		@Override
 		public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
 			// do nothing in this implementation

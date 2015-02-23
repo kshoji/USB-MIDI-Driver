@@ -111,10 +111,6 @@ public final class MidiDeviceConnectionWatcher {
 			this.deviceAttachedListener = deviceAttachedListener;
 		}
 		
-		/*
-		 * (non-Javadoc)
-		 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
-		 */
 		@Override
 		public void onReceive(Context receiverContext, Intent intent) {
 			String action = intent.getAction();
@@ -164,10 +160,6 @@ public final class MidiDeviceConnectionWatcher {
 			deviceFilters = DeviceFilter.getDeviceFilters(context);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Thread#run()
-		 */
 		@Override
 		public void run() {
 			super.run();

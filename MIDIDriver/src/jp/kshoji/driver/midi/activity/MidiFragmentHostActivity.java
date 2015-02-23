@@ -1,5 +1,18 @@
 package jp.kshoji.driver.midi.activity;
 
+import android.app.Activity;
+import android.app.Fragment;
+import android.content.Context;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Handler.Callback;
+import android.os.Message;
+import android.util.Log;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,18 +32,6 @@ import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
-import android.app.Activity;
-import android.app.Fragment;
-import android.content.Context;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Handler.Callback;
-import android.os.Message;
-import android.util.Log;
 
 /**
  * base Activity for using {@link AbstractMidiFragment}s.
@@ -51,16 +52,12 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		/**
 		 * constructor
 		 * 
-		 * @param usbManager
+		 * @param usbManager the UsbManager
 		 */
 		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
 			this.usbManager = usbManager;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice)
-		 */
 		@Override
 		public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
@@ -120,10 +117,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	 * @author K.Shoji
 	 */
 	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
-		 */
+
 		@Override
 		public synchronized void onDeviceDetached(UsbDevice detachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
@@ -192,10 +186,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	Handler deviceDetachedHandler = null;
 	MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onCreate(android.os.Bundle)
-	 */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -209,10 +199,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
 
 		deviceDetachedHandler = new Handler(new Callback() {
-			/*
-			 * (non-Javadoc)
-			 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
-			 */
+
 			@Override
 			public boolean handleMessage(Message msg) {
 				Log.d(Constants.TAG, "(handleMessage) detached device:" + msg.obj);
@@ -225,10 +212,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onDestroy()
-	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -338,7 +321,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	/**
 	 * Get MIDI output device, if available.
 	 * 
-	 * @param usbDevice
+	 * @param usbDevice the UsbDevice
 	 * @return {@link Set<MidiOutputDevice>}
 	 */
 	public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {
@@ -378,10 +361,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	    return midiFragments;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiMiscellaneousFunctionCodes(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-	 */
 	@Override
 	public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -390,10 +369,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiCableEvents(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-	 */
 	@Override
 	public void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -402,10 +377,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiSystemCommonMessage(jp.kshoji.driver.midi.device.MidiInputDevice, int, byte[])
-	 */
 	@Override
 	public void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -414,10 +385,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiSystemExclusive(jp.kshoji.driver.midi.device.MidiInputDevice, int, byte[])
-	 */
 	@Override
 	public void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -426,10 +393,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNoteOff(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-	 */
 	@Override
 	public void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -438,10 +401,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNoteOn(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-	 */
 	@Override
 	public void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -450,10 +409,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiPolyphonicAftertouch(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-	 */
 	@Override
 	public void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -462,10 +417,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiControlChange(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int)
-	 */
 	@Override
 	public void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -474,10 +425,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiProgramChange(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int)
-	 */
 	@Override
 	public void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -486,10 +433,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiChannelAftertouch(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int)
-	 */
 	@Override
 	public void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -498,10 +441,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiPitchWheel(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int)
-	 */
 	@Override
 	public void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -510,10 +449,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiSingleByte(jp.kshoji.driver.midi.device.MidiInputDevice, int, int)
-	 */
 	@Override
 	public void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -522,10 +457,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice)
-	 */
 	@Override
 	public void onDeviceAttached(UsbDevice usbDevice) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -534,10 +465,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
-	 */
 	@Override
 	public void onDeviceDetached(UsbDevice usbDevice) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -546,10 +473,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiRPNReceived(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int, int)
-	 */
 	@Override
 	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
@@ -558,10 +481,6 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.listener.OnMidiInputEventListener#onMidiNRPNReceived(jp.kshoji.driver.midi.device.MidiInputDevice, int, int, int, int, int)
-	 */
 	@Override
 	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();

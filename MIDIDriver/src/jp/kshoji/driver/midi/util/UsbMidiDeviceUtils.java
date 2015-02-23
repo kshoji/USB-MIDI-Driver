@@ -1,5 +1,12 @@
 package jp.kshoji.driver.midi.util;
 
+import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+import android.util.Log;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -9,12 +16,6 @@ import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.usb.util.DeviceFilter;
-import android.hardware.usb.UsbConstants;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbEndpoint;
-import android.hardware.usb.UsbInterface;
-import android.util.Log;
 
 /**
  * Utility for finding MIDI device
@@ -22,12 +23,13 @@ import android.util.Log;
  * @author K.Shoji
  */
 public final class UsbMidiDeviceUtils {
+
 	/**
 	 * Find {@link UsbInterface} from {@link UsbDevice} with the direction
 	 * 
-	 * @param usbDevice
-	 * @param direction {@link UsbConstants.USB_DIR_IN} or {@link UsbConstants.USB_DIR_OUT}
-	 * @param deviceFilters
+	 * @param usbDevice the UsbDevice
+	 * @param direction {@link UsbConstants#USB_DIR_IN} or {@link UsbConstants#USB_DIR_OUT}
+	 * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link Set<UsbInterface>} always not null
 	 */
 	public static Set<UsbInterface> findMidiInterfaces(UsbDevice usbDevice, int direction, List<DeviceFilter> deviceFilters) {
@@ -46,9 +48,9 @@ public final class UsbMidiDeviceUtils {
 	
 	/**
 	 * Find all {@link UsbInterface} from {@link UsbDevice}
-	 * 
-	 * @param usbDevice
-	 * @param deviceFilters
+	 *
+     * @param usbDevice the UsbDevice
+     * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link Set<UsbInterface>} always not null
 	 */
 	public static Set<UsbInterface> findAllMidiInterfaces(UsbDevice usbDevice, List<DeviceFilter> deviceFilters) {
@@ -69,13 +71,13 @@ public final class UsbMidiDeviceUtils {
 	}
 
 	/**
-	 * Find {@link Set<MidiIntputDevice>} from {@link UsbDevice}
-	 * 
-	 * @param usbDevice
-	 * @param usbDeviceConnection
-	 * @param deviceFilters
-	 * @param inputEventListener
-	 * @return {@link Set<MidiIntputDevice>} always not null
+	 * Find {@link Set<MidiInputDevice>} from {@link UsbDevice}
+	 *
+     * @param usbDevice the UsbDevice
+	 * @param usbDeviceConnection the UsbDeviceConnection
+     * @param deviceFilters the List of {@link DeviceFilter}
+	 * @param inputEventListener the OnMidiInputEventListener
+	 * @return {@link Set<MidiInputDevice>} always not null
 	 */
 	public static Set<MidiInputDevice> findMidiInputDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters, OnMidiInputEventListener inputEventListener) {
 		Set<MidiInputDevice> devices = new HashSet<MidiInputDevice>();
@@ -95,10 +97,10 @@ public final class UsbMidiDeviceUtils {
 	
 	/**
 	 * Find {@link Set<MidiOutputDevice>} from {@link UsbDevice}
-	 * 
-	 * @param usbDevice
-	 * @param usbDeviceConnection
-	 * @param deviceFilters
+	 *
+     * @param usbDevice the UsbDevice
+     * @param usbDeviceConnection the UsbDeviceConnection
+     * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link Set<MidiOutputDevice>} always not null
 	 */
 	public static Set<MidiOutputDevice> findMidiOutputDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters) {
@@ -107,11 +109,8 @@ public final class UsbMidiDeviceUtils {
 		int count = usbDevice.getInterfaceCount();
 		for (int i = 0; i < count; i++) {
 			UsbInterface usbInterface = usbDevice.getInterface(i);
-			if (usbInterface == null) {
-				continue;
-			}
 
-			UsbEndpoint endpoint = findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_OUT, deviceFilters);
+            UsbEndpoint endpoint = findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_OUT, deviceFilters);
 			if (endpoint != null) {
 				devices.add(new MidiOutputDevice(usbDevice, usbDeviceConnection, usbInterface, endpoint));
 			}
@@ -121,12 +120,12 @@ public final class UsbMidiDeviceUtils {
 	}
 
 	/**
-	 * Find {@link UsbEndpoint} from {@link findMidiEndpoint} with the direction
-	 * 
-	 * @param usbDevice
-	 * @param usbInterface
-	 * @param direction
-	 * @param deviceFilters
+	 * Find {@link UsbEndpoint} with the direction
+	 *
+     * @param usbDevice the UsbDevice
+	 * @param usbInterface the UsbInterface
+     * @param direction {@link UsbConstants#USB_DIR_IN} or {@link UsbConstants#USB_DIR_OUT}
+     * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link UsbEndpoint}, null if not found
 	 */
 	public static UsbEndpoint findMidiEndpoint(UsbDevice usbDevice, UsbInterface usbInterface, int direction, List<DeviceFilter> deviceFilters) {

@@ -11,7 +11,7 @@ public interface OnMidiDeviceAttachedListener {
 	/**
 	 * device has been attached
 	 * 
-	 * @param usbDevice
+	 * @param usbDevice the attached UsbDevice
 	 */
 	void onDeviceAttached(UsbDevice usbDevice);
 }

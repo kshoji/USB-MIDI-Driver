@@ -1,5 +1,17 @@
 package jp.kshoji.driver.midi.activity;
 
+import android.app.Activity;
+import android.content.Context;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Handler.Callback;
+import android.os.Message;
+import android.util.Log;
+
 import java.util.List;
 import java.util.Set;
 
@@ -12,17 +24,6 @@ import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
-import android.app.Activity;
-import android.content.Context;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Handler.Callback;
-import android.os.Message;
-import android.util.Log;
 
 /**
  * base Activity for using USB MIDI interface.
@@ -43,16 +44,12 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		/**
 		 * constructor
 		 * 
-		 * @param usbManager
+		 * @param usbManager the UsbManager
 		 */
 		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
 			this.usbManager = usbManager;
 		}
 		
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice, android.hardware.usb.UsbInterface)
-		 */
 		@Override
 		public synchronized void onDeviceAttached(final UsbDevice attachedDevice) {
 			if (device != null) {
@@ -89,10 +86,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @author K.Shoji
 	 */
 	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
-		 */
+
 		@Override
 		public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
 			
@@ -143,11 +137,6 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	Handler deviceDetachedHandler = null;
 	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
-
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onCreate(android.os.Bundle)
-	 */
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -157,10 +146,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl(); 
 		
 		deviceDetachedHandler = new Handler(new Callback() {
-			/*
-			 * (non-Javadoc)
-			 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
-			 */
+
 			@Override
 			public boolean handleMessage(Message msg) {
 				UsbDevice usbDevice = (UsbDevice) msg.obj;
@@ -172,10 +158,6 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onDestroy()
-	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -226,7 +208,6 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	/**
 	 * Get MIDI output device, if available.
 	 * 
-	 * @param usbDevice
 	 * @return MidiOutputDevice, null if not available
 	 */
 	public final MidiOutputDevice getMidiOutputDevice() {
@@ -240,10 +221,10 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	/**
 	 * RPN message
 	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
-	 * 
-	 * @param sender
-	 * @param cable
-	 * @param channel
+	 *
+     * @param sender the Object which the event sent
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param function 14bits
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
@@ -256,10 +237,10 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	/**
 	 * NRPN message
 	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
-	 * 
-	 * @param sender
-	 * @param cable
-	 * @param channel
+	 *
+     * @param sender the Object which the event sent
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param function 14bits
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.

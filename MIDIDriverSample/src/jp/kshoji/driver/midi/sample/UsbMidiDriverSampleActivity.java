@@ -101,10 +101,6 @@ public class UsbMidiDriverSampleActivity extends Activity {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity#onCreate(android.os.Bundle)
-	 */
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -301,10 +297,6 @@ public class UsbMidiDriverSampleActivity extends Activity {
 
 		OnTouchListener onToneButtonTouchListener = new OnTouchListener() {
 
-			/*
-			 * (non-Javadoc)
-			 * @see android.view.View.OnTouchListener#onTouch(android.view.View, android.view.MotionEvent)
-			 */
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				MidiOutputDevice midiOutputDevice = getMidiOutputDeviceFromSpinner();
@@ -367,10 +359,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
 		audioTrack = prepareAudioTrack(soundMaker.getSamplingRate());
 		timer = new Timer();
 		timerTask = new TimerTask() {
-			/*
-			 * (non-Javadoc)
-			 * @see java.util.TimerTask#run()
-			 */
+
 			@Override
 			public void run() {
 				if (soundMaker != null) {
@@ -393,10 +382,6 @@ public class UsbMidiDriverSampleActivity extends Activity {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity#onDestroy()
-	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();

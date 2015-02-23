@@ -100,10 +100,20 @@ public final class UsbMidiReceiver implements MidiDeviceReceiver {
         outputDevice = null;
 	}
 
+    /**
+     * Get the cableId of this UsbMidiReceiver
+     *
+     * @return the cable ID
+     */
 	public int getCableId() {
 		return cableId;
 	}
 
+    /**
+     * Set the cableId of this UsbMidiReceiver
+     *
+     * @param cableId the cable ID
+     */
 	public void setCableId(int cableId) {
 		this.cableId = cableId;
 	}

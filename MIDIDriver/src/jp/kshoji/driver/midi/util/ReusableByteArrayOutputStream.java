@@ -14,7 +14,7 @@ public class ReusableByteArrayOutputStream extends ByteArrayOutputStream {
 	/**
 	 * Construct instance
 	 * 
-	 * @param size
+	 * @param size the initial size of this Stream
 	 */
 	public ReusableByteArrayOutputStream(int size) {
 		super(size);
@@ -29,10 +29,6 @@ public class ReusableByteArrayOutputStream extends ByteArrayOutputStream {
 		this(DEFAULT_BUFFER_LIMIT);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.io.ByteArrayOutputStream#reset()
-	 */
 	@Override
 	public synchronized void reset() {
 		super.reset();

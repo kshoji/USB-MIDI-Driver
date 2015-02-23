@@ -28,10 +28,10 @@ public final class MidiInputDevice {
 	/**
 	 * constructor
 	 * 
-	 * @param usbDevice
-	 * @param usbDeviceConnection
-	 * @param usbInterface
-	 * @param midiEventListener
+	 * @param usbDevice the UsbDevice
+	 * @param usbDeviceConnection the UsbDeviceConnection
+	 * @param usbInterface the UsbInterface
+	 * @param midiEventListener the OnMidiInputEventListener
 	 * @throws IllegalArgumentException endpoint not found.
 	 */
 	public MidiInputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint, OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
@@ -132,11 +132,6 @@ public final class MidiInputDevice {
 			suspendFlag = false;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.lang.Thread#run()
-		 */
 		@Override
 		public void run() {
 			final UsbDeviceConnection deviceConnection = usbDeviceConnection;
@@ -327,10 +322,10 @@ public final class MidiInputDevice {
 		/**
 		 * RPN and NRPN messages
 		 * 
-		 * @param cable
-		 * @param byte1
-		 * @param byte2
-		 * @param byte3
+		 * @param cable the cableID 0-15
+		 * @param byte1 the first byte
+		 * @param byte2 the second byte
+		 * @param byte3 the third byte
 		 */
 		private void processRpnMessages(int cable, int byte1, int byte2, int byte3, MidiInputDevice sender) {
 			switch (byte2) {
