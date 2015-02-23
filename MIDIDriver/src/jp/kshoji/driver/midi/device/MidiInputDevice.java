@@ -4,6 +4,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
 
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
@@ -34,7 +35,7 @@ public final class MidiInputDevice {
 	 * @param midiEventListener the OnMidiInputEventListener
 	 * @throws IllegalArgumentException endpoint not found.
 	 */
-	public MidiInputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint, OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint, @NonNull OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -44,9 +45,6 @@ public final class MidiInputDevice {
 		waiterThread = new WaiterThread();
 
 		inputEndpoint = usbEndpoint;
-		if (inputEndpoint == null) {
-			throw new IllegalArgumentException("Input endpoint was not found.");
-		}
 
 		usbDeviceConnection.claimInterface(usbInterface, true);
 		waiterThread.setPriority(8);
@@ -95,21 +93,24 @@ public final class MidiInputDevice {
 	/**
 	 * @return the usbDevice
 	 */
-	public UsbDevice getUsbDevice() {
+    @NonNull
+    public UsbDevice getUsbDevice() {
 		return usbDevice;
 	}
 
 	/**
 	 * @return the usbInterface
 	 */
-	public UsbInterface getUsbInterface() {
+    @NonNull
+    public UsbInterface getUsbInterface() {
 		return usbInterface;
 	}
 
 	/**
 	 * @return the usbEndpoint
 	 */
-	public UsbEndpoint getUsbEndpoint() {
+    @NonNull
+    public UsbEndpoint getUsbEndpoint() {
 		return inputEndpoint;
 	}
 
@@ -197,8 +198,8 @@ public final class MidiInputDevice {
 				}
 
 				for (i = 0; i < readSize; i += 4) {
-					cable = (read[i + 0] >> 4) & 0xf;
-					codeIndexNumber = read[i + 0] & 0xf;
+					cable = (read[i] >> 4) & 0xf;
+					codeIndexNumber = read[i] & 0xf;
 					byte1 = read[i + 1] & 0xff;
 					byte2 = read[i + 2] & 0xff;
 					byte3 = read[i + 3] & 0xff;
@@ -235,40 +236,31 @@ public final class MidiInputDevice {
 					case 5:
 						// system common message with 1byte
 						// sysex end with 1 byte
-						if (systemExclusive == null) {
-							byte[] bytes = new byte[] { (byte) byte1 };
-							eventListener.onMidiSystemCommonMessage(sender, cable, bytes);
-						} else {
-							synchronized (systemExclusive) {
-								systemExclusive.write(byte1);
-								eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
-								systemExclusive.reset();
-							}
-						}
-						break;
+                        synchronized (systemExclusive) {
+                            systemExclusive.write(byte1);
+                            eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            systemExclusive.reset();
+                        }
+                        break;
 					case 6:
 						// sysex end with 2 bytes
-						if (systemExclusive != null) {
-							synchronized (systemExclusive) {
-								systemExclusive.write(byte1);
-								systemExclusive.write(byte2);
-								eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
-								systemExclusive.reset();
-							}
-						}
-						break;
+                        synchronized (systemExclusive) {
+                            systemExclusive.write(byte1);
+                            systemExclusive.write(byte2);
+                            eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            systemExclusive.reset();
+                        }
+                        break;
 					case 7:
 						// sysex end with 3 bytes
-						if (systemExclusive != null) {
-							synchronized (systemExclusive) {
-								systemExclusive.write(byte1);
-								systemExclusive.write(byte2);
-								systemExclusive.write(byte3);
-								eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
-								systemExclusive.reset();
-							}
-						}
-						break;
+                        synchronized (systemExclusive) {
+                            systemExclusive.write(byte1);
+                            systemExclusive.write(byte2);
+                            systemExclusive.write(byte3);
+                            eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            systemExclusive.reset();
+                        }
+                        break;
 					case 8:
 						eventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
 						break;
@@ -327,7 +319,7 @@ public final class MidiInputDevice {
 		 * @param byte2 the second byte
 		 * @param byte3 the third byte
 		 */
-		private void processRpnMessages(int cable, int byte1, int byte2, int byte3, MidiInputDevice sender) {
+		private void processRpnMessages(int cable, int byte1, int byte2, int byte3, @NonNull MidiInputDevice sender) {
 			switch (byte2) {
 			case 6:
 				rpnValueMSB = byte3 & 0x7f;

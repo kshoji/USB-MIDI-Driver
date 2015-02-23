@@ -7,6 +7,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.Collections;
@@ -43,7 +44,7 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
      *
      * @param context the context
      */
-    public UsbMidiSystem(Context context) {
+    public UsbMidiSystem(@NonNull Context context) {
         this.context = context.getApplicationContext();
         deviceFilters = DeviceFilter.getDeviceFilters(context);
     }
@@ -65,11 +66,12 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
      */
     public void terminate() {
         synchronized (midiDevices) {
-            for (UsbDevice device : midiDevices.keySet()) {
-                for (UsbMidiDevice midiDevice : midiDevices.get(device)) {
+            for (Map.Entry<UsbDevice, Set<UsbMidiDevice>> midiDeviceEntry  : midiDevices.entrySet()) {
+                for (UsbMidiDevice midiDevice : midiDeviceEntry.getValue()) {
                     midiDevice.close();
                 }
             }
+
             midiDevices.clear();
         }
 
@@ -84,7 +86,7 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
     }
 
     @Override
-    public void onDeviceAttached(UsbDevice attachedDevice) {
+    public void onDeviceAttached(@NonNull UsbDevice attachedDevice) {
         deviceConnectionWatcher.notifyDeviceGranted();
 
         UsbDeviceConnection deviceConnection = usbManager.openDevice(attachedDevice);
@@ -104,7 +106,7 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
     }
 
     @Override
-    public void onDeviceDetached(UsbDevice detachedDevice) {
+    public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
         UsbDeviceConnection usbDeviceConnection;
         synchronized (deviceConnections) {
             usbDeviceConnection = deviceConnections.get(detachedDevice);
@@ -136,7 +138,8 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
      * @param usbDeviceConnection the device connection
      * @return {@link Set<UsbMidiDevice>}, always not null
      */
-	private Set<UsbMidiDevice> findAllUsbMidiDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection) {
+    @NonNull
+    private Set<UsbMidiDevice> findAllUsbMidiDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection) {
 		Set<UsbMidiDevice> result = new HashSet<UsbMidiDevice>();
 
 		Set<UsbInterface> interfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(usbDevice, deviceFilters);
@@ -144,7 +147,9 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
 			UsbEndpoint inputEndpoint = UsbMidiDeviceUtils.findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_IN, deviceFilters);
 			UsbEndpoint outputEndpoint = UsbMidiDeviceUtils.findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_OUT, deviceFilters);
 
-			result.add(new UsbMidiDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, outputEndpoint));
+            if (inputEndpoint != null || outputEndpoint != null) {
+                result.add(new UsbMidiDevice(usbDevice, usbDeviceConnection, usbInterface, inputEndpoint, outputEndpoint));
+            }
 		}
 
 		return Collections.unmodifiableSet(result);

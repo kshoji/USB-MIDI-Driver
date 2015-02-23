@@ -5,6 +5,8 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
@@ -32,7 +34,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 	private MidiInputDevice inputDevice;
 	Receiver receiver;
 
-	public UsbMidiTransmitter(UsbMidiDevice usbMidiDevice, UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint inputEndpoint) {
+	public UsbMidiTransmitter(@NonNull UsbMidiDevice usbMidiDevice, @NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint inputEndpoint) {
         this.usbMidiDevice = usbMidiDevice;
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
@@ -42,10 +44,11 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 	}
 
 	@Override
-	public void setReceiver(Receiver receiver) {
+	public void setReceiver(@Nullable Receiver receiver) {
 		this.receiver = receiver;
 	}
 
+    @Nullable
 	@Override
 	public Receiver getReceiver() {
 		return receiver;
@@ -65,6 +68,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
         inputDevice = null;
 	}
 
+    @NonNull
     @Override
     public MidiDevice getMidiDevice() {
         return usbMidiDevice;
@@ -72,7 +76,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 
     class OnMidiInputEventListenerImpl implements OnMidiInputEventListener{
 		@Override
-		public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+		public void onMidiMiscellaneousFunctionCodes(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 			if (receiver != null) {
 				try {
 					final SysexMessage message = new SysexMessage();
@@ -85,7 +89,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+		public void onMidiCableEvents(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 			if (receiver != null) {
 				try {
 					final SysexMessage message = new SysexMessage();
@@ -98,7 +102,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes) {
+		public void onMidiSystemCommonMessage(@NonNull MidiInputDevice sender, int cable, byte[] bytes) {
 			if (receiver != null) {
 				try {
 					final SysexMessage message = new SysexMessage();
@@ -111,7 +115,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive) {
+		public void onMidiSystemExclusive(@NonNull MidiInputDevice sender, int cable, byte[] systemExclusive) {
 			if (receiver != null) {
 				try {
 					final SysexMessage message = new SysexMessage();
@@ -124,7 +128,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+		public void onMidiNoteOff(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -137,7 +141,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+		public void onMidiNoteOn(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -150,7 +154,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure) {
+		public void onMidiPolyphonicAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int note, int pressure) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -163,7 +167,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value) {
+		public void onMidiControlChange(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -176,7 +180,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program) {
+		public void onMidiProgramChange(@NonNull MidiInputDevice sender, int cable, int channel, int program) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -189,7 +193,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure) {
+		public void onMidiChannelAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int pressure) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -202,7 +206,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount) {
+		public void onMidiPitchWheel(@NonNull MidiInputDevice sender, int cable, int channel, int amount) {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
@@ -215,7 +219,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
-		public void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1) {
+		public void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1) {
 			if (receiver != null) {
 				try {
 					final SysexMessage message = new SysexMessage();
@@ -228,12 +232,12 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 		
 		@Override
-		public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
+		public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
 			// do nothing in this implementation
 		}
 		
 		@Override
-		public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
+		public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
 			// do nothing in this implementation
 		}
 	}

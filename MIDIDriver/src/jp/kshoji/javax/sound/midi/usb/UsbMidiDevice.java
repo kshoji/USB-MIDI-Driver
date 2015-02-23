@@ -4,6 +4,8 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -31,13 +33,27 @@ public final class UsbMidiDevice implements MidiDevice {
 	
 	private boolean isOpened;
 
-	public UsbMidiDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint inputEndpoint, UsbEndpoint outputEndpoint) {
+    /**
+     * Constructor
+     *
+     * @param usbDevice the UsbDevice
+     * @param usbDeviceConnection the UsbDeviceConnection
+     * @param usbInterface the UsbInterface
+     * @param inputEndpoint the UsbEndpoint for input
+     * @param outputEndpoint the UsbEndpoint for output
+     */
+	public UsbMidiDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @Nullable UsbEndpoint inputEndpoint, @Nullable UsbEndpoint outputEndpoint) {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
 
-		receivers.add(new UsbMidiReceiver(this, usbDevice, usbDeviceConnection, usbInterface, outputEndpoint));
-		transmitters.add(new UsbMidiTransmitter(this, usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
+        if (outputEndpoint != null) {
+            receivers.add(new UsbMidiReceiver(this, usbDevice, usbDeviceConnection, usbInterface, outputEndpoint));
+        }
+
+        if (inputEndpoint != null) {
+            transmitters.add(new UsbMidiTransmitter(this, usbDevice, usbDeviceConnection, usbInterface, inputEndpoint));
+        }
 
 		isOpened = false;
 
@@ -48,6 +64,7 @@ public final class UsbMidiDevice implements MidiDevice {
         }
     }
 
+    @NonNull
 	@SuppressWarnings("boxing")
 	@Override
 	public Info getDeviceInfo() {
@@ -95,11 +112,9 @@ public final class UsbMidiDevice implements MidiDevice {
 		}
 		receivers.clear();
 
-		if (usbDeviceConnection != null && usbInterface != null) {
-			usbDeviceConnection.releaseInterface(usbInterface);
-		}
-		
-		isOpened = false;
+        usbDeviceConnection.releaseInterface(usbInterface);
+
+        isOpened = false;
 	}
 
 	@Override
@@ -115,43 +130,41 @@ public final class UsbMidiDevice implements MidiDevice {
 
 	@Override
 	public int getMaxReceivers() {
-		if (receivers != null) {
-			return receivers.size();
-		}
-		return 0;
+        return receivers.size();
 	}
 
 	@Override
 	public int getMaxTransmitters() {
-		if (transmitters != null) {
-			return transmitters.size();
-		}
-		return 0;
+        return transmitters.size();
 	}
 
+    @Nullable
 	@Override
 	public Receiver getReceiver() throws MidiUnavailableException {
-		if (receivers == null || receivers.size() < 1) {
+		if (receivers.size() < 1) {
 			return null;
 		}
 		
 		return receivers.get(0);
 	}
 
+    @NonNull
 	@Override
 	public List<Receiver> getReceivers() {
 		return Collections.unmodifiableList(receivers);
 	}
 
+    @Nullable
 	@Override
 	public Transmitter getTransmitter() throws MidiUnavailableException {
-		if (transmitters == null || transmitters.size() < 1) {
+		if (transmitters.size() < 1) {
 			return null;
 		}
 		
 		return transmitters.get(0);
 	}
 
+    @NonNull
 	@Override
 	public List<Transmitter> getTransmitters() {
 		return Collections.unmodifiableList(transmitters);

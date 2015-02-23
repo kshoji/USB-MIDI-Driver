@@ -8,6 +8,7 @@ import android.hardware.usb.UsbRequest;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.support.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ public final class MidiOutputDevice {
 	 * @param usbInterface the UsbInterface
 	 * @param usbEndpoint the UsbEndpoint
 	 */
-	public MidiOutputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint) {
+	public MidiOutputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -44,9 +45,6 @@ public final class MidiOutputDevice {
 		waiterThread = new WaiterThread();
 
 		outputEndpoint = usbEndpoint;
-		if (outputEndpoint == null) {
-			throw new IllegalArgumentException("Output endpoint was not found.");
-		}
 
 		this.usbDeviceConnection.claimInterface(this.usbInterface, true);
 
@@ -93,21 +91,24 @@ public final class MidiOutputDevice {
 	/**
 	 * @return the usbDevice
 	 */
-	public UsbDevice getUsbDevice() {
+    @NonNull
+    public UsbDevice getUsbDevice() {
 		return usbDevice;
 	}
 
 	/**
 	 * @return the usbInterface
 	 */
-	public UsbInterface getUsbInterface() {
+    @NonNull
+    public UsbInterface getUsbInterface() {
 		return usbInterface;
 	}
 
 	/**
 	 * @return the usbEndpoint
 	 */
-	public UsbEndpoint getUsbEndpoint() {
+    @NonNull
+    public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;
 	}
 
@@ -153,7 +154,8 @@ public final class MidiOutputDevice {
 			}
 		});
 
-		Handler getHandler() {
+		@NonNull
+        Handler getHandler() {
 			return handler;
 		}
 
@@ -331,8 +333,7 @@ public final class MidiOutputDevice {
      * @param cable the cable ID 0-15
 	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
-	@SuppressWarnings("incomplete-switch")
-	public void sendMidiSystemExclusive(int cable, byte[] systemExclusive) {
+	public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
 		ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
 
 		for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {

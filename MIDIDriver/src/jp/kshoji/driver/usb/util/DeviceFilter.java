@@ -1,5 +1,15 @@
 package jp.kshoji.driver.usb.util;
 
+import android.content.Context;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Log;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,18 +18,10 @@ import java.util.List;
 import jp.kshoji.driver.midi.R;
 import jp.kshoji.driver.midi.util.Constants;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import android.content.Context;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbInterface;
-import android.util.Log;
-
 /**
  * Utility methods from com.android.server.usb.UsbSettingsManager.DeviceFilter
  * 
- * @see http://ics-custom-services.googlecode.com/git-history/1899c9df4b68885df4f351fa9feee603a08ee8ec/java/com/android/server/usb/UsbSettingsManager.java
+ * @see <a href="http://ics-custom-services.googlecode.com/git-history/1899c9df4b68885df4f351fa9feee603a08ee8ec/java/com/android/server/usb/UsbSettingsManager.java">UsbSettingsManager.java</a>
  * @author K.Shoji
  */
 public final class DeviceFilter {
@@ -57,7 +59,8 @@ public final class DeviceFilter {
 	 * @param context the Context
 	 * @return List of {@link DeviceFilter}
 	 */
-	public static List<DeviceFilter> getDeviceFilters(Context context) {
+    @NonNull
+    public static List<DeviceFilter> getDeviceFilters(@NonNull Context context) {
 		// create device filter
 		XmlPullParser parser = context.getResources().getXml(R.xml.device_filter);
 		List<DeviceFilter> deviceFilters = new ArrayList<DeviceFilter>();
@@ -85,7 +88,8 @@ public final class DeviceFilter {
 	 * @param parser the XmlPullParser
 	 * @return parsed {@link DeviceFilter}
 	 */
-	public static DeviceFilter parseXml(XmlPullParser parser) {
+    @Nullable
+    public static DeviceFilter parseXml(@NonNull XmlPullParser parser) {
 		int vendorId = -1;
 		int productId = -1;
 		int deviceClass = -1;
@@ -137,7 +141,7 @@ public final class DeviceFilter {
 	 * @param device the UsbDevice
 	 * @return true if the specified UsbDevice matches this DeviceFilter
 	 */
-	public boolean matches(UsbDevice device) {
+	public boolean matches(@NonNull UsbDevice device) {
 		if (usbVendorId != -1 && device.getVendorId() != usbVendorId) {
 			return false;
 		}

@@ -7,6 +7,7 @@ import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.Collections;
@@ -43,14 +44,14 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         /**
          * constructor
          *
-         * @param usbManager
+         * @param usbManager the UsbManager
          */
-        public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
+        public OnMidiDeviceAttachedListenerImpl(@NonNull UsbManager usbManager) {
             this.usbManager = usbManager;
         }
 
         @Override
-        public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
+        public synchronized void onDeviceAttached(@NonNull UsbDevice attachedDevice) {
             // these fields are null; when this event fired while Activity destroying.
             if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
                 // nothing to do
@@ -110,7 +111,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
     final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 
         @Override
-        public synchronized void onDeviceDetached(UsbDevice detachedDevice) {
+        public synchronized void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
             // these fields are null; when this event fired while Activity destroying.
             if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
                 // nothing to do
@@ -184,7 +185,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      *
      * @param context Activity context
      */
-    protected UsbMidiDriver(Context context) {
+    protected UsbMidiDriver(@NonNull Context context) {
         this.context = context;
     }
 
@@ -325,6 +326,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      *
      * @return connected UsbDevice set
      */
+    @NonNull
     public final Set<UsbDevice> getConnectedUsbDevices() {
         if (deviceConnectionWatcher != null) {
             deviceConnectionWatcher.checkConnectedDevicesImmediately();
@@ -339,10 +341,11 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
     /**
      * Get MIDI output device, if available.
      *
-     * @param usbDevice
+     * @param usbDevice the UsbDevice
      * @return {@link Set<MidiOutputDevice>}
      */
-    public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {
+    @NonNull
+    public final Set<MidiOutputDevice> getMidiOutputDevices(@NonNull UsbDevice usbDevice) {
         if (deviceConnectionWatcher != null) {
             deviceConnectionWatcher.checkConnectedDevicesImmediately();
         }
@@ -357,15 +360,15 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      * RPN message
      * This method is just the utility method, do not need to be implemented necessarily by subclass.
      *
-     * @param sender
-     * @param cable
-     * @param channel
+     * @param sender the Object which the event sent
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
      * @param function 14bits
      * @param valueMSB higher 7bits
      * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
      */
     @Override
-    public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+    public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
         // do nothing in this implementation
     }
 
@@ -373,15 +376,15 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
      * NRPN message
      * This method is just the utility method, do not need to be implemented necessarily by subclass.
      *
-     * @param sender
-     * @param cable
-     * @param channel
+     * @param sender the Object which the event sent
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
      * @param function 14bits
      * @param valueMSB higher 7bits
      * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
      */
     @Override
-    public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+    public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
         // do nothing in this implementation
     }
 }

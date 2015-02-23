@@ -1,5 +1,7 @@
 package jp.kshoji.driver.midi.listener;
 
+import android.support.annotation.NonNull;
+
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 
 /**
@@ -20,7 +22,7 @@ public interface OnMidiInputEventListener {
 	 * @param byte2 the second byte
 	 * @param byte3 the third byte
 	 */
-	void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
+	void onMidiMiscellaneousFunctionCodes(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
 	
 	/**
 	 * Cable events. Reserved for future expansion.
@@ -32,7 +34,7 @@ public interface OnMidiInputEventListener {
      * @param byte2 the second byte
      * @param byte3 the third byte
 	 */
-	void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
+	void onMidiCableEvents(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3);
 	
 	/**
 	 * System Common messages, or SysEx ends with following single byte.
@@ -42,7 +44,7 @@ public interface OnMidiInputEventListener {
      * @param cable the cable ID 0-15
 	 * @param bytes bytes.length:1, 2, or 3
 	 */
-	void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes);
+	void onMidiSystemCommonMessage(@NonNull MidiInputDevice sender, int cable, byte[] bytes);
 	
 	/**
 	 * SysEx
@@ -52,7 +54,7 @@ public interface OnMidiInputEventListener {
      * @param cable the cable ID 0-15
 	 * @param systemExclusive the SysEx message
 	 */
-	void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive);
+	void onMidiSystemExclusive(@NonNull MidiInputDevice sender, int cable, byte[] systemExclusive);
 	
 	/**
 	 * Note-off
@@ -64,7 +66,7 @@ public interface OnMidiInputEventListener {
 	 * @param note 0-127
 	 * @param velocity 0-127
 	 */
-	void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity);
+	void onMidiNoteOff(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity);
 	
 	/**
 	 * Note-on
@@ -76,7 +78,7 @@ public interface OnMidiInputEventListener {
 	 * @param note 0-127
 	 * @param velocity 0-127
 	 */
-	void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity);
+	void onMidiNoteOn(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity);
 	
 	/**
 	 * Poly-KeyPress
@@ -88,7 +90,7 @@ public interface OnMidiInputEventListener {
 	 * @param note 0-127
 	 * @param pressure 0-127
 	 */
-	void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure);
+	void onMidiPolyphonicAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int note, int pressure);
 	
 	/**
 	 * Control Change
@@ -100,7 +102,7 @@ public interface OnMidiInputEventListener {
 	 * @param function 0-127
 	 * @param value 0-127
 	 */
-	void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value);
+	void onMidiControlChange(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value);
 	
 	/**
 	 * Program Change
@@ -111,7 +113,7 @@ public interface OnMidiInputEventListener {
      * @param channel the MIDI channel number 0-15
 	 * @param program 0-127
 	 */
-	void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program);
+	void onMidiProgramChange(@NonNull MidiInputDevice sender, int cable, int channel, int program);
 	
 	/**
 	 * Channel Pressure
@@ -122,7 +124,7 @@ public interface OnMidiInputEventListener {
      * @param channel the MIDI channel number 0-15
 	 * @param pressure 0-127
 	 */
-	void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure);
+	void onMidiChannelAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int pressure);
 	
 	/**
 	 * PitchBend Change
@@ -133,7 +135,7 @@ public interface OnMidiInputEventListener {
      * @param channel the MIDI channel number 0-15
 	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
-	void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount);
+	void onMidiPitchWheel(@NonNull MidiInputDevice sender, int cable, int channel, int amount);
 	
 	/**
 	 * Single Byte
@@ -143,7 +145,7 @@ public interface OnMidiInputEventListener {
      * @param cable the cable ID 0-15
 	 * @param byte1 the first byte
 	 */
-	void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1);
+	void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1);
 
 	/**
 	 * RPN message
@@ -155,7 +157,7 @@ public interface OnMidiInputEventListener {
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
-	void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
+	void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
 
 	/**
 	 * NRPN message
@@ -167,5 +169,5 @@ public interface OnMidiInputEventListener {
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
-	void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
+	void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
 }

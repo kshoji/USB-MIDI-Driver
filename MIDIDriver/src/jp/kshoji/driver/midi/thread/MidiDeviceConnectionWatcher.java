@@ -10,6 +10,7 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -43,12 +44,12 @@ public final class MidiDeviceConnectionWatcher {
 	/**
 	 * constructor
 	 * 
-	 * @param context
-	 * @param usbManager
-	 * @param deviceAttachedListener
-	 * @param deviceDetachedListener
+	 * @param context the Context
+	 * @param usbManager the UsbManager
+	 * @param deviceAttachedListener the OnMidiDeviceAttachedListener
+	 * @param deviceDetachedListener the OnMidiDeviceDetachedListener
 	 */
-	public MidiDeviceConnectionWatcher(Context context, UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, final OnMidiDeviceDetachedListener deviceDetachedListener) {
+	public MidiDeviceConnectionWatcher(@NonNull Context context, @NonNull UsbManager usbManager, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener, @NonNull final OnMidiDeviceDetachedListener deviceDetachedListener) {
 		this.context = context;
 		deviceGrantQueue = new LinkedList<UsbDevice>();
 		isGranting = false;
@@ -103,10 +104,10 @@ public final class MidiDeviceConnectionWatcher {
 		private final OnMidiDeviceAttachedListener deviceAttachedListener;
 		
 		/**
-		 * @param device
-		 * @param deviceAttachedListener
+		 * @param device the UsbDevice
+		 * @param deviceAttachedListener the OnMidiDeviceAttachedListener
 		 */
-		public UsbMidiGrantedReceiver(UsbDevice device, OnMidiDeviceAttachedListener deviceAttachedListener) {
+		public UsbMidiGrantedReceiver(@NonNull UsbDevice device, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener) {
 			this.device = device;
 			this.deviceAttachedListener = deviceAttachedListener;
 		}
@@ -117,10 +118,9 @@ public final class MidiDeviceConnectionWatcher {
 			if (USB_PERMISSION_GRANTED_ACTION.equals(action)) {
 				boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
 				if (granted) {
-					if (deviceAttachedListener != null && device != null) {
-						grantedDevices.add(device);
-						deviceAttachedListener.onDeviceAttached(device);
-					}
+                    grantedDevices.add(device);
+                    deviceAttachedListener.onDeviceAttached(device);
+
                     isGranting = false;
                     grantingDevice = null;
 				} else {
@@ -147,11 +147,12 @@ public final class MidiDeviceConnectionWatcher {
 
 		/**
 		 * constructor
-		 * @param usbManager
-		 * @param deviceAttachedListener
-		 * @param deviceDetachedHandler
+         *
+		 * @param usbManager the UsbManager
+		 * @param deviceAttachedListener the OnMidiDeviceAttachedListener
+		 * @param deviceDetachedHandler the OnMidiDeviceDetachedListener
 		 */
-		MidiDeviceConnectionWatchThread(UsbManager usbManager, OnMidiDeviceAttachedListener deviceAttachedListener, Handler deviceDetachedHandler) {
+		MidiDeviceConnectionWatchThread(@NonNull UsbManager usbManager, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener, @NonNull Handler deviceDetachedHandler) {
 			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedHandler = deviceDetachedHandler;

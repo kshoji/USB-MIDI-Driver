@@ -9,7 +9,8 @@ repositories {
 }
 
 dependencies {
-    compile 'jp.kshoji:javax-sound-midi:0.0.1-SNAPSHOT:@aar'
+    compile 'jp.kshoji:javax-sound-midi:0.0.2-SNAPSHOT:@aar'
+    compile 'com.android.support:support-annotations:21.0.3'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
 

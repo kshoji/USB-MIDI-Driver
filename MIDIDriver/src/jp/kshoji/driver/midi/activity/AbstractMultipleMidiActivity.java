@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.Collections;
@@ -51,12 +52,12 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 		 * 
 		 * @param usbManager the UsbManager
 		 */
-		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
+		public OnMidiDeviceAttachedListenerImpl(@NonNull UsbManager usbManager) {
 			this.usbManager = usbManager;
 		}
 
 		@Override
-		public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
+		public synchronized void onDeviceAttached(@NonNull UsbDevice attachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
 			if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
 				// nothing to do
@@ -116,7 +117,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 
 		@Override
-		public synchronized void onDeviceDetached(UsbDevice detachedDevice) {
+		public synchronized void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
 			if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
 				// nothing to do
@@ -304,7 +305,8 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	 * 
 	 * @return connected UsbDevice set
 	 */
-	public final Set<UsbDevice> getConnectedUsbDevices() {
+    @NonNull
+    public final Set<UsbDevice> getConnectedUsbDevices() {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
@@ -321,7 +323,8 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	 * @param usbDevice the UsbDevice
 	 * @return {@link Set<MidiOutputDevice>}
 	 */
-	public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {
+    @NonNull
+    public final Set<MidiOutputDevice> getMidiOutputDevices(@NonNull UsbDevice usbDevice) {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
@@ -344,7 +347,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
 	@Override
-	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
 
@@ -360,7 +363,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
 	@Override
-	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
 }

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
@@ -54,12 +55,12 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		 * 
 		 * @param usbManager the UsbManager
 		 */
-		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
+		public OnMidiDeviceAttachedListenerImpl(@NonNull UsbManager usbManager) {
 			this.usbManager = usbManager;
 		}
 
 		@Override
-		public synchronized void onDeviceAttached(UsbDevice attachedDevice) {
+		public synchronized void onDeviceAttached(@NonNull UsbDevice attachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
 			if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
 				// nothing to do
@@ -119,7 +120,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 
 		@Override
-		public synchronized void onDeviceDetached(UsbDevice detachedDevice) {
+		public synchronized void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
 			// these fields are null; when this event fired while Activity destroying.
 			if (midiInputDevices == null || midiOutputDevices == null || deviceConnections == null) {
 				// nothing to do
@@ -307,7 +308,8 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	 * 
 	 * @return connected UsbDevice set
 	 */
-	public final Set<UsbDevice> getConnectedUsbDevices() {
+    @NonNull
+    public final Set<UsbDevice> getConnectedUsbDevices() {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
@@ -324,7 +326,8 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	 * @param usbDevice the UsbDevice
 	 * @return {@link Set<MidiOutputDevice>}
 	 */
-	public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {
+    @NonNull
+    public final Set<MidiOutputDevice> getMidiOutputDevices(@NonNull UsbDevice usbDevice) {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
@@ -348,7 +351,8 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	 * 
 	 * @return {@link AbstractMidiFragment}s attached with this Activity
 	 */
-	private final List<AbstractMidiFragment> getMidiFragments() {
+    @NonNull
+    private List<AbstractMidiFragment> getMidiFragments() {
 	    ArrayList<AbstractMidiFragment> midiFragments = new ArrayList<AbstractMidiFragment>();
 
 	    for(WeakReference<Fragment> reference : attachedFragments) {
@@ -362,7 +366,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+	public void onMidiMiscellaneousFunctionCodes(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
@@ -370,7 +374,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+	public void onMidiCableEvents(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
@@ -378,7 +382,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes) {
+	public void onMidiSystemCommonMessage(@NonNull MidiInputDevice sender, int cable, byte[] bytes) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiSystemCommonMessage(sender, cable, bytes);
@@ -386,7 +390,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive) {
+	public void onMidiSystemExclusive(@NonNull MidiInputDevice sender, int cable, byte[] systemExclusive) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiSystemExclusive(sender, cable, systemExclusive);
@@ -394,7 +398,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+	public void onMidiNoteOff(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiNoteOff(sender, cable, channel, note, velocity);
@@ -402,7 +406,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+	public void onMidiNoteOn(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiNoteOn(sender, cable, channel, note, velocity);
@@ -410,7 +414,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure) {
+	public void onMidiPolyphonicAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int note, int pressure) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiPolyphonicAftertouch(sender, cable, channel, note, pressure);
@@ -418,7 +422,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value) {
+	public void onMidiControlChange(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiControlChange(sender, cable, channel, function, value);
@@ -426,7 +430,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program) {
+	public void onMidiProgramChange(@NonNull MidiInputDevice sender, int cable, int channel, int program) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiProgramChange(sender, cable, channel, program);
@@ -434,7 +438,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure) {
+	public void onMidiChannelAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int pressure) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiChannelAftertouch(sender, cable, channel, pressure);
@@ -442,7 +446,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount) {
+	public void onMidiPitchWheel(@NonNull MidiInputDevice sender, int cable, int channel, int amount) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiPitchWheel(sender, cable, channel, amount);
@@ -450,7 +454,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1) {
+	public void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiSingleByte(sender, cable, byte1);
@@ -458,7 +462,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onDeviceAttached(UsbDevice usbDevice) {
+	public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onDeviceAttached(usbDevice);
@@ -466,7 +470,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onDeviceDetached(UsbDevice usbDevice) {
+	public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onDeviceDetached(usbDevice);
@@ -474,7 +478,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 	
 	@Override
-	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
@@ -482,7 +486,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
-	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiNRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);

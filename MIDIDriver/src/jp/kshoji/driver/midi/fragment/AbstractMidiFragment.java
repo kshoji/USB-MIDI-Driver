@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.Collections;
@@ -63,7 +64,8 @@ public abstract class AbstractMidiFragment extends Fragment implements OnMidiDev
 	 * @param usbDevice the UsbDevice
 	 * @return {@link Set<MidiOutputDevice>} unmodifiable
 	 */
-	public final Set<MidiOutputDevice> getMidiOutputDevices(UsbDevice usbDevice) {
+    @NonNull
+    public final Set<MidiOutputDevice> getMidiOutputDevices(@NonNull UsbDevice usbDevice) {
 		if (hostActivity == null) {
 			return Collections.unmodifiableSet(new HashSet<MidiOutputDevice>());
 		}
@@ -76,7 +78,8 @@ public abstract class AbstractMidiFragment extends Fragment implements OnMidiDev
 	 * 
 	 * @return {@link Set<UsbDevice>} unmodifiable
 	 */
-	public final Set<UsbDevice> getConnectedUsbDevices() {
+    @NonNull
+    public final Set<UsbDevice> getConnectedUsbDevices() {
 		if (hostActivity == null) {
 			return Collections.unmodifiableSet(new HashSet<UsbDevice>());
 		}

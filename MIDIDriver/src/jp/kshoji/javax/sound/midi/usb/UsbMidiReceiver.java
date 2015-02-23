@@ -5,6 +5,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
 
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.javax.sound.midi.MetaMessage;
@@ -30,7 +31,7 @@ public final class UsbMidiReceiver implements MidiDeviceReceiver {
 	
 	private MidiOutputDevice outputDevice = null;
 	
-	public UsbMidiReceiver(UsbMidiDevice usbMidiDevice, UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint outputEndpoint) {
+	public UsbMidiReceiver(@NonNull UsbMidiDevice usbMidiDevice, @NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint outputEndpoint) {
         this.usbMidiDevice = usbMidiDevice;
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
@@ -42,7 +43,7 @@ public final class UsbMidiReceiver implements MidiDeviceReceiver {
     }
 
 	@Override
-	public void send(MidiMessage message, long timeStamp) {
+	public void send(@NonNull MidiMessage message, long timeStamp) {
         if (outputDevice == null) {
             // already closed
             return;
@@ -118,6 +119,7 @@ public final class UsbMidiReceiver implements MidiDeviceReceiver {
 		this.cableId = cableId;
 	}
 
+    @NonNull
     @Override
     public MidiDevice getMidiDevice() {
         return usbMidiDevice;

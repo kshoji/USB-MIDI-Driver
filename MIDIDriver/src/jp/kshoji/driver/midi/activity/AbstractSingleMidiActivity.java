@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.List;
@@ -46,12 +48,12 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		 * 
 		 * @param usbManager the UsbManager
 		 */
-		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
+		public OnMidiDeviceAttachedListenerImpl(@NonNull UsbManager usbManager) {
 			this.usbManager = usbManager;
 		}
 		
 		@Override
-		public synchronized void onDeviceAttached(final UsbDevice attachedDevice) {
+		public synchronized void onDeviceAttached(@NonNull final UsbDevice attachedDevice) {
 			if (device != null) {
 				// already one device has been connected
 				return;
@@ -88,7 +90,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 
 		@Override
-		public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
+		public synchronized void onDeviceDetached(@NonNull final UsbDevice detachedDevice) {
 			
 			AsyncTask<UsbDevice, Void, Void> task = new AsyncTask<UsbDevice, Void, Void>() {
 
@@ -210,7 +212,8 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * 
 	 * @return MidiOutputDevice, null if not available
 	 */
-	public final MidiOutputDevice getMidiOutputDevice() {
+    @Nullable
+    public final MidiOutputDevice getMidiOutputDevice() {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
@@ -230,7 +233,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
 	@Override
-	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
 	
@@ -246,7 +249,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
 	@Override
-	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
 }

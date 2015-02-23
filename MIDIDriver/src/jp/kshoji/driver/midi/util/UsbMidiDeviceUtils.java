@@ -5,6 +5,8 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.Collections;
@@ -32,7 +34,8 @@ public final class UsbMidiDeviceUtils {
 	 * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link Set<UsbInterface>} always not null
 	 */
-	public static Set<UsbInterface> findMidiInterfaces(UsbDevice usbDevice, int direction, List<DeviceFilter> deviceFilters) {
+    @NonNull
+    public static Set<UsbInterface> findMidiInterfaces(@NonNull UsbDevice usbDevice, int direction, @NonNull List<DeviceFilter> deviceFilters) {
 		Set<UsbInterface> usbInterfaces = new HashSet<UsbInterface>();
 		
 		int count = usbDevice.getInterfaceCount();
@@ -53,7 +56,8 @@ public final class UsbMidiDeviceUtils {
      * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link Set<UsbInterface>} always not null
 	 */
-	public static Set<UsbInterface> findAllMidiInterfaces(UsbDevice usbDevice, List<DeviceFilter> deviceFilters) {
+    @NonNull
+    public static Set<UsbInterface> findAllMidiInterfaces(@NonNull UsbDevice usbDevice, @NonNull List<DeviceFilter> deviceFilters) {
 		Set<UsbInterface> usbInterfaces = new HashSet<UsbInterface>();
 		
 		int count = usbDevice.getInterfaceCount();
@@ -79,7 +83,8 @@ public final class UsbMidiDeviceUtils {
 	 * @param inputEventListener the OnMidiInputEventListener
 	 * @return {@link Set<MidiInputDevice>} always not null
 	 */
-	public static Set<MidiInputDevice> findMidiInputDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters, OnMidiInputEventListener inputEventListener) {
+    @NonNull
+    public static Set<MidiInputDevice> findMidiInputDevices(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull List<DeviceFilter> deviceFilters, @NonNull OnMidiInputEventListener inputEventListener) {
 		Set<MidiInputDevice> devices = new HashSet<MidiInputDevice>();
 
 		int count = usbDevice.getInterfaceCount();
@@ -103,7 +108,8 @@ public final class UsbMidiDeviceUtils {
      * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link Set<MidiOutputDevice>} always not null
 	 */
-	public static Set<MidiOutputDevice> findMidiOutputDevices(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, List<DeviceFilter> deviceFilters) {
+    @NonNull
+    public static Set<MidiOutputDevice> findMidiOutputDevices(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull List<DeviceFilter> deviceFilters) {
 		Set<MidiOutputDevice> devices = new HashSet<MidiOutputDevice>();
 		
 		int count = usbDevice.getInterfaceCount();
@@ -128,7 +134,8 @@ public final class UsbMidiDeviceUtils {
      * @param deviceFilters the List of {@link DeviceFilter}
 	 * @return {@link UsbEndpoint}, null if not found
 	 */
-	public static UsbEndpoint findMidiEndpoint(UsbDevice usbDevice, UsbInterface usbInterface, int direction, List<DeviceFilter> deviceFilters) {
+    @Nullable
+    public static UsbEndpoint findMidiEndpoint(@NonNull UsbDevice usbDevice, @NonNull UsbInterface usbInterface, int direction, @NonNull List<DeviceFilter> deviceFilters) {
 		int endpointCount = usbInterface.getEndpointCount();
 		
 		// standard USB MIDI interface
