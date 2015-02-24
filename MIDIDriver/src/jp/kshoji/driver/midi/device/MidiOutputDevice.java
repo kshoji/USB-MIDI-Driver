@@ -278,6 +278,97 @@ public final class MidiOutputDevice {
 	}
 
 	/**
+     * Send a MIDI message with 3 bytes raw MIDI data
+     *
+     * @param cable the cable ID 0-15
+     * @param byte1 the first byte
+     * @param byte2 the second byte: ignored when 1 byte message
+     * @param byte3 the third byte: ignored when 1-2 byte message
+     */
+    public void sendMidiMessage(int cable, int byte1, int byte2, int byte3) {
+        int codeIndexNumber = 0;
+
+        switch (byte1 & 0xf0) {
+            case 0x80: // Note Off
+                codeIndexNumber = 0x8;
+                break;
+            case 0x90: // Note On
+                codeIndexNumber = 0x9;
+                break;
+            case 0xa0: // Poly Pressure
+                codeIndexNumber = 0xa;
+                break;
+            case 0xb0: // Control Change
+                codeIndexNumber = 0xb;
+                break;
+            case 0xc0: // Program Change
+                codeIndexNumber = 0xc;
+                break;
+            case 0xd0: // Channel Pressure
+                codeIndexNumber = 0xd;
+                break;
+            case 0xe0: // Pitch Bend
+                codeIndexNumber = 0xe;
+                break;
+            case 0xf0: // SysEx with 3 bytes
+                switch (byte1) {
+                    case 0xf0: // Start Of Exclusive
+                        if (byte2 == 0xf7) {
+                            // 2 byte SysEx(F0 F7)
+                            codeIndexNumber = 0x6;
+                        } else if (byte3 == 0xf7) {
+                            // 3 byte SysEx(F0 xx F7)
+                            codeIndexNumber = 0x7;
+                        } else {
+                            // ignored
+                            return;
+                        }
+                        break;
+                    case 0xf7: // End of Exclusive
+                        // ignored
+                        return;
+
+                    case 0xf4: // (Undefined MIDI System Common)
+                    case 0xf5: // (Undefined MIDI System Common / Bus Select?)
+                    case 0xf9: // (Undefined MIDI System Real-time)
+                    case 0xfd: // (Undefined MIDI System Real-time)
+                        // ignored
+                        return;
+
+                    case 0xf6: // Tune Request
+                    case 0xf8: // Timing Clock
+                    case 0xfa: // Start
+                    case 0xfb: // Continue
+                    case 0xfc: // Stop
+                    case 0xfe: // Active Sensing
+                    case 0xff: // System Reset
+                        // Single byte message
+                        codeIndexNumber = 0x5;
+                        break;
+
+                    case 0xf1: // MIDI Time Code
+                    case 0xf3: // Song Select
+                        // Two byte message
+                        codeIndexNumber = 0x2;
+                        break;
+
+                    case 0xf2: // Song Point Pointer
+                        // Three byte message
+                        codeIndexNumber = 0x3;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                // ignored
+                return;
+        }
+
+        sendMidiMessage(codeIndexNumber, cable, byte1, byte2, byte3);
+    }
+
+	/**
 	 * Miscellaneous function codes. Reserved for future extensions. Code Index Number : 0x0
 	 *
      * @param cable the cable ID 0-15
