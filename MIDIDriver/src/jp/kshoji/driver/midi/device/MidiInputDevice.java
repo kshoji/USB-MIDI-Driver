@@ -11,8 +11,7 @@ import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 
 /**
  * MIDI Input Device
- * stop() method must be called when the application will be destroyed.
- * 
+ *
  * @author K.Shoji
  */
 public final class MidiInputDevice {
@@ -22,25 +21,22 @@ public final class MidiInputDevice {
 	private final UsbInterface usbInterface;
 	final UsbEndpoint inputEndpoint;
 
-	final OnMidiInputEventListener midiEventListener;
+    private OnMidiInputEventListener midiEventListener;
 
 	private final WaiterThread waiterThread;
 
 	/**
-	 * constructor
+	 * Constructor
 	 * 
 	 * @param usbDevice the UsbDevice
 	 * @param usbDeviceConnection the UsbDeviceConnection
 	 * @param usbInterface the UsbInterface
-	 * @param midiEventListener the OnMidiInputEventListener
 	 * @throws IllegalArgumentException endpoint not found.
 	 */
-	public MidiInputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint, @NonNull OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) throws IllegalArgumentException {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
-
-		this.midiEventListener = midiEventListener;
 
 		waiterThread = new WaiterThread();
 
@@ -53,9 +49,19 @@ public final class MidiInputDevice {
 	}
 
 	/**
+     * Sets the OnMidiInputEventListener
+     *
+     * @param midiEventListener the OnMidiInputEventListener
+     */
+    public void setMidiEventListener(OnMidiInputEventListener midiEventListener) {
+        this.midiEventListener = midiEventListener;
+    }
+
+    /**
 	 * stops the watching thread
 	 */
-	public void stop() {
+    void stop() {
+        midiEventListener = null;
         usbDeviceConnection.releaseInterface(usbInterface);
 
         waiterThread.stopFlag = true;
@@ -90,6 +96,15 @@ public final class MidiInputDevice {
 		}
 	}
 
+    /**
+     * Get the device name(linux device path)
+     * @return the device name(linux device path)
+     */
+    @NonNull
+    public String getDeviceAddress() {
+        return usbDevice.getDeviceName();
+    }
+
 	/**
 	 * @return the usbDevice
 	 */
@@ -114,7 +129,7 @@ public final class MidiInputDevice {
 		return inputEndpoint;
 	}
 
-	/**
+    /**
 	 * Polling thread for input data.
 	 * Loops infinitely while stopFlag == false.
 	 * 
@@ -126,7 +141,7 @@ public final class MidiInputDevice {
 		volatile boolean suspendFlag;
 
 		/**
-		 * constructor
+		 * Constructor
 		 */
 		WaiterThread() {
 			stopFlag = false;

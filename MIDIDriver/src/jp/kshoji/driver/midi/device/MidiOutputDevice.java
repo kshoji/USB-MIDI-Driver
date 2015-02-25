@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * MIDI Output Device stop() method must be called when the application will be destroyed.
+ * MIDI Output Device
  *
  * @author K.Shoji
  */
@@ -30,7 +30,7 @@ public final class MidiOutputDevice {
 	final WaiterThread waiterThread;
 
 	/**
-	 * constructor
+	 * Constructor
 	 *
 	 * @param usbDevice the UsbDevice
 	 * @param usbDeviceConnection the UsbDeviceConnection
@@ -55,7 +55,7 @@ public final class MidiOutputDevice {
 	/**
 	 * stop to use this device.
 	 */
-	public void stop() {
+	void stop() {
 		usbDeviceConnection.releaseInterface(usbInterface);
 
 		resume();
@@ -88,7 +88,16 @@ public final class MidiOutputDevice {
 		waiterThread.interrupt();
 	}
 
-	/**
+    /**
+     * Get the device name(linux device path)
+     * @return the device name(linux device path)
+     */
+    @NonNull
+    public String getDeviceAddress() {
+        return usbDevice.getDeviceName();
+    }
+
+    /**
 	 * @return the usbDevice
 	 */
     @NonNull
@@ -126,7 +135,7 @@ public final class MidiOutputDevice {
 		private UsbRequest usbRequest;
 
 		/**
-		 * constructor
+		 * Constructor
 		 */
 		WaiterThread() {
 			stopFlag = false;

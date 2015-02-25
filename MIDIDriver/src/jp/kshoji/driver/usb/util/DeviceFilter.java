@@ -37,7 +37,7 @@ public final class DeviceFilter {
 	private final int usbProtocol;
 	
 	/**
-	 * constructor
+	 * Constructor
 	 * 
 	 * @param vendorId the USB vendor id
 	 * @param productId the USB product id
@@ -101,18 +101,18 @@ public final class DeviceFilter {
 			String name = parser.getAttributeName(i);
 			// All attribute values are ints
 			int value = Integer.parseInt(parser.getAttributeValue(i));
-			
+
 			if ("vendor-id".equals(name)) {
-				vendorId = value;
+                vendorId = value;
 			} else if ("product-id".equals(name)) {
-				productId = value;
+                productId = value;
 			} else if ("class".equals(name)) {
-				deviceClass = value;
+                deviceClass = value;
 			} else if ("subclass".equals(name)) {
-				deviceSubclass = value;
+                deviceSubclass = value;
 			} else if ("protocol".equals(name)) {
-				deviceProtocol = value;
-			}
+                deviceProtocol = value;
+            }
 		}
 		
 		// all blank(may be not proper tags)
