@@ -9,11 +9,14 @@ import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
  * MIDI Output Device stop() method must be called when the application will be destroyed.
@@ -88,7 +91,36 @@ public final class MidiOutputDevice {
 		waiterThread.interrupt();
 	}
 
-	/**
+    /**
+     * Get the product name
+     * 
+     * @return the product name. null if API Level < {@link android.os.Build.VERSION_CODES#HONEYCOMB_MR2 }, or the product name is truly null
+     */
+    @Nullable
+    public String getProductName() {
+        return UsbMidiDeviceUtils.getProductName(usbDevice, usbDeviceConnection);
+    }
+
+    /**
+     * Get the manufacturer name
+     *
+     * @return the manufacturer name. null if API Level < {@link android.os.Build.VERSION_CODES#HONEYCOMB_MR2 }, or the manufacturer name is truly null
+     */
+    @Nullable
+    public String getManufacturerName() {
+        return UsbMidiDeviceUtils.getManufacturerName(usbDevice, usbDeviceConnection);
+    }
+
+    /**
+     * Get the device name(linux device path)
+     * @return the device name(linux device path)
+     */
+    @NonNull
+    public String getDeviceAddress() {
+        return usbDevice.getDeviceName();
+    }
+
+    /**
 	 * @return the usbDevice
 	 */
     @NonNull

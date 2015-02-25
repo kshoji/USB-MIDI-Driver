@@ -5,9 +5,11 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
+import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
  * MIDI Input Device
@@ -52,7 +54,7 @@ public final class MidiInputDevice {
 		waiterThread.start();
 	}
 
-	/**
+    /**
 	 * stops the watching thread
 	 */
 	public void stop() {
@@ -89,6 +91,35 @@ public final class MidiInputDevice {
 			waiterThread.suspendSignal.notifyAll();
 		}
 	}
+
+    /**
+     * Get the product name
+     *
+     * @return the product name. null if API Level < {@link android.os.Build.VERSION_CODES#HONEYCOMB_MR2 }, or the product name is truly null
+     */
+    @Nullable
+    public String getProductName() {
+        return UsbMidiDeviceUtils.getProductName(usbDevice, usbDeviceConnection);
+    }
+
+    /**
+     * Get the manufacturer name
+     *
+     * @return the manufacturer name. null if API Level < {@link android.os.Build.VERSION_CODES#HONEYCOMB_MR2 }, or the manufacturer name is truly null
+     */
+    @Nullable
+    public String getManufacturerName() {
+        return UsbMidiDeviceUtils.getManufacturerName(usbDevice, usbDeviceConnection);
+    }
+
+    /**
+     * Get the device name(linux device path)
+     * @return the device name(linux device path)
+     */
+    @NonNull
+    public String getDeviceAddress() {
+        return usbDevice.getDeviceName();
+    }
 
 	/**
 	 * @return the usbDevice
