@@ -1,7 +1,6 @@
 package jp.kshoji.javax.sound.midi.usb;
 
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbInterface;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -65,7 +64,6 @@ public final class UsbMidiDevice implements MidiDevice {
 	@Override
 	public Info getDeviceInfo() {
         UsbDevice usbDevice = null;
-        UsbInterface usbInterface = null;
 
         for (MidiInputDevice midiInputDevice : transmitters.keySet()) {
             usbDevice = midiInputDevice.getUsbDevice();
@@ -78,21 +76,10 @@ public final class UsbMidiDevice implements MidiDevice {
             }
         }
 
-        for (MidiInputDevice midiInputDevice : transmitters.keySet()) {
-            usbInterface = midiInputDevice.getUsbInterface();
-            break;
-        }
-        if (usbInterface == null) {
-            for (MidiOutputDevice midiOutputDevice : receivers.keySet()) {
-                usbInterface = midiOutputDevice.getUsbInterface();
-                break;
-            }
-        }
-
         return new Info(usbDevice.getDeviceName(), //
 				String.format("vendorId: %x, productId: %x", usbDevice.getVendorId(), usbDevice.getProductId()), //
 				"deviceId:" + usbDevice.getDeviceId(), //
-				"interfaceId:" + usbInterface.getId());
+				usbDevice.getDeviceName());
 	}
 
 	@Override

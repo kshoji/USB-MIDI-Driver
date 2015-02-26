@@ -113,10 +113,6 @@ public final class MidiDeviceConnectionWatcher {
 
                         Log.d(Constants.TAG, "Device " + usbDevice.getDeviceName() + " has been detached.");
 
-                        Message message = Message.obtain(deviceDetachedHandler);
-                        message.obj = usbDevice;
-                        deviceDetachedHandler.sendMessage(message);
-
                         return null;
                     }
 
@@ -226,14 +222,13 @@ public final class MidiDeviceConnectionWatcher {
                     }
 
                     Log.d(Constants.TAG, "Device " + device.getDeviceName() + " has been attached.");
-
-                    isGranting = false;
-                    grantingDevice = null;
-				} else {
-					// reset the 'isGranting' to false
-					notifyDeviceGranted();
 				}
+
+                // reset the 'isGranting' to false
+                isGranting = false;
+                grantingDevice = null;
 			}
+            context.unregisterReceiver(this);
 		}
 	}
 	
@@ -249,7 +244,6 @@ public final class MidiDeviceConnectionWatcher {
 		private Set<UsbDevice> connectedDevices;
 		boolean stopFlag;
 		private List<DeviceFilter> deviceFilters;
-		UsbMidiGrantedReceiver usbMidiGrantedReceiver;
 
 		/**
 		 * Constructor
@@ -280,8 +274,7 @@ public final class MidiDeviceConnectionWatcher {
 						grantingDevice = deviceGrantQueue.remove();
 						
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
-						usbMidiGrantedReceiver = new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener);
-						context.registerReceiver(usbMidiGrantedReceiver, new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
+						context.registerReceiver(new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
 						usbManager.requestPermission(grantingDevice, permissionIntent);
 					}
 				}
@@ -338,14 +331,4 @@ public final class MidiDeviceConnectionWatcher {
             connectedDevices.addAll(deviceMap.values());
 		}
 	}
-
-	/**
-	 * notifies the 'current granting device' has successfully granted.
-	 */
-	public void notifyDeviceGranted() {
-		if (thread.usbMidiGrantedReceiver != null) {
-			context.unregisterReceiver(thread.usbMidiGrantedReceiver);
-		}
-		isGranting = false;
- 	}
 }

@@ -120,13 +120,18 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
-                if (connectedDevicesAdapter != null) {
-                    connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
-                    connectedDevicesAdapter.add(midiOutputDevice.getUsbDevice());
-                    connectedDevicesAdapter.notifyDataSetChanged();
-                }
-                Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+            public void onMidiOutputDeviceAttached(@NonNull final MidiOutputDevice midiOutputDevice) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (connectedDevicesAdapter != null) {
+                            connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
+                            connectedDevicesAdapter.add(midiOutputDevice.getUsbDevice());
+                            connectedDevicesAdapter.notifyDataSetChanged();
+                        }
+                        Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+                    }
+                });
             }
 
             @Override
@@ -141,12 +146,17 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-                if (connectedDevicesAdapter != null) {
-                    connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
-                    connectedDevicesAdapter.notifyDataSetChanged();
-                }
-                Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+            public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (connectedDevicesAdapter != null) {
+                            connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
+                            connectedDevicesAdapter.notifyDataSetChanged();
+                        }
+                        Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+                    }
+                });
             }
 
             @Override

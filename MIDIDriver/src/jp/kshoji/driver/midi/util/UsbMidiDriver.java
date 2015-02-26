@@ -45,6 +45,9 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             if (midiInputDevices != null) {
                 midiInputDevices.add(midiInputDevice);
             }
+            midiInputDevice.setMidiEventListener(UsbMidiDriver.this);
+
+            UsbMidiDriver.this.onMidiInputDeviceAttached(midiInputDevice);
         }
 
         @Override
@@ -52,6 +55,8 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             if (midiOutputDevices != null) {
                 midiOutputDevices.add(midiOutputDevice);
             }
+
+            UsbMidiDriver.this.onMidiOutputDeviceAttached(midiOutputDevice);
         }
     }
 
@@ -73,6 +78,9 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             if (midiInputDevices != null) {
                 midiInputDevices.remove(midiInputDevice);
             }
+            midiInputDevice.setMidiEventListener(null);
+
+            UsbMidiDriver.this.onMidiInputDeviceDetached(midiInputDevice);
         }
 
         @Override
@@ -80,6 +88,8 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             if (midiOutputDevices != null) {
                 midiOutputDevices.remove(midiOutputDevice);
             }
+
+            UsbMidiDriver.this.onMidiOutputDeviceDetached(midiOutputDevice);
         }
     }
 

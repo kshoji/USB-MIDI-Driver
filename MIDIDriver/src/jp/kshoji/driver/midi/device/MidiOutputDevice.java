@@ -108,6 +108,7 @@ public final class MidiOutputDevice {
 	/**
 	 * @return the usbInterface
 	 */
+    @Deprecated
     @NonNull
     public UsbInterface getUsbInterface() {
 		return usbInterface;
@@ -116,6 +117,7 @@ public final class MidiOutputDevice {
 	/**
 	 * @return the usbEndpoint
 	 */
+    @Deprecated
     @NonNull
     public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;

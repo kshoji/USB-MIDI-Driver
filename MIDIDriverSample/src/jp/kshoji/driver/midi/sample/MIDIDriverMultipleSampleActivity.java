@@ -247,7 +247,8 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 
     @Override
     public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
-
+        // deprecated method.
+        // do nothing
     }
 
     @Override
@@ -256,13 +257,13 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
     }
 
     @Override
-    public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
+    public void onMidiOutputDeviceAttached(@NonNull final MidiOutputDevice midiOutputDevice) {
         if (connectedDevicesAdapter != null) {
             connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
             connectedDevicesAdapter.add(midiOutputDevice.getUsbDevice());
             connectedDevicesAdapter.notifyDataSetChanged();
         }
-		Toast.makeText(this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+        Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -273,17 +274,16 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 
     @Override
     public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-        // deprecated method.
-        // do nothing
+
     }
 
     @Override
-    public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
+    public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
         if (connectedDevicesAdapter != null) {
             connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
             connectedDevicesAdapter.notifyDataSetChanged();
         }
-		Toast.makeText(this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+        Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
     }
 
 	@Override

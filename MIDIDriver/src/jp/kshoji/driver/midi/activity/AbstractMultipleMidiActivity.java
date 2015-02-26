@@ -40,17 +40,32 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
         }
 
         @Override
-        public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+        public void onMidiInputDeviceAttached(@NonNull final MidiInputDevice midiInputDevice) {
+            midiInputDevice.setMidiEventListener(AbstractMultipleMidiActivity.this);
             if (midiInputDevices != null) {
                 midiInputDevices.add(midiInputDevice);
             }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractMultipleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice);
+                }
+            });
         }
 
         @Override
-        public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
+        public void onMidiOutputDeviceAttached(@NonNull final MidiOutputDevice midiOutputDevice) {
             if (midiOutputDevices != null) {
                 midiOutputDevices.add(midiOutputDevice);
             }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractMultipleMidiActivity.this.onMidiOutputDeviceAttached(midiOutputDevice);
+                }
+            });
         }
     }
 
@@ -68,17 +83,32 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
         }
 
         @Override
-        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+        public void onMidiInputDeviceDetached(@NonNull final MidiInputDevice midiInputDevice) {
+            midiInputDevice.setMidiEventListener(null);
             if (midiInputDevices != null) {
                 midiInputDevices.remove(midiInputDevice);
             }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractMultipleMidiActivity.this.onMidiInputDeviceDetached(midiInputDevice);
+                }
+            });
         }
 
         @Override
-        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
+        public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
             if (midiOutputDevices != null) {
                 midiOutputDevices.remove(midiOutputDevice);
             }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractMultipleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice);
+                }
+            });
         }
     }
 
