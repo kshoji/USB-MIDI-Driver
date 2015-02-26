@@ -5,10 +5,12 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -172,4 +174,63 @@ public final class UsbMidiDeviceUtils {
 		}
 		return null;
 	}
+
+    private static final int USB_REQUEST_GET_DESCRIPTOR = 0x06;
+    private static final int USB_DATA_TYPE_STRING = 0x03;
+
+    /**
+     * Get UsbDevice's product name
+     *
+     * @param usbDevice the UsbDevice
+     * @param usbDeviceConnection the UsbDeviceConnection
+     * @return the product name
+     */
+    @Nullable
+    public static String getProductName(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return usbDevice.getProductName();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
+
+            try {
+                byte[] buffer = new byte[255];
+                int indexOfProductName = rawDescriptors[15] & 0xff;
+
+                int productNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfProductName, 0, buffer, 255, 0);
+                return new String(buffer, 2, productNameLength - 2, "UTF-16LE");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get UsbDevice's manufacturer name
+     *
+     * @param usbDevice the UsbDevice
+     * @param usbDeviceConnection the UsbDeviceConnection
+     * @return the manufacturer name
+     */
+    @Nullable
+    public static String getManufacturerName(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return usbDevice.getManufacturerName();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
+
+            try {
+                byte[] buffer = new byte[255];
+                int indexOfManufacturerName = rawDescriptors[14] & 0xff;
+
+                int manufacturerNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfManufacturerName, 0, buffer, 255, 0);
+                return new String(buffer, 2, manufacturerNameLength - 2, "UTF-16LE");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
 }
