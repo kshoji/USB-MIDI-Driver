@@ -220,15 +220,37 @@ public class MIDIDriverSingleSampleActivity extends AbstractSingleMidiActivity {
 		return result;
 	}
 
-	@Override
-	public void onDeviceAttached(@NonNull final UsbDevice usbDevice) {
-		Toast.makeText(this, "USB MIDI Device " + usbDevice.getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
-	}
+    @Override
+    public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
+        // deprecated method.
+        // do nothing
+    }
 
-	@Override
-	public void onDeviceDetached(@NonNull final UsbDevice usbDevice) {
-		Toast.makeText(this, "USB MIDI Device " + usbDevice.getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
-	}
+    @Override
+    public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+
+    }
+
+    @Override
+    public void onMidiOutputDeviceAttached(@NonNull final MidiOutputDevice midiOutputDevice) {
+        Toast.makeText(MIDIDriverSingleSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
+        // deprecated method.
+        // do nothing
+    }
+
+    @Override
+    public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+
+    }
+
+    @Override
+    public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
+        Toast.makeText(MIDIDriverSingleSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+    }
 
 	@Override
 	public void onMidiNoteOff(@NonNull final MidiInputDevice sender, int cable, int channel, int note, int velocity) {

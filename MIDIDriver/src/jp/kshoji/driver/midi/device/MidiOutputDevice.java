@@ -19,7 +19,7 @@ import java.util.Queue;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
- * MIDI Output Device stop() method must be called when the application will be destroyed.
+ * MIDI Output Device
  *
  * @author K.Shoji
  */
@@ -33,7 +33,7 @@ public final class MidiOutputDevice {
 	final WaiterThread waiterThread;
 
 	/**
-	 * constructor
+	 * Constructor
 	 *
 	 * @param usbDevice the UsbDevice
 	 * @param usbDeviceConnection the UsbDeviceConnection
@@ -58,7 +58,7 @@ public final class MidiOutputDevice {
 	/**
 	 * stop to use this device.
 	 */
-	public void stop() {
+	void stop() {
 		usbDeviceConnection.releaseInterface(usbInterface);
 
 		resume();
@@ -131,6 +131,7 @@ public final class MidiOutputDevice {
 	/**
 	 * @return the usbInterface
 	 */
+    @Deprecated
     @NonNull
     public UsbInterface getUsbInterface() {
 		return usbInterface;
@@ -139,6 +140,7 @@ public final class MidiOutputDevice {
 	/**
 	 * @return the usbEndpoint
 	 */
+    @Deprecated
     @NonNull
     public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;
@@ -158,7 +160,7 @@ public final class MidiOutputDevice {
 		private UsbRequest usbRequest;
 
 		/**
-		 * constructor
+		 * Constructor
 		 */
 		WaiterThread() {
 			stopFlag = false;

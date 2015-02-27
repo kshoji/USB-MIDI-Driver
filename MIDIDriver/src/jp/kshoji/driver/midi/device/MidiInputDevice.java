@@ -13,8 +13,7 @@ import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
  * MIDI Input Device
- * stop() method must be called when the application will be destroyed.
- * 
+ *
  * @author K.Shoji
  */
 public final class MidiInputDevice {
@@ -24,25 +23,22 @@ public final class MidiInputDevice {
 	private final UsbInterface usbInterface;
 	final UsbEndpoint inputEndpoint;
 
-	final OnMidiInputEventListener midiEventListener;
+    private OnMidiInputEventListener midiEventListener;
 
 	private final WaiterThread waiterThread;
 
 	/**
-	 * constructor
+	 * Constructor
 	 * 
 	 * @param usbDevice the UsbDevice
 	 * @param usbDeviceConnection the UsbDeviceConnection
 	 * @param usbInterface the UsbInterface
-	 * @param midiEventListener the OnMidiInputEventListener
 	 * @throws IllegalArgumentException endpoint not found.
 	 */
-	public MidiInputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint, @NonNull OnMidiInputEventListener midiEventListener) throws IllegalArgumentException {
+	public MidiInputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) throws IllegalArgumentException {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
-
-		this.midiEventListener = midiEventListener;
 
 		waiterThread = new WaiterThread();
 
@@ -54,10 +50,20 @@ public final class MidiInputDevice {
 		waiterThread.start();
 	}
 
+	/**
+     * Sets the OnMidiInputEventListener
+     *
+     * @param midiEventListener the OnMidiInputEventListener
+     */
+    public void setMidiEventListener(OnMidiInputEventListener midiEventListener) {
+        this.midiEventListener = midiEventListener;
+    }
+
     /**
 	 * stops the watching thread
 	 */
-	public void stop() {
+    void stop() {
+        midiEventListener = null;
         usbDeviceConnection.releaseInterface(usbInterface);
 
         waiterThread.stopFlag = true;
@@ -132,6 +138,7 @@ public final class MidiInputDevice {
 	/**
 	 * @return the usbInterface
 	 */
+    @Deprecated
     @NonNull
     public UsbInterface getUsbInterface() {
 		return usbInterface;
@@ -140,12 +147,13 @@ public final class MidiInputDevice {
 	/**
 	 * @return the usbEndpoint
 	 */
+    @Deprecated
     @NonNull
     public UsbEndpoint getUsbEndpoint() {
 		return inputEndpoint;
 	}
 
-	/**
+    /**
 	 * Polling thread for input data.
 	 * Loops infinitely while stopFlag == false.
 	 * 
@@ -157,7 +165,7 @@ public final class MidiInputDevice {
 		volatile boolean suspendFlag;
 
 		/**
-		 * constructor
+		 * Constructor
 		 */
 		WaiterThread() {
 			stopFlag = false;
@@ -169,7 +177,6 @@ public final class MidiInputDevice {
 			final UsbDeviceConnection deviceConnection = usbDeviceConnection;
 			final UsbEndpoint usbEndpoint = inputEndpoint;
 			final MidiInputDevice sender = MidiInputDevice.this;
-			final OnMidiInputEventListener eventListener = midiEventListener;
 			final int maxPacketSize = inputEndpoint.getMaxPacketSize();
 			// prepare buffer variables
 			final byte[] bulkReadBuffer = new byte[maxPacketSize];
@@ -194,7 +201,7 @@ public final class MidiInputDevice {
 					if (suspendFlag) {
 						try {
 							// check the deviceConnection to ignore events while suspending.
-							// Note: Events received within last sleeping(100msec) will be sent to the eventListener.
+							// Note: Events received within last sleeping(100msec) will be sent to the midiEventListener.
 							suspendSignal.wait(100);
 						} catch (InterruptedException e) {
 							// ignore exception
@@ -237,24 +244,28 @@ public final class MidiInputDevice {
 
 					switch (codeIndexNumber) {
 					case 0:
-						eventListener.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
+                        }
 						break;
 					case 1:
-						eventListener.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
+                        }
 						break;
 					case 2:
-					// system common message with 2 bytes
-					{
-						byte[] bytes = new byte[] { (byte) byte1, (byte) byte2 };
-						eventListener.onMidiSystemCommonMessage(sender, cable, bytes);
-					}
+                        // system common message with 2 bytes
+                        if (midiEventListener != null) {
+                            byte[] bytes = new byte[] { (byte) byte1, (byte) byte2 };
+                            midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
+                        }
 						break;
 					case 3:
-					// system common message with 3 bytes
-					{
-						byte[] bytes = new byte[] { (byte) byte1, (byte) byte2, (byte) byte3 };
-						eventListener.onMidiSystemCommonMessage(sender, cable, bytes);
-					}
+                        // system common message with 3 bytes
+                        if (midiEventListener != null) {
+                            byte[] bytes = new byte[] { (byte) byte1, (byte) byte2, (byte) byte3 };
+                            midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
+                        }
 						break;
 					case 4:
 						// sysex starts, and has next
@@ -269,7 +280,9 @@ public final class MidiInputDevice {
 						// sysex end with 1 byte
                         synchronized (systemExclusive) {
                             systemExclusive.write(byte1);
-                            eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            if (midiEventListener != null) {
+                                midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            }
                             systemExclusive.reset();
                         }
                         break;
@@ -278,7 +291,9 @@ public final class MidiInputDevice {
                         synchronized (systemExclusive) {
                             systemExclusive.write(byte1);
                             systemExclusive.write(byte2);
-                            eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            if (midiEventListener != null) {
+                                midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            }
                             systemExclusive.reset();
                         }
                         break;
@@ -288,44 +303,62 @@ public final class MidiInputDevice {
                             systemExclusive.write(byte1);
                             systemExclusive.write(byte2);
                             systemExclusive.write(byte3);
-                            eventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            if (midiEventListener != null) {
+                                midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive.toByteArray());
+                            }
                             systemExclusive.reset();
                         }
                         break;
 					case 8:
-						eventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
+                        }
 						break;
 					case 9:
-						if (byte3 == 0x00) {
-							eventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
-						} else {
-							eventListener.onMidiNoteOn(sender, cable, byte1 & 0xf, byte2, byte3);
-						}
+                        if (midiEventListener != null) {
+                            if (byte3 == 0x00) {
+                                midiEventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
+                            } else {
+                                midiEventListener.onMidiNoteOn(sender, cable, byte1 & 0xf, byte2, byte3);
+                            }
+                        }
 						break;
 					case 10:
 						// poly key press
-						eventListener.onMidiPolyphonicAftertouch(sender, cable, byte1 & 0xf, byte2, byte3);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiPolyphonicAftertouch(sender, cable, byte1 & 0xf, byte2, byte3);
+                        }
 						break;
 					case 11:
 						// control change
-						eventListener.onMidiControlChange(sender, cable, byte1 & 0xf, byte2, byte3);
-						processRpnMessages(cable, byte1, byte2, byte3, sender);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiControlChange(sender, cable, byte1 & 0xf, byte2, byte3);
+                        }
+                        processRpnMessages(cable, byte1, byte2, byte3, sender);
 						break;
 					case 12:
 						// program change
-						eventListener.onMidiProgramChange(sender, cable, byte1 & 0xf, byte2);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiProgramChange(sender, cable, byte1 & 0xf, byte2);
+                        }
 						break;
 					case 13:
 						// channel pressure
-						eventListener.onMidiChannelAftertouch(sender, cable, byte1 & 0xf, byte2);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiChannelAftertouch(sender, cable, byte1 & 0xf, byte2);
+                        }
 						break;
 					case 14:
 						// pitch bend
-						eventListener.onMidiPitchWheel(sender, cable, byte1 & 0xf, byte2 | (byte3 << 7));
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiPitchWheel(sender, cable, byte1 & 0xf, byte2 | (byte3 << 7));
+                        }
 						break;
 					case 15:
 						// single byte
-						eventListener.onMidiSingleByte(sender, cable, byte1);
+                        if (midiEventListener != null) {
+                            midiEventListener.onMidiSingleByte(sender, cable, byte1);
+                        }
 						break;
 					default:
 						// do nothing.
@@ -354,18 +387,22 @@ public final class MidiInputDevice {
 			switch (byte2) {
 			case 6:
 				rpnValueMSB = byte3 & 0x7f;
-				if (rpnStatus == RPNStatus.RPN) {
-					midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, -1);
-				} else if (rpnStatus == RPNStatus.NRPN) {
-					midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, -1);
-				}
+                if (midiEventListener != null) {
+                    if (rpnStatus == RPNStatus.RPN) {
+                        midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, -1);
+                    } else if (rpnStatus == RPNStatus.NRPN) {
+                        midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, -1);
+                    }
+                }
 				break;
 			case 38:
-				if (rpnStatus == RPNStatus.RPN) {
-					midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
-				} else if (rpnStatus == RPNStatus.NRPN) {
-					midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
-				}
+                if (midiEventListener != null) {
+                    if (rpnStatus == RPNStatus.RPN) {
+                        midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
+                    } else if (rpnStatus == RPNStatus.NRPN) {
+                        midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
+                    }
+                }
 				break;
 			case 98:
 				nrpnFunctionLSB = byte3 & 0x7f;

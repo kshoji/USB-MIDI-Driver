@@ -19,7 +19,6 @@ import java.util.Set;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
-import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.usb.util.DeviceFilter;
 
 /**
@@ -82,12 +81,11 @@ public final class UsbMidiDeviceUtils {
 	 *
      * @param usbDevice the UsbDevice
 	 * @param usbDeviceConnection the UsbDeviceConnection
-     * @param deviceFilters the List of {@link DeviceFilter}
-	 * @param inputEventListener the OnMidiInputEventListener
+     * @param deviceFilters the List of {@link jp.kshoji.driver.usb.util.DeviceFilter}
 	 * @return {@link Set<MidiInputDevice>} always not null
 	 */
     @NonNull
-    public static Set<MidiInputDevice> findMidiInputDevices(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull List<DeviceFilter> deviceFilters, @NonNull OnMidiInputEventListener inputEventListener) {
+    public static Set<MidiInputDevice> findMidiInputDevices(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull List<DeviceFilter> deviceFilters) {
 		Set<MidiInputDevice> devices = new HashSet<MidiInputDevice>();
 
 		int count = usbDevice.getInterfaceCount();
@@ -96,7 +94,7 @@ public final class UsbMidiDeviceUtils {
 
 			UsbEndpoint endpoint = findMidiEndpoint(usbDevice, usbInterface, UsbConstants.USB_DIR_IN, deviceFilters);
 			if (endpoint != null) {
-				devices.add(new MidiInputDevice(usbDevice, usbDeviceConnection, usbInterface, endpoint, inputEventListener));
+				devices.add(new MidiInputDevice(usbDevice, usbDeviceConnection, usbInterface, endpoint));
 			}
 		}
 

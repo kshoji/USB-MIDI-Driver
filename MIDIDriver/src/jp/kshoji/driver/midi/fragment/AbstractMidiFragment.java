@@ -2,7 +2,6 @@ package jp.kshoji.driver.midi.fragment;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -61,29 +60,14 @@ public abstract class AbstractMidiFragment extends Fragment implements OnMidiDev
 	/**
 	 * Get {@link MidiOutputDevice} attached with {@link MidiFragmentHostActivity}
 	 * 
-	 * @param usbDevice the UsbDevice
 	 * @return {@link Set<MidiOutputDevice>} unmodifiable
 	 */
     @NonNull
-    public final Set<MidiOutputDevice> getMidiOutputDevices(@NonNull UsbDevice usbDevice) {
+    public final Set<MidiOutputDevice> getMidiOutputDevices() {
 		if (hostActivity == null) {
 			return Collections.unmodifiableSet(new HashSet<MidiOutputDevice>());
 		}
 		
-		return hostActivity.getMidiOutputDevices(usbDevice);
-	}
-	
-	/**
-	 * Get {@link UsbDevice} attached with {@link MidiFragmentHostActivity}
-	 * 
-	 * @return {@link Set<UsbDevice>} unmodifiable
-	 */
-    @NonNull
-    public final Set<UsbDevice> getConnectedUsbDevices() {
-		if (hostActivity == null) {
-			return Collections.unmodifiableSet(new HashSet<UsbDevice>());
-		}
-		
-		return hostActivity.getConnectedUsbDevices();
+		return hostActivity.getMidiOutputDevices();
 	}
 }
