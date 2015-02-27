@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.util;
 
+import android.annotation.SuppressLint;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -185,6 +186,7 @@ public final class UsbMidiDeviceUtils {
      * @param usbDeviceConnection the UsbDeviceConnection
      * @return the product name
      */
+    @SuppressLint("NewApi")
     @Nullable
     public static String getProductName(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -213,6 +215,7 @@ public final class UsbMidiDeviceUtils {
      * @param usbDeviceConnection the UsbDeviceConnection
      * @return the manufacturer name
      */
+    @SuppressLint("NewApi")
     @Nullable
     public static String getManufacturerName(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
