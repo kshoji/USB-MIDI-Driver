@@ -210,7 +210,7 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 			if (receiver != null) {
 				try {
 					final ShortMessage message = new ShortMessage();
-					message.setMessage(ShortMessage.PITCH_BEND, channel, (amount >> 7) & 0x7f, amount & 0x7f);
+					message.setMessage(ShortMessage.PITCH_BEND, channel, amount & 0x7f, (amount >> 7) & 0x7f);
 					receiver.send(message, -1);
 				} catch (final InvalidMidiDataException e) {
 					Log.d(Constants.TAG, "InvalidMidiDataException", e);
