@@ -1,28 +1,19 @@
 package jp.kshoji.driver.midi.activity;
 
-import java.util.List;
-import java.util.Set;
+import android.app.Activity;
+import android.content.Context;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
+import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
-import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
-import jp.kshoji.driver.midi.util.Constants;
-import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
-import jp.kshoji.driver.usb.util.DeviceFilter;
-import android.app.Activity;
-import android.content.Context;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Handler.Callback;
-import android.os.Message;
-import android.util.Log;
 
 /**
  * base Activity for using USB MIDI interface.
@@ -38,50 +29,45 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @author K.Shoji
 	 */
 	final class OnMidiDeviceAttachedListenerImpl implements OnMidiDeviceAttachedListener {
-		private final UsbManager usbManager;
-		
-		/**
-		 * constructor
-		 * 
-		 * @param usbManager
-		 */
-		public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
-			this.usbManager = usbManager;
-		}
-		
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice, android.hardware.usb.UsbInterface)
-		 */
-		@Override
-		public synchronized void onDeviceAttached(final UsbDevice attachedDevice) {
-			if (device != null) {
-				// already one device has been connected
-				return;
-			}
 
-			deviceConnection = usbManager.openDevice(attachedDevice);
-			if (deviceConnection == null) {
-				return;
-			}
-			
-			List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
+        @Override
+        public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
+            // deprecated method.
+            // do nothing
+        }
 
-			Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters, AbstractSingleMidiActivity.this);
-			if (foundInputDevices.size() > 0) {
-				midiInputDevice = (MidiInputDevice) foundInputDevices.toArray()[0];
-			}
-			
-			Set<MidiOutputDevice> foundOutputDevices = UsbMidiDeviceUtils.findMidiOutputDevices(attachedDevice, deviceConnection, deviceFilters);
-			if (foundOutputDevices.size() > 0) {
-				midiOutputDevice = (MidiOutputDevice) foundOutputDevices.toArray()[0];
-			}
-			
-			Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
-			
-			AbstractSingleMidiActivity.this.onDeviceAttached(attachedDevice);
-		}
-	}
+        @Override
+        public void onMidiInputDeviceAttached(@NonNull final MidiInputDevice midiInputDevice) {
+            if (AbstractSingleMidiActivity.this.midiInputDevice != null) {
+                return;
+            }
+            midiInputDevice.setMidiEventListener(AbstractSingleMidiActivity.this);
+            AbstractSingleMidiActivity.this.midiInputDevice = midiInputDevice;
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractSingleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice);
+                }
+            });
+        }
+
+        @Override
+        public void onMidiOutputDeviceAttached(@NonNull final MidiOutputDevice midiOutputDevice) {
+            if (AbstractSingleMidiActivity.this.midiOutputDevice != null) {
+                return;
+            }
+
+            AbstractSingleMidiActivity.this.midiOutputDevice = midiOutputDevice;
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractSingleMidiActivity.this.onMidiOutputDeviceAttached(midiOutputDevice);
+                }
+            });
+        }
+    }
 	
 	/**
 	 * Implementation for single device connections.
@@ -89,93 +75,60 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	 * @author K.Shoji
 	 */
 	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
-		/*
-		 * (non-Javadoc)
-		 * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
-		 */
-		@Override
-		public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
-			
-			AsyncTask<UsbDevice, Void, Void> task = new AsyncTask<UsbDevice, Void, Void>() {
 
-				@Override
-				protected Void doInBackground(UsbDevice... params) {
-					if (params == null || params.length < 1) {
-						return null;
-					}
-					
-					UsbDevice usbDevice = params[0];
-					
-					if (midiInputDevice != null) {
-						midiInputDevice.stop();
-						midiInputDevice = null;
-					}
-					
-					if (midiOutputDevice != null) {
-						midiOutputDevice.stop();
-						midiOutputDevice = null;
-					}
-					
-					if (deviceConnection != null) {
-						deviceConnection.close();
-						deviceConnection = null;
-					}
-					device = null;
-					
-					Log.d(Constants.TAG, "Device " + usbDevice.getDeviceName() + " has been detached.");
-					
-					Message message = Message.obtain(deviceDetachedHandler);
-					message.obj = usbDevice;
-					deviceDetachedHandler.sendMessage(message);
-					return null;
-				}
-			};
-			task.execute(detachedDevice);
-		}
-	}
+        @Override
+        public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
+            // deprecated method.
+            // do nothing
+        }
+
+        @Override
+        public void onMidiInputDeviceDetached(@NonNull final MidiInputDevice midiInputDevice) {
+            if (AbstractSingleMidiActivity.this.midiInputDevice != null && AbstractSingleMidiActivity.this.midiInputDevice == midiInputDevice) {
+                AbstractSingleMidiActivity.this.midiInputDevice = null;
+            }
+            midiInputDevice.setMidiEventListener(null);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractSingleMidiActivity.this.onMidiInputDeviceDetached(midiInputDevice);
+                }
+            });
+        }
+
+        @Override
+        public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
+            if (AbstractSingleMidiActivity.this.midiOutputDevice != null && AbstractSingleMidiActivity.this.midiOutputDevice == midiOutputDevice) {
+                AbstractSingleMidiActivity.this.midiOutputDevice = null;
+            }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AbstractSingleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice);
+                }
+            });
+        }
+    }
 	
-	UsbDevice device = null;
-	UsbDeviceConnection deviceConnection = null;
 	MidiInputDevice midiInputDevice = null;
 	MidiOutputDevice midiOutputDevice = null;
 	OnMidiDeviceAttachedListener deviceAttachedListener = null;
 	OnMidiDeviceDetachedListener deviceDetachedListener = null;
-	Handler deviceDetachedHandler = null;
 	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
-
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onCreate(android.os.Bundle)
-	 */
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
-		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl(usbManager);
+		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
 		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl(); 
 		
-		deviceDetachedHandler = new Handler(new Callback() {
-			/*
-			 * (non-Javadoc)
-			 * @see android.os.Handler.Callback#handleMessage(android.os.Message)
-			 */
-			@Override
-			public boolean handleMessage(Message msg) {
-				UsbDevice usbDevice = (UsbDevice) msg.obj;
-				onDeviceDetached(usbDevice);
-				return true;
-			}
-		});
-
 		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see android.app.Activity#onDestroy()
-	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -185,14 +138,8 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		}
 		deviceConnectionWatcher = null;
 		
-		if (midiInputDevice != null) {
-			midiInputDevice.stop();
-			midiInputDevice = null;
-		}
-		
+        midiInputDevice = null;
 		midiOutputDevice = null;
-		
-		deviceConnection = null;
 	}
 
 
@@ -226,10 +173,10 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	/**
 	 * Get MIDI output device, if available.
 	 * 
-	 * @param usbDevice
 	 * @return MidiOutputDevice, null if not available
 	 */
-	public final MidiOutputDevice getMidiOutputDevice() {
+    @Nullable
+    public final MidiOutputDevice getMidiOutputDevice() {
 		if (deviceConnectionWatcher != null) {
 			deviceConnectionWatcher.checkConnectedDevicesImmediately();
 		}
@@ -240,32 +187,32 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 	/**
 	 * RPN message
 	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
-	 * 
-	 * @param sender
-	 * @param cable
-	 * @param channel
+	 *
+     * @param sender the Object which the event sent
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param function 14bits
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
 	@Override
-	public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
 	
 	/**
 	 * NRPN message
 	 * This method is just the utility method, do not need to be implemented necessarily by subclass.
-	 * 
-	 * @param sender
-	 * @param cable
-	 * @param channel
+	 *
+     * @param sender the Object which the event sent
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param function 14bits
 	 * @param valueMSB higher 7bits
 	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
 	 */
 	@Override
-	public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+	public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 		// do nothing in this implementation
 	}
 }

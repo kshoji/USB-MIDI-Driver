@@ -10,11 +10,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -28,11 +29,11 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import jp.kshoji.driver.midi.util.UsbMidiDriver;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.sample.util.SoundMaker;
 import jp.kshoji.driver.midi.sample.util.Tone;
+import jp.kshoji.driver.midi.util.UsbMidiDriver;
 
 /**
  * Sample Activity for MIDI Driver library
@@ -81,12 +82,12 @@ public class UsbMidiDriverSampleActivity extends Activity {
 
     private UsbMidiDriver usbMidiDriver;
 
-	/**
-	 * Choose device from spinner
-	 * 
-	 * @return
-	 */
-	MidiOutputDevice getMidiOutputDeviceFromSpinner() {
+    /**
+     * Choose device from spinner
+     *
+     * @return the MidiOutputDevice from spinner
+     */
+	@Nullable MidiOutputDevice getMidiOutputDeviceFromSpinner() {
 		if (deviceSpinner != null && deviceSpinner.getSelectedItemPosition() >= 0 && connectedDevicesAdapter != null && !connectedDevicesAdapter.isEmpty()) {
 			UsbDevice device = connectedDevicesAdapter.getItem(deviceSpinner.getSelectedItemPosition());
 			if (device != null) {
@@ -101,10 +102,6 @@ public class UsbMidiDriverSampleActivity extends Activity {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity#onCreate(android.os.Bundle)
-	 */
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -112,26 +109,58 @@ public class UsbMidiDriverSampleActivity extends Activity {
 
         usbMidiDriver = new UsbMidiDriver(this) {
             @Override
-            public void onDeviceAttached(UsbDevice usbDevice) {
-                if (connectedDevicesAdapter != null) {
-                    connectedDevicesAdapter.remove(usbDevice);
-                    connectedDevicesAdapter.add(usbDevice);
-                    connectedDevicesAdapter.notifyDataSetChanged();
-                }
-                Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + usbDevice.getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+            public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
+                // deprecated method.
+                // do nothing
             }
 
             @Override
-            public void onDeviceDetached(UsbDevice usbDevice) {
-                if (connectedDevicesAdapter != null) {
-                    connectedDevicesAdapter.remove(usbDevice);
-                    connectedDevicesAdapter.notifyDataSetChanged();
-                }
-                Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + usbDevice.getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+            public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+
             }
 
             @Override
-            public void onMidiNoteOff(final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+            public void onMidiOutputDeviceAttached(@NonNull final MidiOutputDevice midiOutputDevice) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (connectedDevicesAdapter != null) {
+                            connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
+                            connectedDevicesAdapter.add(midiOutputDevice.getUsbDevice());
+                            connectedDevicesAdapter.notifyDataSetChanged();
+                        }
+                        Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
+                // deprecated method.
+                // do nothing
+            }
+
+            @Override
+            public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+
+            }
+
+            @Override
+            public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (connectedDevicesAdapter != null) {
+                            connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
+                            connectedDevicesAdapter.notifyDataSetChanged();
+                        }
+                        Toast.makeText(UsbMidiDriverSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onMidiNoteOff(@NonNull final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "NoteOff from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", note: " + note + ", velocity: " + velocity));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -151,7 +180,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiNoteOn(final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+            public void onMidiNoteOn(@NonNull final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "NoteOn from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ",  channel: " + channel + ", note: " + note + ", velocity: " + velocity));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -175,7 +204,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiPolyphonicAftertouch(final MidiInputDevice sender, int cable, int channel, int note, int pressure) {
+            public void onMidiPolyphonicAftertouch(@NonNull final MidiInputDevice sender, int cable, int channel, int note, int pressure) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "PolyphonicAftertouch from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", note: " + note + ", pressure: " + pressure));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -185,7 +214,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiControlChange(final MidiInputDevice sender, int cable, int channel, int function, int value) {
+            public void onMidiControlChange(@NonNull final MidiInputDevice sender, int cable, int channel, int function, int value) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "ControlChange from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", function: " + function + ", value: " + value));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -195,7 +224,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiProgramChange(final MidiInputDevice sender, int cable, int channel, int program) {
+            public void onMidiProgramChange(@NonNull final MidiInputDevice sender, int cable, int channel, int program) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "ProgramChange from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", program: " + program));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -212,7 +241,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiChannelAftertouch(final MidiInputDevice sender, int cable, int channel, int pressure) {
+            public void onMidiChannelAftertouch(@NonNull final MidiInputDevice sender, int cable, int channel, int pressure) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "ChannelAftertouch from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", pressure: " + pressure));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -222,7 +251,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiPitchWheel(final MidiInputDevice sender, int cable, int channel, int amount) {
+            public void onMidiPitchWheel(@NonNull final MidiInputDevice sender, int cable, int channel, int amount) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "PitchWheel from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", channel: " + channel + ", amount: " + amount));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -232,7 +261,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiSystemExclusive(final MidiInputDevice sender, int cable, final byte[] systemExclusive) {
+            public void onMidiSystemExclusive(@NonNull final MidiInputDevice sender, int cable, final byte[] systemExclusive) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "SystemExclusive from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", data:" + Arrays.toString(systemExclusive)));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -242,7 +271,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiSystemCommonMessage(final MidiInputDevice sender, int cable, final byte[] bytes) {
+            public void onMidiSystemCommonMessage(@NonNull final MidiInputDevice sender, int cable, final byte[] bytes) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "SystemCommonMessage from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", bytes: " + Arrays.toString(bytes)));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -252,7 +281,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiSingleByte(final MidiInputDevice sender, int cable, int byte1) {
+            public void onMidiSingleByte(@NonNull final MidiInputDevice sender, int cable, int byte1) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "SingleByte from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", data: " + byte1));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -262,7 +291,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiMiscellaneousFunctionCodes(final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+            public void onMidiMiscellaneousFunctionCodes(@NonNull final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "MiscellaneousFunctionCodes from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -272,7 +301,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
             }
 
             @Override
-            public void onMidiCableEvents(final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+            public void onMidiCableEvents(@NonNull final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
                 midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "CableEvents from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3));
 
                 if (thruToggleButton != null && thruToggleButton.isChecked() && getMidiOutputDeviceFromSpinner() != null) {
@@ -301,10 +330,6 @@ public class UsbMidiDriverSampleActivity extends Activity {
 
 		OnTouchListener onToneButtonTouchListener = new OnTouchListener() {
 
-			/*
-			 * (non-Javadoc)
-			 * @see android.view.View.OnTouchListener#onTouch(android.view.View, android.view.MotionEvent)
-			 */
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				MidiOutputDevice midiOutputDevice = getMidiOutputDeviceFromSpinner();
@@ -329,35 +354,35 @@ public class UsbMidiDriverSampleActivity extends Activity {
 				return false;
 			}
 		};
-		((Button) findViewById(R.id.buttonC)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonCis)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonD)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonDis)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonE)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonF)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonFis)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonG)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonGis)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonA)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonAis)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonB)).setOnTouchListener(onToneButtonTouchListener);
-		((Button) findViewById(R.id.buttonC2)).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonC).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonCis).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonD).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonDis).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonE).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonF).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonFis).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonG).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonGis).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonA).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonAis).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonB).setOnTouchListener(onToneButtonTouchListener);
+		findViewById(R.id.buttonC2).setOnTouchListener(onToneButtonTouchListener);
 
 		int whiteKeyColor = 0xFFFFFFFF;
 		int blackKeyColor = 0xFF808080;
-		((Button) findViewById(R.id.buttonC)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonCis)).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonD)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonDis)).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonE)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonF)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonFis)).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonG)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonGis)).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonA)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonAis)).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonB)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
-		((Button) findViewById(R.id.buttonC2)).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonC).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonCis).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonD).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonDis).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonE).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonF).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonFis).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonG).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonGis).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonA).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonAis).getBackground().setColorFilter(blackKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonB).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
+		findViewById(R.id.buttonC2).getBackground().setColorFilter(whiteKeyColor, Mode.MULTIPLY);
 
 		soundMaker = SoundMaker.getInstance();
 		final int bufferSize = AudioTrack.getMinBufferSize(soundMaker.getSamplingRate(), AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT);
@@ -367,10 +392,7 @@ public class UsbMidiDriverSampleActivity extends Activity {
 		audioTrack = prepareAudioTrack(soundMaker.getSamplingRate());
 		timer = new Timer();
 		timerTask = new TimerTask() {
-			/*
-			 * (non-Javadoc)
-			 * @see java.util.TimerTask#run()
-			 */
+
 			@Override
 			public void run() {
 				if (soundMaker != null) {
@@ -393,10 +415,6 @@ public class UsbMidiDriverSampleActivity extends Activity {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity#onDestroy()
-	 */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -426,11 +444,13 @@ public class UsbMidiDriverSampleActivity extends Activity {
 		}
 	}
 
-	/**
-	 * @param samplingRate
-	 * @return
-	 */
-	private static AudioTrack prepareAudioTrack(int samplingRate) {
+    /**
+     * Prepare the AudioTrack instance
+     *
+     * @param samplingRate the sampling rate of AudioTrack
+     * @return AudioTrack
+     */
+	private static @NonNull AudioTrack prepareAudioTrack(int samplingRate) {
 		AudioTrack result = new AudioTrack(AudioManager.STREAM_MUSIC, samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT, AudioTrack.getMinBufferSize(samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT), AudioTrack.MODE_STREAM);
 		result.setStereoVolume(1f, 1f);
 		result.play();

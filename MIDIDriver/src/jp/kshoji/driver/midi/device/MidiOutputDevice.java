@@ -8,14 +8,18 @@ import android.hardware.usb.UsbRequest;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
+
 /**
- * MIDI Output Device stop() method must be called when the application will be destroyed.
+ * MIDI Output Device
  *
  * @author K.Shoji
  */
@@ -29,14 +33,14 @@ public final class MidiOutputDevice {
 	final WaiterThread waiterThread;
 
 	/**
-	 * constructor
+	 * Constructor
 	 *
-	 * @param usbDevice
-	 * @param usbDeviceConnection
-	 * @param usbInterface
-	 * @param usbEndpoint
+	 * @param usbDevice the UsbDevice
+	 * @param usbDeviceConnection the UsbDeviceConnection
+	 * @param usbInterface the UsbInterface
+	 * @param usbEndpoint the UsbEndpoint
 	 */
-	public MidiOutputDevice(UsbDevice usbDevice, UsbDeviceConnection usbDeviceConnection, UsbInterface usbInterface, UsbEndpoint usbEndpoint) {
+	public MidiOutputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -44,9 +48,6 @@ public final class MidiOutputDevice {
 		waiterThread = new WaiterThread();
 
 		outputEndpoint = usbEndpoint;
-		if (outputEndpoint == null) {
-			throw new IllegalArgumentException("Output endpoint was not found.");
-		}
 
 		this.usbDeviceConnection.claimInterface(this.usbInterface, true);
 
@@ -57,7 +58,7 @@ public final class MidiOutputDevice {
 	/**
 	 * stop to use this device.
 	 */
-	public void stop() {
+	void stop() {
 		usbDeviceConnection.releaseInterface(usbInterface);
 
 		resume();
@@ -90,24 +91,58 @@ public final class MidiOutputDevice {
 		waiterThread.interrupt();
 	}
 
-	/**
+    /**
+     * Get the product name
+     * 
+     * @return the product name. null if API Level < {@link android.os.Build.VERSION_CODES#HONEYCOMB_MR2 }, or the product name is truly null
+     */
+    @Nullable
+    public String getProductName() {
+        return UsbMidiDeviceUtils.getProductName(usbDevice, usbDeviceConnection);
+    }
+
+    /**
+     * Get the manufacturer name
+     *
+     * @return the manufacturer name. null if API Level < {@link android.os.Build.VERSION_CODES#HONEYCOMB_MR2 }, or the manufacturer name is truly null
+     */
+    @Nullable
+    public String getManufacturerName() {
+        return UsbMidiDeviceUtils.getManufacturerName(usbDevice, usbDeviceConnection);
+    }
+
+    /**
+     * Get the device name(linux device path)
+     * @return the device name(linux device path)
+     */
+    @NonNull
+    public String getDeviceAddress() {
+        return usbDevice.getDeviceName();
+    }
+
+    /**
 	 * @return the usbDevice
 	 */
-	public UsbDevice getUsbDevice() {
+    @NonNull
+    public UsbDevice getUsbDevice() {
 		return usbDevice;
 	}
 
 	/**
 	 * @return the usbInterface
 	 */
-	public UsbInterface getUsbInterface() {
+    @Deprecated
+    @NonNull
+    public UsbInterface getUsbInterface() {
 		return usbInterface;
 	}
 
 	/**
 	 * @return the usbEndpoint
 	 */
-	public UsbEndpoint getUsbEndpoint() {
+    @Deprecated
+    @NonNull
+    public UsbEndpoint getUsbEndpoint() {
 		return outputEndpoint;
 	}
 
@@ -125,7 +160,7 @@ public final class MidiOutputDevice {
 		private UsbRequest usbRequest;
 
 		/**
-		 * constructor
+		 * Constructor
 		 */
 		WaiterThread() {
 			stopFlag = false;
@@ -153,15 +188,11 @@ public final class MidiOutputDevice {
 			}
 		});
 
-		Handler getHandler() {
+		@NonNull
+        Handler getHandler() {
 			return handler;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Thread#run()
-		 */
 		@Override
 		public void run() {
 			byte[] dequedDataBuffer;
@@ -262,11 +293,11 @@ public final class MidiOutputDevice {
 	/**
 	 * Sends MIDI message to output device.
 	 *
-	 * @param codeIndexNumber
-	 * @param cable
-	 * @param byte1
-	 * @param byte2
-	 * @param byte3
+	 * @param codeIndexNumber Code Index Number(CIN)
+	 * @param cable the cable ID 0-15
+	 * @param byte1 the first byte
+	 * @param byte2 the second byte
+	 * @param byte3 the third byte
 	 */
 	private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
 		byte[] writeBuffer = new byte[4];
@@ -281,13 +312,103 @@ public final class MidiOutputDevice {
 	}
 
 	/**
+     * Send a MIDI message with 3 bytes raw MIDI data
+     *
+     * @param cable the cable ID 0-15
+     * @param byte1 the first byte
+     * @param byte2 the second byte: ignored when 1 byte message
+     * @param byte3 the third byte: ignored when 1-2 byte message
+     */
+    public void sendMidiMessage(int cable, int byte1, int byte2, int byte3) {
+        int codeIndexNumber = 0;
+
+        switch (byte1 & 0xf0) {
+            case 0x80: // Note Off
+                codeIndexNumber = 0x8;
+                break;
+            case 0x90: // Note On
+                codeIndexNumber = 0x9;
+                break;
+            case 0xa0: // Poly Pressure
+                codeIndexNumber = 0xa;
+                break;
+            case 0xb0: // Control Change
+                codeIndexNumber = 0xb;
+                break;
+            case 0xc0: // Program Change
+                codeIndexNumber = 0xc;
+                break;
+            case 0xd0: // Channel Pressure
+                codeIndexNumber = 0xd;
+                break;
+            case 0xe0: // Pitch Bend
+                codeIndexNumber = 0xe;
+                break;
+            case 0xf0: // SysEx with 3 bytes
+                switch (byte1) {
+                    case 0xf0: // Start Of Exclusive
+                        if (byte2 == 0xf7) {
+                            // 2 byte SysEx(F0 F7)
+                            codeIndexNumber = 0x6;
+                        } else if (byte3 == 0xf7) {
+                            // 3 byte SysEx(F0 xx F7)
+                            codeIndexNumber = 0x7;
+                        } else {
+                            // ignored
+                            return;
+                        }
+                        break;
+                    case 0xf7: // End of Exclusive
+                        // ignored
+                        return;
+
+                    case 0xf4: // (Undefined MIDI System Common)
+                    case 0xf5: // (Undefined MIDI System Common / Bus Select?)
+                    case 0xf9: // (Undefined MIDI System Real-time)
+                    case 0xfd: // (Undefined MIDI System Real-time)
+                        // ignored
+                        return;
+
+                    case 0xf6: // Tune Request
+                    case 0xf8: // Timing Clock
+                    case 0xfa: // Start
+                    case 0xfb: // Continue
+                    case 0xfc: // Stop
+                    case 0xfe: // Active Sensing
+                    case 0xff: // System Reset
+                        // Single byte message
+                        codeIndexNumber = 0x5;
+                        break;
+
+                    case 0xf1: // MIDI Time Code
+                    case 0xf3: // Song Select
+                        // Two byte message
+                        codeIndexNumber = 0x2;
+                        break;
+
+                    case 0xf2: // Song Point Pointer
+                        // Three byte message
+                        codeIndexNumber = 0x3;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                // ignored
+                return;
+        }
+
+        sendMidiMessage(codeIndexNumber, cable, byte1, byte2, byte3);
+    }
+
+	/**
 	 * Miscellaneous function codes. Reserved for future extensions. Code Index Number : 0x0
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param byte1
-	 * @param byte2
-	 * @param byte3
+     * @param cable the cable ID 0-15
+     * @param byte1 the first byte
+     * @param byte2 the second byte
+     * @param byte3 the third byte
 	 */
 	public void sendMidiMiscellaneousFunctionCodes(int cable, int byte1, int byte2, int byte3) {
 		sendMidiMessage(0x0, cable, byte1, byte2, byte3);
@@ -296,11 +417,10 @@ public final class MidiOutputDevice {
 	/**
 	 * Cable events. Reserved for future expansion. Code Index Number : 0x1
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param byte1
-	 * @param byte2
-	 * @param byte3
+     * @param cable the cable ID 0-15
+     * @param byte1 the first byte
+     * @param byte2 the second byte
+     * @param byte3 the third byte
 	 */
 	public void sendMidiCableEvents(int cable, int byte1, int byte2, int byte3) {
 		sendMidiMessage(0x1, cable, byte1, byte2, byte3);
@@ -309,10 +429,8 @@ public final class MidiOutputDevice {
 	/**
 	 * System Common messages, or SysEx ends with following single byte. Code Index Number : 0x2 0x3 0x5
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param bytes
-	 *            bytes.length:1, 2, or 3
+     * @param cable the cable ID 0-15
+	 * @param bytes bytes.length:1, 2, or 3
 	 */
 	public void sendMidiSystemCommonMessage(int cable, byte bytes[]) {
 		if (bytes == null) {
@@ -337,20 +455,17 @@ public final class MidiOutputDevice {
 	/**
 	 * SysEx Code Index Number : 0x4, 0x5, 0x6, 0x7
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param systemExclusive
-	 *            : start with 'F0', and end with 'F7'
+     * @param cable the cable ID 0-15
+	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
-	@SuppressWarnings("incomplete-switch")
-	public void sendMidiSystemExclusive(int cable, byte[] systemExclusive) {
+	public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
 		ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
 
 		for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
 			if ((sysexIndex + 3 < systemExclusive.length)) {
 				// sysex starts or continues...
 				transferDataStream.write((((cable & 0xf) << 4) | 0x4));
-				transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+				transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
 				transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
 				transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
 			} else {
@@ -358,24 +473,26 @@ public final class MidiOutputDevice {
 				case 1:
 					// sysex end with 1 byte
 					transferDataStream.write((((cable & 0xf) << 4) | 0x5));
-					transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+					transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
 					transferDataStream.write(0);
 					transferDataStream.write(0);
 					break;
 				case 2:
 					// sysex end with 2 bytes
 					transferDataStream.write((((cable & 0xf) << 4) | 0x6));
-					transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+					transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
 					transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
 					transferDataStream.write(0);
 					break;
 				case 0:
 					// sysex end with 3 bytes
 					transferDataStream.write((((cable & 0xf) << 4) | 0x7));
-					transferDataStream.write(systemExclusive[sysexIndex + 0] & 0xff);
+					transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
 					transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
 					transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
 					break;
+                default:
+                    break;
 				}
 			}
 		}
@@ -405,10 +522,8 @@ public final class MidiOutputDevice {
 	/**
 	 * Note-on Code Index Number : 0x9
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param note
 	 *            0-127
 	 * @param velocity
@@ -421,10 +536,8 @@ public final class MidiOutputDevice {
 	/**
 	 * Poly-KeyPress Code Index Number : 0xa
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param note
 	 *            0-127
 	 * @param pressure
@@ -437,10 +550,8 @@ public final class MidiOutputDevice {
 	/**
 	 * Control Change Code Index Number : 0xb
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param function
 	 *            0-127
 	 * @param value
@@ -453,10 +564,8 @@ public final class MidiOutputDevice {
 	/**
 	 * Program Change Code Index Number : 0xc
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param program
 	 *            0-127
 	 */
@@ -467,10 +576,8 @@ public final class MidiOutputDevice {
 	/**
 	 * Channel Pressure Code Index Number : 0xd
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
 	 * @param pressure
 	 *            0-127
 	 */
@@ -481,12 +588,9 @@ public final class MidiOutputDevice {
 	/**
 	 * PitchBend Change Code Index Number : 0xe
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
-	 * @param amount
-	 *            0(low)-8192(center)-16383(high)
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
+	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
 	public void sendMidiPitchWheel(int cable, int channel, int amount) {
 		sendMidiMessage(0xe, cable, 0xe0 | (channel & 0xf), amount & 0x7f, (amount >> 7) & 0x7f);
@@ -495,9 +599,8 @@ public final class MidiOutputDevice {
 	/**
 	 * Single Byte Code Index Number : 0xf
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param byte1
+     * @param cable the cable ID 0-15
+	 * @param byte1 the first byte
 	 */
 	public void sendMidiSingleByte(int cable, int byte1) {
 		sendMidiMessage(0xf, cable, byte1, 0, 0);
@@ -506,14 +609,10 @@ public final class MidiOutputDevice {
 	/**
 	 * RPN message
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
-	 * @param function
-	 *            14bits
-	 * @param value
-	 *            7bits or 14bits
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
+	 * @param function 14bits
+	 * @param value 7bits or 14bits
 	 */
 	public void sendRPNMessage(int cable, int channel, int function, int value) {
 		sendRPNMessage(cable, channel, (function >> 7) & 0x7f, function & 0x7f, value);
@@ -522,16 +621,11 @@ public final class MidiOutputDevice {
 	/**
 	 * RPN message
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
-	 * @param functionMSB
-	 *            higher 7bits
-	 * @param functionLSB
-	 *            lower 7bits
-	 * @param value
-	 *            7bits or 14bits
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
+	 * @param functionMSB higher 7bits
+	 * @param functionLSB lower 7bits
+	 * @param value 7bits or 14bits
 	 */
 	public void sendRPNMessage(int cable, int channel, int functionMSB, int functionLSB, int value) {
 		// send the function
@@ -554,14 +648,10 @@ public final class MidiOutputDevice {
 	/**
 	 * NRPN message
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
-	 * @param function
-	 *            14bits
-	 * @param value
-	 *            7bits or 14bits
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
+	 * @param function 14bits
+	 * @param value 7bits or 14bits
 	 */
 	public void sendNRPNMessage(int cable, int channel, int function, int value) {
 		sendNRPNMessage(cable, channel, (function >> 7) & 0x7f, function & 0x7f, value);
@@ -570,16 +660,11 @@ public final class MidiOutputDevice {
 	/**
 	 * NRPN message
 	 *
-	 * @param cable
-	 *            0-15
-	 * @param channel
-	 *            0-15
-	 * @param functionMSB
-	 *            higher 7bits
-	 * @param functionLSB
-	 *            lower 7bits
-	 * @param value
-	 *            7bits or 14bits
+     * @param cable the cable ID 0-15
+     * @param channel the MIDI channel number 0-15
+	 * @param functionMSB higher 7bits
+	 * @param functionLSB lower 7bits
+	 * @param value 7bits or 14bits
 	 */
 	public void sendNRPNMessage(int cable, int channel, int functionMSB, int functionLSB, int value) {
 		// send the function

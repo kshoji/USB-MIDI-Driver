@@ -1,5 +1,15 @@
 package jp.kshoji.driver.usb.util;
 
+import android.content.Context;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbInterface;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Log;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,18 +18,10 @@ import java.util.List;
 import jp.kshoji.driver.midi.R;
 import jp.kshoji.driver.midi.util.Constants;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import android.content.Context;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbInterface;
-import android.util.Log;
-
 /**
  * Utility methods from com.android.server.usb.UsbSettingsManager.DeviceFilter
  * 
- * @see http://ics-custom-services.googlecode.com/git-history/1899c9df4b68885df4f351fa9feee603a08ee8ec/java/com/android/server/usb/UsbSettingsManager.java
+ * @see <a href="http://ics-custom-services.googlecode.com/git-history/1899c9df4b68885df4f351fa9feee603a08ee8ec/java/com/android/server/usb/UsbSettingsManager.java">UsbSettingsManager.java</a>
  * @author K.Shoji
  */
 public final class DeviceFilter {
@@ -35,13 +37,13 @@ public final class DeviceFilter {
 	private final int usbProtocol;
 	
 	/**
-	 * constructor
+	 * Constructor
 	 * 
-	 * @param vendorId
-	 * @param productId
-	 * @param clasz
-	 * @param subclass
-	 * @param protocol
+	 * @param vendorId the USB vendor id
+	 * @param productId the USB product id
+	 * @param clasz the USB class id
+	 * @param subclass the USB subclass id
+	 * @param protocol the USB protocol kind id
 	 */
 	public DeviceFilter(int vendorId, int productId, int clasz, int subclass, int protocol) {
 		usbVendorId = vendorId;
@@ -54,10 +56,11 @@ public final class DeviceFilter {
 	/**
 	 * Load DeviceFilter from resources(res/xml/device_filter.xml).
 	 * 
-	 * @param context
-	 * @return
+	 * @param context the Context
+	 * @return List of {@link DeviceFilter}
 	 */
-	public static List<DeviceFilter> getDeviceFilters(Context context) {
+    @NonNull
+    public static List<DeviceFilter> getDeviceFilters(@NonNull Context context) {
 		// create device filter
 		XmlPullParser parser = context.getResources().getXml(R.xml.device_filter);
 		List<DeviceFilter> deviceFilters = new ArrayList<DeviceFilter>();
@@ -82,10 +85,11 @@ public final class DeviceFilter {
 	/**
 	 * convert {@link XmlPullParser} into {@link DeviceFilter}
 	 * 
-	 * @param parser
+	 * @param parser the XmlPullParser
 	 * @return parsed {@link DeviceFilter}
 	 */
-	public static DeviceFilter parseXml(XmlPullParser parser) {
+    @Nullable
+    public static DeviceFilter parseXml(@NonNull XmlPullParser parser) {
 		int vendorId = -1;
 		int productId = -1;
 		int deviceClass = -1;
@@ -97,18 +101,18 @@ public final class DeviceFilter {
 			String name = parser.getAttributeName(i);
 			// All attribute values are ints
 			int value = Integer.parseInt(parser.getAttributeValue(i));
-			
+
 			if ("vendor-id".equals(name)) {
-				vendorId = value;
+                vendorId = value;
 			} else if ("product-id".equals(name)) {
-				productId = value;
+                productId = value;
 			} else if ("class".equals(name)) {
-				deviceClass = value;
+                deviceClass = value;
 			} else if ("subclass".equals(name)) {
-				deviceSubclass = value;
+                deviceSubclass = value;
 			} else if ("protocol".equals(name)) {
-				deviceProtocol = value;
-			}
+                deviceProtocol = value;
+            }
 		}
 		
 		// all blank(may be not proper tags)
@@ -122,10 +126,10 @@ public final class DeviceFilter {
 	/**
 	 * check equals
 	 * 
-	 * @param clasz
-	 * @param subclass
-	 * @param protocol
-	 * @return
+	 * @param clasz the USB class id
+	 * @param subclass the USB subclass id
+	 * @param protocol the USB protocol kind id
+     * @return true if the specified UsbDevice matches this DeviceFilter
 	 */
 	private boolean matches(int clasz, int subclass, int protocol) {
 		return ((usbClass == -1 || clasz == usbClass) && (usbSubclass == -1 || subclass == usbSubclass) && (usbProtocol == -1 || protocol == usbProtocol));
@@ -134,10 +138,10 @@ public final class DeviceFilter {
 	/**
 	 * check equals
 	 * 
-	 * @param device
-	 * @return
+	 * @param device the UsbDevice
+	 * @return true if the specified UsbDevice matches this DeviceFilter
 	 */
-	public boolean matches(UsbDevice device) {
+	public boolean matches(@NonNull UsbDevice device) {
 		if (usbVendorId != -1 && device.getVendorId() != usbVendorId) {
 			return false;
 		}

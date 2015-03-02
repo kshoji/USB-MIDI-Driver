@@ -4,7 +4,7 @@ android:
   components:
     - build-tools-21.1.2
     - extra-android-m2repository
-    - android-12
+    - android-21
   licenses:
     - '.+'
 before_install:
