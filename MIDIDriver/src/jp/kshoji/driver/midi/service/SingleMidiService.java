@@ -10,16 +10,19 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
+
 import java.util.List;
 import java.util.Set;
+
+import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
-import jp.kshoji.driver.midi.thread.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
@@ -85,7 +88,7 @@ public class SingleMidiService extends Service
 
             List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
 
-            Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters, SingleMidiService.this);
+            Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters);
             if (foundInputDevices.size() > 0) {
                 midiInputDevice = (MidiInputDevice) foundInputDevices.toArray()[0];
             }
@@ -98,6 +101,16 @@ public class SingleMidiService extends Service
             Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
 
             SingleMidiService.this.onDeviceAttached(attachedDevice);
+        }
+
+        @Override
+        public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+
+        }
+
+        @Override
+        public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
+
         }
     }
 
@@ -114,12 +127,10 @@ public class SingleMidiService extends Service
         @Override
         public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
             if (midiInputDevice != null) {
-                midiInputDevice.stop();
                 midiInputDevice = null;
             }
 
             if (midiOutputDevice != null) {
-                midiOutputDevice.stop();
                 midiOutputDevice = null;
             }
 
@@ -134,6 +145,16 @@ public class SingleMidiService extends Service
             Message message = new Message();
             message.obj = detachedDevice;
             deviceDetachedHandler.sendMessage(message);
+        }
+
+        @Override
+        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+
+        }
+
+        @Override
+        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
+
         }
     }
 
@@ -204,10 +225,7 @@ public class SingleMidiService extends Service
         }
         deviceConnectionWatcher = null;
 
-        if (midiInputDevice != null) {
-            midiInputDevice.stop();
-            midiInputDevice = null;
-        }
+        midiInputDevice = null;
 
         midiOutputDevice = null;
 
@@ -238,10 +256,30 @@ public class SingleMidiService extends Service
     }
 
     @Override
+    public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+
+    }
+
+    @Override
+    public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
+
+    }
+
+    @Override
     public void onDeviceDetached(UsbDevice usbDevice) {
         Toast.makeText(this,
                 "USB MIDI Device " + usbDevice.getDeviceName() + " has been detached.",
                 Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+
+    }
+
+    @Override
+    public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
+
     }
 
 
