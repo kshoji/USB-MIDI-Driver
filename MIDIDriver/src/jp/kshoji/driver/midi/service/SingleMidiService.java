@@ -4,18 +4,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
-
-import java.util.List;
-import java.util.Set;
 
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
@@ -24,198 +18,62 @@ import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.Constants;
-import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
-import jp.kshoji.driver.usb.util.DeviceFilter;
 
 /**
- * Created by André on 17.10.13.
+ * Service for single MIDI connection
+ *
+ * @author <a href="https://github.com/akapelrud">akapelrud</a>
+ * @author K.Shoji
  */
-public class SingleMidiService extends Service
-    implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener{
+public final class SingleMidiService extends Service implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
 
+    /**
+     * Binder for this Service
+     */
     public class LocalBinder extends Binder {
+
+        /**
+         * Get the Service
+         *
+         * @return the Service
+         */
+        @NonNull
         public SingleMidiService getService() {
             return SingleMidiService.this;
         }
     }
 
-    private final IBinder mBinder = new LocalBinder();
+    private final IBinder binder = new LocalBinder();
 
-    UsbDevice device = null;
-    UsbDeviceConnection deviceConnection = null;
-    MidiInputDevice midiInputDevice = null;
-    MidiOutputDevice midiOutputDevice = null;
-    OnMidiDeviceAttachedListener deviceAttachedListener = null;
-    OnMidiDeviceDetachedListener deviceDetachedListener = null;
-    Handler deviceDetachedHandler = null;
+    private MidiInputDevice midiInputDevice = null;
+    private MidiOutputDevice midiOutputDevice = null;
     private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+    private OnMidiInputEventListener midiInputEventListener = null;
 
-    private boolean mRunning = false;
-    private boolean mLoopback = false;
-
-    /**
-     * Implementation for single device connections.
-     *
-     * @author K.Shoji
-     */
-    final class OnMidiDeviceAttachedListenerImpl implements OnMidiDeviceAttachedListener {
-        private final UsbManager usbManager;
-
-        /**
-         * constructor
-         *
-         * @param usbManager
-         */
-        public OnMidiDeviceAttachedListenerImpl(UsbManager usbManager) {
-            this.usbManager = usbManager;
-        }
-
-        /*
-         * (non-Javadoc)
-         * @see jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener#onDeviceAttached(android.hardware.usb.UsbDevice, android.hardware.usb.UsbInterface)
-         */
-        @Override
-        public synchronized void onDeviceAttached(final UsbDevice attachedDevice) {
-            if (device != null) {
-                // already one device has been connected
-                return;
-            }
-
-            deviceConnection = usbManager.openDevice(attachedDevice);
-            if (deviceConnection == null) {
-                return;
-            }
-
-            List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(getApplicationContext());
-
-            Set<MidiInputDevice> foundInputDevices = UsbMidiDeviceUtils.findMidiInputDevices(attachedDevice, deviceConnection, deviceFilters);
-            if (foundInputDevices.size() > 0) {
-                midiInputDevice = (MidiInputDevice) foundInputDevices.toArray()[0];
-            }
-
-            Set<MidiOutputDevice> foundOutputDevices = UsbMidiDeviceUtils.findMidiOutputDevices(attachedDevice, deviceConnection, deviceFilters);
-            if (foundOutputDevices.size() > 0) {
-                midiOutputDevice = (MidiOutputDevice) foundOutputDevices.toArray()[0];
-            }
-
-            Log.d(Constants.TAG, "Device " + attachedDevice.getDeviceName() + " has been attached.");
-
-            SingleMidiService.this.onDeviceAttached(attachedDevice);
-        }
-
-        @Override
-        public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
-
-        }
-
-        @Override
-        public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
-
-        }
-    }
-
-    /**
-     * Implementation for single device connections.
-     *
-     * @author K.Shoji
-     */
-    final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
-        /*
-         * (non-Javadoc)
-         * @see jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener#onDeviceDetached(android.hardware.usb.UsbDevice)
-         */
-        @Override
-        public synchronized void onDeviceDetached(final UsbDevice detachedDevice) {
-            if (midiInputDevice != null) {
-                midiInputDevice = null;
-            }
-
-            if (midiOutputDevice != null) {
-                midiOutputDevice = null;
-            }
-
-            if (deviceConnection != null) {
-                deviceConnection.close();
-                deviceConnection = null;
-            }
-            device = null;
-
-            Log.d(Constants.TAG, "Device " + detachedDevice.getDeviceName() + " has been detached.");
-
-            Message message = new Message();
-            message.obj = detachedDevice;
-            deviceDetachedHandler.sendMessage(message);
-        }
-
-        @Override
-        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-
-        }
-
-        @Override
-        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-
-        }
-    }
-
-
-    /*
-     * (non-Javadoc)
-     * @see android.app.Activity#onCreate(android.os.Bundle)
-     */
-    @Override
-    public void onCreate() {
-
-        Log.d(Constants.TAG, "Creating MIDI service.");
-    }
+    private boolean isRunning = false;
+    private boolean isLoopbackEnabled = false;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(!mRunning) {
+        if (!isRunning) {
             Log.d(Constants.TAG, "MIDI service starting.");
-            Toast.makeText(this, "MIDI Service starting", Toast.LENGTH_SHORT).show();
 
-            /*Notification notification = new Notification.Builder(this)
-                    .setContentTitle("MIDI service")
-                    .setContentText("Running")
-                    .build();*/
-            //startForeground(1, notification);
-
-            UsbManager usbManager = (UsbManager) this.getSystemService(Context.USB_SERVICE);
-            deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl(usbManager);
-            deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
-
-            deviceDetachedHandler = new Handler(new Handler.Callback() {
-                @Override
-                public boolean handleMessage(Message msg) {
-                    UsbDevice usbDevice = (UsbDevice) msg.obj;
-                    onDeviceDetached(usbDevice);
-                    return true;
-                }
-            });
+            UsbManager usbManager = (UsbManager)getSystemService(Context.USB_SERVICE);
 
             // runs in separate thread
-            deviceConnectionWatcher = new MidiDeviceConnectionWatcher(
-                    this, usbManager,
-                    deviceAttachedListener, deviceDetachedListener);
+            deviceConnectionWatcher = new MidiDeviceConnectionWatcher(this, usbManager, this, this);
 
-            mRunning = true;
+            isRunning = true;
         }
 
-        return START_REDELIVER_INTENT;
-            // must be restarted if stopped by the system, We must respond to midi events(!)
+        return START_REDELIVER_INTENT; // must be restarted if stopped by the system, We must respond to midi events(!)
     }
-
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        return binder;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see android.app.Activity#onDestroy()
-     */
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -229,18 +87,66 @@ public class SingleMidiService extends Service
 
         midiOutputDevice = null;
 
-        deviceConnection = null;
-
-        //stopForeground(true);
-        Toast.makeText(this, "MIDI Service stopped", Toast.LENGTH_SHORT).show();
+        Log.d(Constants.TAG, "MIDI service stopped.");
     }
 
     /**
-     * Get MIDI output device, if available.
-     *
-     * @return MidiOutputDevice, null if not available
+     * Suspends event listening / sending
      */
-    public final MidiOutputDevice getMidiOutputDevice() {
+    public void suspend() {
+        if (midiInputDevice != null) {
+            midiInputDevice.suspend();
+        }
+
+        if (midiOutputDevice != null) {
+            midiOutputDevice.suspend();
+        }
+    }
+
+    /**
+     * Resumes from {@link #suspend()}
+     */
+    public void resume() {
+        if (midiInputDevice != null) {
+            midiInputDevice.resume();
+        }
+
+        if (midiOutputDevice != null) {
+            midiOutputDevice.resume();
+        }
+    }
+
+    /**
+     * Enables loopback mode, and checks MIDI Output availability
+     *
+     * @param enable true: enabled
+     * @return true: the MIDI output is available
+     */
+    public boolean enableLoopback(boolean enable) {
+        if (isLoopbackEnabled != enable) {
+            Log.d(Constants.TAG, (enable ? "Enabling" : "Disabling") + " MIDI Loopback.");
+        }
+        isLoopbackEnabled = enable;
+
+        return getMidiOutputDevice() != null;
+    }
+
+    /**
+     * Set the {@link OnMidiInputEventListener} to receive MIDI events.
+     *
+     * @param midiInputEventListener the listener
+     */
+    public void setOnMidiInputEventListener(@Nullable OnMidiInputEventListener midiInputEventListener) {
+        this.midiInputEventListener = midiInputEventListener;
+    }
+
+    /**
+     * Get {@link MidiOutputDevice} to send MIDI events.
+     *
+     * @return the MidiOutputDevice, null if not available
+     */
+    @Nullable
+    public MidiOutputDevice getMidiOutputDevice() {
         if (deviceConnectionWatcher != null) {
             deviceConnectionWatcher.checkConnectedDevicesImmediately();
         }
@@ -249,148 +155,212 @@ public class SingleMidiService extends Service
     }
 
     @Override
-    public void onDeviceAttached(UsbDevice usbDevice) {
-        Toast.makeText(this,
-                "USB MIDI Device " + usbDevice.getDeviceName() + " has been attached.",
-                Toast.LENGTH_LONG).show();
+    public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
+        Log.d(Constants.TAG, "USB MIDI Device " + usbDevice.getDeviceName() + " has been attached.");
     }
 
     @Override
     public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+        if (this.midiInputDevice != null) {
+            return;
+        }
 
+        this.midiInputDevice = midiInputDevice;
+        this.midiInputDevice.setMidiEventListener(this);
     }
 
     @Override
     public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
+        if (this.midiOutputDevice != null) {
+            return;
+        }
 
+        this.midiOutputDevice = midiOutputDevice;
     }
 
     @Override
-    public void onDeviceDetached(UsbDevice usbDevice) {
-        Toast.makeText(this,
-                "USB MIDI Device " + usbDevice.getDeviceName() + " has been detached.",
-                Toast.LENGTH_LONG).show();
+    public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
+        Log.d(Constants.TAG, "USB MIDI Device " + detachedDevice.getDeviceName() + " has been detached.");
     }
 
     @Override
     public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-
+        if (this.midiInputDevice != null && this.midiInputDevice == midiInputDevice) {
+            this.midiInputDevice.setMidiEventListener(null);
+            this.midiInputDevice = null;
+        }
     }
 
     @Override
     public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-
+        if (this.midiOutputDevice != null && this.midiOutputDevice == midiOutputDevice) {
+            this.midiOutputDevice = null;
+        }
     }
-
-
-    public boolean enableLoopback(boolean enable) {
-        if(mLoopback != enable)
-            Toast.makeText(this, (enable?"Enabling":"Disabling")+" MIDI Loopback.", Toast.LENGTH_SHORT).show();
-        mLoopback = enable;
-
-        return (getMidiOutputDevice() != null);
-    }
-
 
     @Override
-    public void onMidiMiscellaneousFunctionCodes(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiMiscellaneousFunctionCodes(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiMiscellaneousFunctionCodes(cable, byte1, byte2, byte3);
+        }
     }
 
     @Override
-    public void onMidiCableEvents(MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiCableEvents(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiCableEvents(cable, byte1, byte2, byte3);
+        }
     }
 
     @Override
-    public void onMidiSystemCommonMessage(MidiInputDevice sender, int cable, byte[] bytes) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiSystemCommonMessage(@NonNull MidiInputDevice sender, int cable, byte[] bytes) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiSystemCommonMessage(cable, bytes);
+        }
     }
 
     @Override
-    public void onMidiSystemExclusive(MidiInputDevice sender, int cable, byte[] systemExclusive) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiSystemExclusive(@NonNull MidiInputDevice sender, int cable, byte[] systemExclusive) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiSystemExclusive(sender, cable, systemExclusive);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiSystemExclusive(cable, systemExclusive);
+        }
     }
 
     @Override
-    public void onMidiNoteOff(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiNoteOff(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiNoteOff(sender, cable, channel, note, velocity);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiNoteOff(cable, channel, note, velocity);
+        }
     }
 
     @Override
-    public void onMidiNoteOn(MidiInputDevice sender, int cable, int channel, int note, int velocity) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiNoteOn(@NonNull MidiInputDevice sender, int cable, int channel, int note, int velocity) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiNoteOn(sender, cable, channel, note, velocity);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiNoteOn(cable, channel, note, velocity);
+        }
     }
 
     @Override
-    public void onMidiPolyphonicAftertouch(MidiInputDevice sender, int cable, int channel, int note, int pressure) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiPolyphonicAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int note, int pressure) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiPolyphonicAftertouch(sender, cable, channel, note, pressure);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiPolyphonicAftertouch(cable, channel, note, pressure);
+        }
     }
 
     @Override
-    public void onMidiControlChange(MidiInputDevice sender, int cable, int channel, int function, int value) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiControlChange(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiControlChange(sender, cable, channel, function, value);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiControlChange(cable, channel, function, value);
+        }
     }
 
     @Override
-    public void onMidiProgramChange(MidiInputDevice sender, int cable, int channel, int program) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiProgramChange(@NonNull MidiInputDevice sender, int cable, int channel, int program) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiProgramChange(sender, cable, channel, program);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiProgramChange(cable, channel, program);
+        }
     }
 
     @Override
-    public void onMidiChannelAftertouch(MidiInputDevice sender, int cable, int channel, int pressure) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiChannelAftertouch(@NonNull MidiInputDevice sender, int cable, int channel, int pressure) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiChannelAftertouch(sender, cable, channel, pressure);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiChannelAftertouch(cable, channel, pressure);
+        }
     }
 
     @Override
-    public void onMidiPitchWheel(MidiInputDevice sender, int cable, int channel, int amount) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiPitchWheel(@NonNull MidiInputDevice sender, int cable, int channel, int amount) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiPitchWheel(sender, cable, channel, amount);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiPitchWheel(cable, channel, amount);
+        }
     }
 
     @Override
-    public void onMidiSingleByte(MidiInputDevice sender, int cable, int byte1) {
-        if(mLoopback && getMidiOutputDevice() != null)
+    public void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiSingleByte(sender, cable, byte1);
+        }
+
+        if (isLoopbackEnabled && getMidiOutputDevice() != null) {
             getMidiOutputDevice().sendMidiSingleByte(cable, byte1);
+        }
     }
 
     /**
      * RPN message
      * This method is just the utility method, do not need to be implemented necessarily by subclass.
      *
-     * @param sender
-     * @param cable
-     * @param channel
+     * @param sender the sender
+     * @param cable the cable ID 0-15
+     * @param channel the channel 0-15
      * @param function 14bits
      * @param valueMSB higher 7bits
      * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
      */
-    public void onMidiRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
-        // do nothing in this implementation
+    public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
+        }
     }
 
     /**
      * NRPN message
      * This method is just the utility method, do not need to be implemented necessarily by subclass.
      *
-     * @param sender
-     * @param cable
-     * @param channel
+     * @param sender the sender
+     * @param cable the cable ID 0-15
+     * @param channel the channel 0-15
      * @param function 14bits
      * @param valueMSB higher 7bits
      * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
      */
-    public void onMidiNRPNReceived(MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
-        // do nothing in this implementation
+    public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+        if (midiInputEventListener != null) {
+            midiInputEventListener.onMidiNRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
+        }
     }
 }
