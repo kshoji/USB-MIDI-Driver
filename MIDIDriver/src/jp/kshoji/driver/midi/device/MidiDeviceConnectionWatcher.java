@@ -285,6 +285,15 @@ public final class MidiDeviceConnectionWatcher {
                     // interrupted
 				}
 			}
+
+            // the thread is finishing now.
+            // notify detaches all devices
+            for (UsbDevice device : grantedDevices) {
+                Message message = deviceDetachedHandler.obtainMessage();
+                message.obj = device;
+                deviceDetachedHandler.sendMessage(message);
+            }
+            grantedDevices.clear();
 		}
 
 		/**
