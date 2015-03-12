@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.kshoji</groupId>
 	<artifactId>midi-driver</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 	<packaging>aar</packaging>
 	<name>Android USB MIDI Driver Library</name>
 	<description>USB MIDI Driver for Android tablets(3.1 or higher)</description>
@@ -72,7 +72,6 @@
 					<sdk>
 						<platform>12</platform>
 					</sdk>
-					<deleteConflictingFiles>true</deleteConflictingFiles>
 					<undeployBeforeDeploy>true</undeployBeforeDeploy>
 				</configuration>
 				<extensions>true</extensions>
