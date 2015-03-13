@@ -11,3 +11,5 @@ before_install:
  - chmod +x gradlew
 script:
   - ./gradlew check
+  - cd ./MIDIDriver && mvn install -DskipTests=true
+
