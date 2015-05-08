@@ -38,16 +38,19 @@ import jp.kshoji.driver.usb.util.DeviceFilter;
 public final class MidiDeviceConnectionWatcher {
 	private final MidiDeviceConnectionWatchThread thread;
 	final Context context;
-    final Handler deviceDetachedHandler;
-    volatile boolean isGranting;
-    final Queue<UsbDevice> deviceGrantQueue;
-    UsbDevice grantingDevice;
-    final HashSet<UsbDevice> grantedDevices;
     final UsbManager usbManager;
 
-    Map<UsbDevice, UsbDeviceConnection> deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
-    Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = new HashMap<UsbDevice, Set<MidiInputDevice>>();
-    Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = new HashMap<UsbDevice, Set<MidiOutputDevice>>();
+    final Handler deviceDetachedHandler;
+    final OnMidiDeviceDetachedListener deviceDetachedListener;
+
+    volatile boolean isGranting;
+    volatile UsbDevice grantingDevice;
+    final Queue<UsbDevice> deviceGrantQueue = new LinkedList<>();
+    final HashSet<UsbDevice> grantedDevices = new HashSet<>();
+
+    Map<UsbDevice, UsbDeviceConnection> deviceConnections = new HashMap<>();
+    Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = new HashMap<>();
+    Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = new HashMap<>();
 
     /**
 	 * Constructor
@@ -59,16 +62,13 @@ public final class MidiDeviceConnectionWatcher {
 	public MidiDeviceConnectionWatcher(@NonNull Context context, @NonNull UsbManager usbManager, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener, @NonNull final OnMidiDeviceDetachedListener deviceDetachedListener) {
 		this.context = context;
         this.usbManager = usbManager;
-		deviceGrantQueue = new LinkedList<UsbDevice>();
 		isGranting = false;
         grantingDevice = null;
-		grantedDevices = new HashSet<UsbDevice>();
+        this.deviceDetachedListener = deviceDetachedListener;
+
         deviceDetachedHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message message) {
-                UsbDevice detachedDevice = (UsbDevice) message.obj;
-                deviceDetachedListener.onDeviceDetached(detachedDevice);
-
                 AsyncTask<UsbDevice, Void, Void> task = new AsyncTask<UsbDevice, Void, Void>() {
 
                     @Override
@@ -78,61 +78,74 @@ public final class MidiDeviceConnectionWatcher {
                         }
 
                         UsbDevice usbDevice = params[0];
-
-                        // Stop input device's thread.
-                        Set<MidiInputDevice> inputDevices = midiInputDevices.get(usbDevice);
-                        if (inputDevices != null && inputDevices.size() > 0) {
-                            for (MidiInputDevice inputDevice : inputDevices) {
-                                if (inputDevice != null) {
-                                    inputDevice.stop();
-
-                                    deviceDetachedListener.onMidiInputDeviceDetached(inputDevice);
-                                }
-                            }
-                            midiInputDevices.remove(usbDevice);
-                        }
-
-                        Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(usbDevice);
-                        if (outputDevices != null) {
-                            for (MidiOutputDevice outputDevice : outputDevices) {
-                                if (outputDevice != null) {
-                                    outputDevice.stop();
-
-                                    deviceDetachedListener.onMidiOutputDeviceDetached(outputDevice);
-                                }
-                            }
-                            midiOutputDevices.remove(usbDevice);
-                        }
-
-                        UsbDeviceConnection deviceConnection = deviceConnections.get(usbDevice);
-                        if (deviceConnection != null) {
-                            deviceConnection.close();
-
-                            deviceConnections.remove(usbDevice);
-                        }
-
-                        Log.d(Constants.TAG, "Device " + usbDevice.getDeviceName() + " has been detached.");
+                        onDeviceDetached(usbDevice);
 
                         return null;
                     }
-
                 };
+
+                UsbDevice detachedDevice = (UsbDevice) message.obj;
                 task.execute(detachedDevice);
 
                 return true;
             }
         });
+
 		thread = new MidiDeviceConnectionWatchThread(usbManager, deviceAttachedListener, deviceDetachedHandler);
         thread.setName("MidiDeviceConnectionWatchThread");
 		thread.start();
 	}
-	
-	public void checkConnectedDevicesImmediately() {
+
+    /**
+     * Notify the specified device has been detached
+     *
+     * @param detachedDevice the USB MIDI device
+     */
+    private void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
+        deviceDetachedListener.onDeviceDetached(detachedDevice);
+
+        // Stop input device's thread.
+        Set<MidiInputDevice> inputDevices = midiInputDevices.get(detachedDevice);
+        if (inputDevices != null && inputDevices.size() > 0) {
+            for (MidiInputDevice inputDevice : inputDevices) {
+                if (inputDevice != null) {
+                    inputDevice.stop();
+
+                    deviceDetachedListener.onMidiInputDeviceDetached(inputDevice);
+                }
+            }
+            midiInputDevices.remove(detachedDevice);
+        }
+
+        Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(detachedDevice);
+        if (outputDevices != null) {
+            for (MidiOutputDevice outputDevice : outputDevices) {
+                if (outputDevice != null) {
+                    outputDevice.stop();
+
+                    deviceDetachedListener.onMidiOutputDeviceDetached(outputDevice);
+                }
+            }
+            midiOutputDevices.remove(detachedDevice);
+        }
+
+        UsbDeviceConnection deviceConnection = deviceConnections.get(detachedDevice);
+        if (deviceConnection != null) {
+            deviceConnection.close();
+
+            deviceConnections.remove(detachedDevice);
+        }
+    }
+
+    /**
+     * Checks the connected USB MIDI devices
+     */
+    public void checkConnectedDevicesImmediately() {
 		thread.checkConnectedDevices();
 	}
 	
 	/**
-	 * stops the watching thread <br />
+	 * Stops the watching thread <br />
 	 * <br />
 	 * Note: Takes one second until the thread stops.
 	 * The device attached / detached events will be noticed until the thread will completely stops.
@@ -140,7 +153,7 @@ public final class MidiDeviceConnectionWatcher {
 	public void stop() {
 		thread.stopFlag = true;
         thread.interrupt();
-		
+
 		// blocks while the thread will stop
 		while (thread.isAlive()) {
 			try {
@@ -194,7 +207,7 @@ public final class MidiDeviceConnectionWatcher {
                         try {
                             Set<MidiInputDevice> inputDevices = midiInputDevices.get(device);
                             if (inputDevices == null) {
-                                inputDevices = new HashSet<MidiInputDevice>();
+                                inputDevices = new HashSet<>();
                             }
                             inputDevices.add(midiInputDevice);
                             midiInputDevices.put(device, inputDevices);
@@ -210,7 +223,7 @@ public final class MidiDeviceConnectionWatcher {
                         try {
                             Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(device);
                             if (outputDevices == null) {
-                                outputDevices = new HashSet<MidiOutputDevice>();
+                                outputDevices = new HashSet<>();
                             }
                             outputDevices.add(midiOutputDevice);
                             midiOutputDevices.put(device, outputDevices);
@@ -256,7 +269,7 @@ public final class MidiDeviceConnectionWatcher {
 			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedHandler = deviceDetachedHandler;
-			connectedDevices = new HashSet<UsbDevice>();
+			connectedDevices = new HashSet<>();
 			stopFlag = false;
 			deviceFilters = DeviceFilter.getDeviceFilters(context);
 		}
@@ -289,9 +302,8 @@ public final class MidiDeviceConnectionWatcher {
             // the thread is finishing now.
             // notify detaches all devices
             for (UsbDevice device : grantedDevices) {
-                Message message = deviceDetachedHandler.obtainMessage();
-                message.obj = device;
-                deviceDetachedHandler.sendMessage(message);
+                // call the method immediately
+                onDeviceDetached(device);
             }
             grantedDevices.clear();
 		}
