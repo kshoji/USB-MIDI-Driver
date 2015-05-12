@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.kshoji</groupId>
 	<artifactId>midi-driver</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 	<packaging>aar</packaging>
 	<name>Android USB MIDI Driver Library</name>
 	<description>USB MIDI Driver for Android tablets(3.1 or higher)</description>
@@ -57,9 +57,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.5.1</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-					<compilerVersion>1.6</compilerVersion>
+					<source>1.7</source>
+					<target>1.7</target>
+					<compilerVersion>1.7</compilerVersion>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -70,9 +70,8 @@
 					<androidManifestFile>${project.basedir}/AndroidManifest.xml</androidManifestFile>
 					<resourceDirectory>${project.basedir}/res</resourceDirectory>
 					<sdk>
-						<platform>12</platform>
+						<platform>21</platform>
 					</sdk>
-					<deleteConflictingFiles>true</deleteConflictingFiles>
 					<undeployBeforeDeploy>true</undeployBeforeDeploy>
 				</configuration>
 				<extensions>true</extensions>
@@ -108,22 +107,33 @@
             <name>javax.sound.midi Repository</name>
             <url>https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository</url>
         </repository>
+        <repository>
+            <id>android</id>
+            <url>file://${android.sdk.path}/extras/android/m2repository</url>
+        </repository>
     </repositories>
 
 	<dependencies>
 		<!-- install dependency using https://github.com/mosabua/maven-android-sdk-deployer -->
-		<!-- mvn install -P 3.1 -->
-		<dependency>
-			<groupId>android</groupId>
-			<artifactId>android</artifactId>
-			<version>3.1_r3</version>
-			<scope>provided</scope>
-		</dependency>
+		<!-- mvn install -P5.0 -->
+        <dependency>
+            <groupId>android</groupId>
+            <artifactId>android</artifactId>
+            <version>5.0.1_r2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.android.support</groupId>
+            <artifactId>support-annotations</artifactId>
+            <version>22.0.0</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>jp.kshoji</groupId>
             <artifactId>javax-sound-midi</artifactId>
-            <version>0.0.1</version>
+            <version>0.0.2</version>
             <type>aar</type>
         </dependency>
 	</dependencies>
