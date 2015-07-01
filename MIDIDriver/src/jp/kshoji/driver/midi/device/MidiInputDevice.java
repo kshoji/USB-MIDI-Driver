@@ -7,6 +7,9 @@ import android.hardware.usb.UsbInterface;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
 import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
@@ -191,6 +194,16 @@ public final class MidiInputDevice {
             int byte3;
             int i;
 
+            // for RPN/NRPN
+            int rpnNrpnFunction;
+            Integer rpnNrpnValue;
+            RPNStatus rpnStatus = RPNStatus.NONE;
+            int rpnFunction = 0x3fff;
+            int nrpnFunction = 0x3fff;
+
+            Map<Integer, Integer> rpnValueCache = new HashMap<>();
+            Map<Integer, Integer> nrpnValueCache = new HashMap<>();
+
             @SuppressWarnings("resource")
             ReusableByteArrayOutputStream[] systemExclusive = new ReusableByteArrayOutputStream[16];
             for (i = 0; i < 16; i++) {
@@ -199,7 +212,7 @@ public final class MidiInputDevice {
 
             // Don't allocate instances in the loop, as much as possible.
             while (!stopFlag) {
-                length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 0);
+                length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 10);
 
                 synchronized (suspendSignal) {
                     if (suspendFlag) {
@@ -338,7 +351,104 @@ public final class MidiInputDevice {
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiControlChange(sender, cable, byte1 & 0xf, byte2, byte3);
                             }
-                            processRpnMessages(cable, byte1, byte2, byte3, sender);
+
+                            // process RPN/NRPN messages
+                            switch (byte2) {
+                                case 6: // RPN/NRPN value MSB
+                                    if (rpnStatus == RPNStatus.RPN) {
+                                        rpnNrpnFunction = rpnFunction;
+                                        rpnNrpnValue = rpnValueCache.get(rpnNrpnFunction);
+                                    } else if (rpnStatus == RPNStatus.NRPN) {
+                                        rpnNrpnFunction = nrpnFunction;
+                                        rpnNrpnValue = nrpnValueCache.get(rpnNrpnFunction);
+                                    } else {
+                                        break;
+                                    }
+
+                                    // set MSB
+                                    if (rpnNrpnValue == null) {
+                                        rpnNrpnValue = 0;
+                                    }
+                                    rpnNrpnValue &= 0x00007f;
+                                    rpnNrpnValue |= (byte3 & 0x7f) << 7;
+
+                                    if (rpnStatus == RPNStatus.RPN) {
+                                        rpnValueCache.put(rpnNrpnFunction, rpnNrpnValue);
+                                        if (midiEventListener != null) {
+                                            midiEventListener.onMidiRPNReceived(sender, cable, byte1, rpnNrpnFunction, rpnNrpnValue);
+                                            midiEventListener.onMidiRPNReceived(sender, cable, byte1, rpnNrpnFunction, (rpnNrpnValue >> 7) & 0x7f, rpnNrpnValue & 0x7f);
+                                        }
+                                    } else {
+                                        nrpnValueCache.put(rpnNrpnFunction, rpnNrpnValue);
+                                        if (midiEventListener != null) {
+                                            midiEventListener.onMidiNRPNReceived(sender, cable, byte1, rpnNrpnFunction, rpnNrpnValue);
+                                            midiEventListener.onMidiNRPNReceived(sender, cable, byte1, rpnNrpnFunction, (rpnNrpnValue >> 7) & 0x7f, rpnNrpnValue & 0x7f);
+                                        }
+                                    }
+                                    break;
+                                case 38: // RPN/NRPN value LSB
+                                    if (rpnStatus == RPNStatus.RPN) {
+                                        rpnNrpnFunction = rpnFunction;
+                                        rpnNrpnValue = rpnValueCache.get(rpnNrpnFunction);
+                                    } else if (rpnStatus == RPNStatus.NRPN) {
+                                        rpnNrpnFunction = nrpnFunction;
+                                        rpnNrpnValue = nrpnValueCache.get(rpnNrpnFunction);
+                                    } else {
+                                        break;
+                                    }
+
+                                    // set LSB
+                                    if (rpnNrpnValue == null) {
+                                        rpnNrpnValue = 0;
+                                    }
+                                    rpnNrpnValue &= 0x003f80;
+                                    rpnNrpnValue |= (byte3 & 0x7f);
+
+                                    if (rpnStatus == RPNStatus.RPN) {
+                                        rpnValueCache.put(rpnNrpnFunction, rpnNrpnValue);
+                                        if (midiEventListener != null) {
+                                            midiEventListener.onMidiRPNReceived(sender, cable, byte1, rpnNrpnFunction, rpnNrpnValue);
+                                            midiEventListener.onMidiRPNReceived(sender, cable, byte1, rpnNrpnFunction, (rpnNrpnValue >> 7) & 0x7f, rpnNrpnValue & 0x7f);
+                                        }
+                                    } else {
+                                        nrpnValueCache.put(rpnNrpnFunction, rpnNrpnValue);
+                                        if (midiEventListener != null) {
+                                            midiEventListener.onMidiNRPNReceived(sender, cable, byte1, rpnNrpnFunction, rpnNrpnValue);
+                                            midiEventListener.onMidiNRPNReceived(sender, cable, byte1, rpnNrpnFunction, (rpnNrpnValue >> 7) & 0x7f, rpnNrpnValue & 0x7f);
+                                        }
+                                    }
+                                    break;
+                                case 98: // NRPN parameter number LSB
+                                    nrpnFunction &= 0x003f80;
+                                    nrpnFunction |= byte3 & 0x7f;
+                                    rpnStatus = RPNStatus.NRPN;
+                                    break;
+                                case 99: // NRPN parameter number MSB
+                                    nrpnFunction &= 0x00007f;
+                                    nrpnFunction |= (byte3 & 0x7f) << 7;
+                                    rpnStatus = RPNStatus.NRPN;
+                                    break;
+                                case 100: // RPN parameter number LSB
+                                    rpnFunction &= 0x003f80;
+                                    rpnFunction |= byte3 & 0x7f;
+                                    if (rpnFunction == 0x3fff) {
+                                        rpnStatus = RPNStatus.NONE;
+                                    } else {
+                                        rpnStatus = RPNStatus.RPN;
+                                    }
+                                    break;
+                                case 101: // RPN parameter number MSB
+                                    rpnFunction &= 0x00007f;
+                                    rpnFunction |= (byte3 & 0x7f) << 7;
+                                    if (rpnFunction == 0x3fff) {
+                                        rpnStatus = RPNStatus.NONE;
+                                    } else {
+                                        rpnStatus = RPNStatus.RPN;
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
                             break;
                         case 12:
                             // program change
@@ -369,71 +479,6 @@ public final class MidiInputDevice {
                             break;
                     }
                 }
-            }
-        }
-
-        private RPNStatus rpnStatus = RPNStatus.NONE;
-        private int rpnFunctionMSB = 0x7f;
-        private int rpnFunctionLSB = 0x7f;
-        private int nrpnFunctionMSB = 0x7f;
-        private int nrpnFunctionLSB = 0x7f;
-        private int rpnValueMSB;
-
-        /**
-         * RPN and NRPN messages
-         *
-         * @param cable the cableID 0-15
-         * @param byte1 the first byte
-         * @param byte2 the second byte
-         * @param byte3 the third byte
-         */
-        private void processRpnMessages(int cable, int byte1, int byte2, int byte3, @NonNull MidiInputDevice sender) {
-            switch (byte2) {
-                case 6:
-                    rpnValueMSB = byte3 & 0x7f;
-                    if (midiEventListener != null) {
-                        if (rpnStatus == RPNStatus.RPN) {
-                            midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, -1);
-                        } else if (rpnStatus == RPNStatus.NRPN) {
-                            midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, -1);
-                        }
-                    }
-                    break;
-                case 38:
-                    if (midiEventListener != null) {
-                        if (rpnStatus == RPNStatus.RPN) {
-                            midiEventListener.onMidiRPNReceived(sender, cable, byte1, ((rpnFunctionMSB & 0x7f) << 7) & (rpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
-                        } else if (rpnStatus == RPNStatus.NRPN) {
-                            midiEventListener.onMidiNRPNReceived(sender, cable, byte1, ((nrpnFunctionMSB & 0x7f) << 7) & (nrpnFunctionLSB & 0x7f), rpnValueMSB, byte3 & 0x7f);
-                        }
-                    }
-                    break;
-                case 98:
-                    nrpnFunctionLSB = byte3 & 0x7f;
-                    rpnStatus = RPNStatus.NRPN;
-                    break;
-                case 99:
-                    nrpnFunctionMSB = byte3 & 0x7f;
-                    rpnStatus = RPNStatus.NRPN;
-                    break;
-                case 100:
-                    rpnFunctionLSB = byte3 & 0x7f;
-                    if (rpnFunctionMSB == 0x7f && rpnFunctionLSB == 0x7f) {
-                        rpnStatus = RPNStatus.NONE;
-                    } else {
-                        rpnStatus = RPNStatus.RPN;
-                    }
-                    break;
-                case 101:
-                    rpnFunctionMSB = byte3 & 0x7f;
-                    if (rpnFunctionMSB == 0x7f && rpnFunctionLSB == 0x7f) {
-                        rpnStatus = RPNStatus.NONE;
-                    } else {
-                        rpnStatus = RPNStatus.RPN;
-                    }
-                    break;
-                default:
-                    break;
             }
         }
     }

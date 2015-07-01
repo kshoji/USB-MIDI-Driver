@@ -148,26 +148,48 @@ public interface OnMidiInputEventListener {
 	void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1);
 
 	/**
-	 * RPN message
+	 * RPN message, the value will be calculated as  `(valueMSB << 7) | valueLSB`
 	 *
      * @param sender the Object which the event sent
      * @param cable the cable ID 0-15
      * @param channel the MIDI channel number 0-15
 	 * @param function 14bits
 	 * @param valueMSB higher 7bits
-	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 * @param valueLSB lower 7bits. If you know the value has LSB for the NRPN function, observe this value to detect parameter changing.
 	 */
 	void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
 
 	/**
-	 * NRPN message
+	 * NRPN message, the value will be calculated as `(valueMSB << 7) | valueLSB`
 	 *
      * @param sender the Object which the event sent
      * @param cable the cable ID 0-15
      * @param channel the MIDI channel number 0-15
 	 * @param function 14bits
 	 * @param valueMSB higher 7bits
-	 * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
+	 * @param valueLSB lower 7bits. If you know the value has LSB for the NRPN function, observe this value to detect parameter changing.
 	 */
 	void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB);
+
+	/**
+	 * RPN message
+	 *
+	 * @param sender the Object which the event sent
+	 * @param cable the cable ID 0-15
+	 * @param channel the MIDI channel number 0-15
+	 * @param function 14bits
+	 * @param value 0-16383
+	 */
+	void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value);
+
+	/**
+	 * NRPN message
+	 *
+	 * @param sender the Object which the event sent
+	 * @param cable the cable ID 0-15
+	 * @param channel the MIDI channel number 0-15
+	 * @param function 14bits
+	 * @param value 0-16383
+	 */
+	void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value);
 }
