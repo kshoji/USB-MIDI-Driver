@@ -5,17 +5,18 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
-import android.os.Handler;
-import android.os.Handler.Callback;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
+import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
@@ -31,6 +32,9 @@ public final class MidiOutputDevice {
 	final UsbEndpoint outputEndpoint;
 
 	final WaiterThread waiterThread;
+
+    private static final int BUFFER_POOL_SIZE = 100;
+	final List<byte[]> bufferPool;
 
 	/**
 	 * Constructor
@@ -53,6 +57,11 @@ public final class MidiOutputDevice {
 
         waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
 		waiterThread.start();
+
+		bufferPool = new ArrayList<>();
+		for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
+			bufferPool.add(new byte[4]);
+		}
 	}
 
 	/**
@@ -167,32 +176,6 @@ public final class MidiOutputDevice {
 			suspendFlag = false;
 		}
 
-		private final Handler handler = new Handler(new Callback() {
-			@Override
-			public synchronized boolean handleMessage(Message msg) {
-				if (!(msg.obj instanceof byte[])) {
-					return false;
-				}
-
-				byte[] writeBuffer = (byte[]) msg.obj;
-
-				synchronized (queue) {
-					queue.add(writeBuffer);
-				}
-
-				// message has been queued, so interrupt the waiter thread
-				waiterThread.interrupt();
-
-				// message handled successfully
-				return true;
-			}
-		});
-
-		@NonNull
-        Handler getHandler() {
-			return handler;
-		}
-
 		@Override
 		public void run() {
 			byte[] dequedDataBuffer;
@@ -247,12 +230,12 @@ public final class MidiOutputDevice {
 							while (usbRequest.queue(ByteBuffer.wrap(endpointBuffer), endpointBufferLength) == false) {
 								// loop until queue completed
 
-                                usbRequestFailCount++;
-                                if (usbRequestFailCount > 10) {
-                                    // maybe disconnected
-                                    stopFlag = true;
-                                    break;
-                                }
+								usbRequestFailCount++;
+								if (usbRequestFailCount > 10) {
+									// maybe disconnected
+									stopFlag = true;
+									break;
+								}
 							}
 
                             if (stopFlag) {
@@ -271,6 +254,12 @@ public final class MidiOutputDevice {
 							}
 						}
 					}
+
+                    if (dequedDataBuffer.length == 4) {
+                        synchronized (queue) {
+                            bufferPool.add(dequedDataBuffer);
+                        }
+                    }
 				}
 
 				// no more data in queue, sleep.
@@ -300,15 +289,28 @@ public final class MidiOutputDevice {
 	 * @param byte3 the third byte
 	 */
 	private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
-		byte[] writeBuffer = new byte[4];
+        while (bufferPool.isEmpty()) {
+            Log.d(Constants.TAG, "MidiOutputDevice: buffer pool is empty");
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ignored) {
 
-		writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
-		writeBuffer[1] = (byte) byte1;
-		writeBuffer[2] = (byte) byte2;
-		writeBuffer[3] = (byte) byte3;
+            }
+        }
 
-		Handler handler = waiterThread.getHandler();
-		handler.sendMessage(Message.obtain(handler, 0, writeBuffer));
+        synchronized (waiterThread.queue) {
+			byte[] writeBuffer = bufferPool.remove(0);
+
+			writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
+			writeBuffer[1] = (byte) byte1;
+			writeBuffer[2] = (byte) byte2;
+			writeBuffer[3] = (byte) byte3;
+
+			waiterThread.queue.add(writeBuffer);
+		}
+
+		// message has been queued, so interrupt the waiter thread
+		waiterThread.interrupt();
 	}
 
 	/**
@@ -459,48 +461,101 @@ public final class MidiOutputDevice {
 	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
 	public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
-		ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
+        if (systemExclusive.length > 3) {
+            ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
 
-		for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
-			if ((sysexIndex + 3 < systemExclusive.length)) {
-				// sysex starts or continues...
-				transferDataStream.write((((cable & 0xf) << 4) | 0x4));
-				transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-				transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-				transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
-			} else {
-				switch (systemExclusive.length % 3) {
-				case 1:
-					// sysex end with 1 byte
-					transferDataStream.write((((cable & 0xf) << 4) | 0x5));
-					transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-					transferDataStream.write(0);
-					transferDataStream.write(0);
-					break;
-				case 2:
-					// sysex end with 2 bytes
-					transferDataStream.write((((cable & 0xf) << 4) | 0x6));
-					transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-					transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-					transferDataStream.write(0);
-					break;
-				case 0:
-					// sysex end with 3 bytes
-					transferDataStream.write((((cable & 0xf) << 4) | 0x7));
-					transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-					transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-					transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
-					break;
-                default:
-                    break;
-				}
-			}
-		}
+            for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
+                if ((sysexIndex + 3 < systemExclusive.length)) {
+                    // sysex starts or continues...
+                    transferDataStream.write((((cable & 0xf) << 4) | 0x4));
+                    transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
+                    transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                    transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+                } else {
+                    switch (systemExclusive.length % 3) {
+                        case 1:
+                            // sysex end with 1 byte
+                            transferDataStream.write((((cable & 0xf) << 4) | 0x5));
+                            transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
+                            transferDataStream.write(0);
+                            transferDataStream.write(0);
+                            break;
+                        case 2:
+                            // sysex end with 2 bytes
+                            transferDataStream.write((((cable & 0xf) << 4) | 0x6));
+                            transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
+                            transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                            transferDataStream.write(0);
+                            break;
+                        case 0:
+                            // sysex end with 3 bytes
+                            transferDataStream.write((((cable & 0xf) << 4) | 0x7));
+                            transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
+                            transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                            transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
 
-		byte[] buffer = transferDataStream.toByteArray();
+            synchronized (waiterThread.queue) {
+                waiterThread.queue.add(transferDataStream.toByteArray());
+            }
 
-		Handler handler = waiterThread.getHandler();
-		handler.sendMessage(Message.obtain(handler, 0, buffer));
+            // message has been queued, so interrupt the waiter thread
+            waiterThread.interrupt();
+        } else if (systemExclusive.length == 3) {
+            while (bufferPool.isEmpty()) {
+                Log.d(Constants.TAG, "MidiOutputDevice: buffer pool is empty");
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException ignored) {
+
+                }
+            }
+
+            synchronized (waiterThread.queue) {
+                byte[] writeBuffer = bufferPool.remove(0);
+
+                writeBuffer[0] = (byte) (((cable & 0xf) << 4) | 0x7);
+                writeBuffer[1] = systemExclusive[0];
+                writeBuffer[2] = systemExclusive[1];
+                writeBuffer[3] = systemExclusive[2];
+
+                waiterThread.queue.add(writeBuffer);
+            }
+
+            // message has been queued, so interrupt the waiter thread
+            waiterThread.interrupt();
+        } else if (systemExclusive.length == 2) {
+            while (bufferPool.isEmpty()) {
+                Log.d(Constants.TAG, "MidiOutputDevice: buffer pool is empty");
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException ignored) {
+
+                }
+            }
+
+            synchronized (waiterThread.queue) {
+                byte[] writeBuffer = bufferPool.remove(0);
+
+                writeBuffer[0] = (byte) (((cable & 0xf) << 4) | 0x6);
+                writeBuffer[1] = systemExclusive[0];
+                writeBuffer[2] = systemExclusive[1];
+                writeBuffer[3] = 0;
+
+                waiterThread.queue.add(writeBuffer);
+
+                // message has been queued, so interrupt the waiter thread
+                waiterThread.interrupt();
+            }
+
+            // message has been queued, so interrupt the waiter thread
+            waiterThread.interrupt();
+        }
 	}
 
 	/**
