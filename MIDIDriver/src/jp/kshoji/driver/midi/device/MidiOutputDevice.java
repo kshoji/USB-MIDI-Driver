@@ -157,8 +157,6 @@ public final class MidiOutputDevice {
 		volatile boolean stopFlag;
 		volatile boolean suspendFlag;
 
-		private UsbRequest usbRequest;
-
 		/**
 		 * Constructor
 		 */
@@ -226,14 +224,8 @@ public final class MidiOutputDevice {
 				if (dequedDataBuffer != null) {
 					dequedDataBufferLength = dequedDataBuffer.length;
 
-					// usbRequest.queue() is not thread-safe
 					synchronized (usbDeviceConnection) {
-						if (usbRequest == null) {
-							usbRequest = new UsbRequest();
-							usbRequest.initialize(usbDeviceConnection, outputEndpoint);
-						}
-
-						// usbRequest can't send data larger than maxPacketSize. split the data.
+						// usb can't send data larger than maxPacketSize. split the data.
 						for (bufferPosition = 0; bufferPosition < dequedDataBufferLength; bufferPosition += maxPacketSize) {
 							if (bufferPosition + maxPacketSize > dequedDataBufferLength) {
 								endpointBufferLength = dequedDataBufferLength % maxPacketSize;
@@ -243,8 +235,8 @@ public final class MidiOutputDevice {
 							System.arraycopy(dequedDataBuffer, bufferPosition, endpointBuffer, 0, endpointBufferLength);
 
                             usbRequestFailCount = 0;
-                            // if device disconnected, usbRequest.queue returns false
-							while (usbRequest.queue(ByteBuffer.wrap(endpointBuffer), endpointBufferLength) == false) {
+                            // if device disconnected, usbDeviceConnection.bulkTransfer returns negative value
+							while (usbDeviceConnection.bulkTransfer(outputEndpoint, endpointBuffer, endpointBufferLength, 10) < 0) {
 								// loop until queue completed
 
                                 usbRequestFailCount++;
@@ -258,17 +250,6 @@ public final class MidiOutputDevice {
                             if (stopFlag) {
                                 break;
                             }
-
-                            usbRequestFailCount = 0;
-							while (usbRequest.equals(usbDeviceConnection.requestWait()) == false) {
-								// loop until result received
-                                usbRequestFailCount++;
-                                if (usbRequestFailCount > 10) {
-                                    // maybe disconnected
-                                    stopFlag = true;
-                                    break;
-                                }
-							}
 						}
 					}
 				}
@@ -282,10 +263,6 @@ public final class MidiOutputDevice {
 						// interrupted: event queued, or stopFlag changed.
 					}
 				}
-			}
-
-			if (usbRequest != null) {
-				usbRequest.close();
 			}
 		}
 	}
