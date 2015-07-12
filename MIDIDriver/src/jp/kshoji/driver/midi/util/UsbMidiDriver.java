@@ -2,14 +2,11 @@ package jp.kshoji.driver.midi.util;
 
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.support.annotation.NonNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
@@ -36,8 +33,8 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
 
         @Override
         public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
-            // deprecated method.
-            // do nothing
+            connectedUsbDevices.add(usbDevice);
+            UsbMidiDriver.this.onDeviceAttached(usbDevice);
         }
 
         @Override
@@ -69,8 +66,8 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
 
         @Override
         public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
-            // deprecated method.
-            // do nothing
+            connectedUsbDevices.remove(usbDevice);
+            UsbMidiDriver.this.onDeviceDetached(usbDevice);
         }
 
         @Override
@@ -93,7 +90,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         }
     }
 
-    Map<UsbDevice, UsbDeviceConnection> deviceConnections = null;
+    Set<UsbDevice> connectedUsbDevices = null;
     Set<MidiInputDevice> midiInputDevices = null;
     Set<MidiOutputDevice> midiOutputDevices = null;
     OnMidiDeviceAttachedListener deviceAttachedListener = null;
@@ -123,9 +120,9 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         }
         isOpen = true;
 
-        deviceConnections = new HashMap<UsbDevice, UsbDeviceConnection>();
-        midiInputDevices = new HashSet<MidiInputDevice>();
-        midiOutputDevices = new HashSet<MidiOutputDevice>();
+        connectedUsbDevices = new HashSet<>();
+        midiInputDevices = new HashSet<>();
+        midiOutputDevices = new HashSet<>();
 
         UsbManager usbManager = (UsbManager) context.getApplicationContext().getSystemService(Context.USB_SERVICE);
         deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
@@ -160,7 +157,10 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         }
         midiOutputDevices = null;
 
-        deviceConnections = null;
+        if (connectedUsbDevices != null) {
+            connectedUsbDevices.clear();
+        }
+        connectedUsbDevices = null;
     }
 
     /**
@@ -216,8 +216,8 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         if (deviceConnectionWatcher != null) {
             deviceConnectionWatcher.checkConnectedDevicesImmediately();
         }
-        if (deviceConnections != null) {
-            return Collections.unmodifiableSet(deviceConnections.keySet());
+        if (connectedUsbDevices != null) {
+            return Collections.unmodifiableSet(connectedUsbDevices);
         }
 
         return Collections.unmodifiableSet(new HashSet<UsbDevice>());
