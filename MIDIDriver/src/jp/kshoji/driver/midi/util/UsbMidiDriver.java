@@ -224,13 +224,34 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
     }
 
     /**
-     * Get MIDI output device, if available.
+     * Get MIDI output device for specified UsbDevice, if available.
      *
      * @param usbDevice the UsbDevice
      * @return {@link Set<MidiOutputDevice>}
      */
     @NonNull
     public final Set<MidiOutputDevice> getMidiOutputDevices(@NonNull UsbDevice usbDevice) {
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.checkConnectedDevicesImmediately();
+        }
+
+        Set<MidiOutputDevice> result = new HashSet<>();
+        for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
+            if (midiOutputDevice.getUsbDevice().equals(usbDevice)) {
+                result.add(midiOutputDevice);
+            }
+        }
+
+        return Collections.unmodifiableSet(result);
+    }
+
+    /**
+     * Get the all MIDI output devices.
+     *
+     * @return {@link Set<MidiOutputDevice>}
+     */
+    @NonNull
+    public final Set<MidiOutputDevice> getMidiOutputDevices() {
         if (deviceConnectionWatcher != null) {
             deviceConnectionWatcher.checkConnectedDevicesImmediately();
         }
