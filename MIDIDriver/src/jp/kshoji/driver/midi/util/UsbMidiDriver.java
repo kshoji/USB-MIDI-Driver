@@ -259,35 +259,23 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         return Collections.unmodifiableSet(midiOutputDevices);
     }
 
-    /**
-     * RPN message
-     * This method is just the utility method, do not need to be implemented necessarily by subclass.
-     *
-     * @param sender the Object which the event sent
-     * @param cable the cable ID 0-15
-     * @param channel the MIDI channel number 0-15
-     * @param function 14bits
-     * @param valueMSB higher 7bits
-     * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
-     */
     @Override
     public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
         // do nothing in this implementation
     }
 
-    /**
-     * NRPN message
-     * This method is just the utility method, do not need to be implemented necessarily by subclass.
-     *
-     * @param sender the Object which the event sent
-     * @param cable the cable ID 0-15
-     * @param channel the MIDI channel number 0-15
-     * @param function 14bits
-     * @param valueMSB higher 7bits
-     * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
-     */
     @Override
     public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+        // do nothing in this implementation
+    }
+
+    @Override
+    public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+        // do nothing in this implementation
+    }
+
+    @Override
+    public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
         // do nothing in this implementation
     }
 }

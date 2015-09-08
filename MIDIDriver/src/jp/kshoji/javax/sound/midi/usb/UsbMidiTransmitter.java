@@ -226,14 +226,24 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 				}
 			}
 		}
-		
+
 		@Override
-		public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
+		public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+			// do nothing in this implementation
+		}
+
+		@Override
+		public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
+			// do nothing in this implementation
+		}
+
+		@Override
+		public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
 			// do nothing in this implementation
 		}
 		
 		@Override
-		public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value, int valueLSB) {
+		public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
 			// do nothing in this implementation
 		}
 	}

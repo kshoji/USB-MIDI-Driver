@@ -347,7 +347,7 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		}
 	}
 
-    @Override
+	@Override
     public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
         // deprecated method.
         // do nothing
@@ -404,6 +404,22 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 		List<AbstractMidiFragment> midiFragments = getMidiFragments();
 		for (AbstractMidiFragment fragment : midiFragments) {
 			fragment.onMidiNRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
+		}
+	}
+
+	@Override
+	public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiRPNReceived(sender, cable, channel, function, value);
+		}
+	}
+
+	@Override
+	public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiNRPNReceived(sender, cable, channel, function, value);
 		}
 	}
 }

@@ -274,37 +274,31 @@ public final class SingleMidiService extends Service {
             }
         }
 
-        /**
-         * RPN message
-         * This method is just the utility method, do not need to be implemented necessarily by subclass.
-         *
-         * @param sender the sender
-         * @param cable the cable ID 0-15
-         * @param channel the channel 0-15
-         * @param function 14bits
-         * @param valueMSB higher 7bits
-         * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
-         */
+        @Override
         public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
             if (midiInputEventListener != null) {
                 midiInputEventListener.onMidiRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
             }
         }
 
-        /**
-         * NRPN message
-         * This method is just the utility method, do not need to be implemented necessarily by subclass.
-         *
-         * @param sender   the sender
-         * @param cable    the cable ID 0-15
-         * @param channel  the channel 0-15
-         * @param function 14bits
-         * @param valueMSB higher 7bits
-         * @param valueLSB lower 7bits. -1 if value has no LSB. If you know the function's parameter value have LSB, you must ignore when valueLSB < 0.
-         */
+        @Override
         public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
             if (midiInputEventListener != null) {
                 midiInputEventListener.onMidiNRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);
+            }
+        }
+
+        @Override
+        public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiRPNReceived(sender, cable, channel, function, value);
+            }
+        }
+
+        @Override
+        public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiNRPNReceived(sender, cable, channel, function, value);
             }
         }
     };
