@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.device;
 
+import android.annotation.SuppressLint;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
@@ -150,6 +151,7 @@ public final class MidiOutputDevice {
      *
      * @author K.Shoji
      */
+    @SuppressLint("NewApi")
     private final class WaiterThread extends Thread {
         final Queue<byte[]> queue = new LinkedList<>();
 
