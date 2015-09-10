@@ -216,15 +216,15 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 
 		@Override
 		public void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1) {
-			if (receiver != null) {
-				try {
-					final SysexMessage message = new SysexMessage();
-					message.setMessage(new byte[] {(byte) (byte1 & 0xff)}, 1);
-					receiver.send(message, -1);
-				} catch (final InvalidMidiDataException e) {
-					Log.d(Constants.TAG, "InvalidMidiDataException", e);
-				}
-			}
+ 			if (receiver != null) {
+                try {
+                    final ShortMessage message = new ShortMessage();
+                    message.setMessage(new byte[] {(byte) (byte1 & 0xff)}, 1);
+                    receiver.send(message, -1);
+                } catch (final InvalidMidiDataException e) {
+                    Log.d(Constants.TAG, "InvalidMidiDataException", e);
+                }
+            }
 		}
 
 		@Override
