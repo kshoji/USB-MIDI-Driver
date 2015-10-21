@@ -7,16 +7,12 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbRequest;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
-import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
@@ -33,10 +29,12 @@ public final class MidiOutputDevice {
 
 	final WaiterThread waiterThread;
 
-    private static final int BUFFER_POOL_SIZE = 100;
-	final List<byte[]> bufferPool;
+    private static final int BUFFER_POOL_SIZE = 1024;
+	final LinkedList<byte[]> bufferPool = new LinkedList<>();
 
-	/**
+    private ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
+
+    /**
 	 * Constructor
 	 *
 	 * @param usbDevice the UsbDevice
@@ -58,9 +56,8 @@ public final class MidiOutputDevice {
         waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
 		waiterThread.start();
 
-		bufferPool = new ArrayList<>();
 		for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
-			bufferPool.add(new byte[4]);
+			bufferPool.addLast(new byte[4]);
 		}
 	}
 
@@ -168,7 +165,7 @@ public final class MidiOutputDevice {
 
 		private UsbRequest usbRequest;
 
-		/**
+        /**
 		 * Constructor
 		 */
 		WaiterThread() {
@@ -257,9 +254,9 @@ public final class MidiOutputDevice {
 
                     if (dequedDataBuffer.length == 4) {
                         synchronized (queue) {
-                            bufferPool.add(dequedDataBuffer);
+                            bufferPool.addLast(dequedDataBuffer);
                         }
-                    }
+    				}
 				}
 
 				// no more data in queue, sleep.
@@ -290,7 +287,6 @@ public final class MidiOutputDevice {
 	 */
 	private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
         while (bufferPool.isEmpty()) {
-            Log.d(Constants.TAG, "MidiOutputDevice: buffer pool is empty");
             try {
                 Thread.sleep(10);
             } catch (InterruptedException ignored) {
@@ -299,7 +295,7 @@ public final class MidiOutputDevice {
         }
 
         synchronized (waiterThread.queue) {
-			byte[] writeBuffer = bufferPool.remove(0);
+			byte[] writeBuffer = bufferPool.removeFirst();
 
 			writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
 			writeBuffer[1] = (byte) byte1;
@@ -460,39 +456,39 @@ public final class MidiOutputDevice {
      * @param cable the cable ID 0-15
 	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
-	public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
+    public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
         if (systemExclusive.length > 3) {
-            ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
+            sysexTransferDataStream.reset();
 
             for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
                 if ((sysexIndex + 3 < systemExclusive.length)) {
                     // sysex starts or continues...
-                    transferDataStream.write((((cable & 0xf) << 4) | 0x4));
-                    transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-                    transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-                    transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+                    sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x4));
+                    sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                    sysexTransferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                    sysexTransferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
                 } else {
                     switch (systemExclusive.length % 3) {
                         case 1:
                             // sysex end with 1 byte
-                            transferDataStream.write((((cable & 0xf) << 4) | 0x5));
-                            transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-                            transferDataStream.write(0);
-                            transferDataStream.write(0);
+                            sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x5));
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                            sysexTransferDataStream.write(0);
+                            sysexTransferDataStream.write(0);
                             break;
                         case 2:
                             // sysex end with 2 bytes
-                            transferDataStream.write((((cable & 0xf) << 4) | 0x6));
-                            transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-                            transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-                            transferDataStream.write(0);
+                            sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x6));
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                            sysexTransferDataStream.write(0);
                             break;
                         case 0:
                             // sysex end with 3 bytes
-                            transferDataStream.write((((cable & 0xf) << 4) | 0x7));
-                            transferDataStream.write(systemExclusive[sysexIndex    ] & 0xff);
-                            transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-                            transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+                            sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x7));
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
                             break;
                         default:
                             break;
@@ -501,62 +497,29 @@ public final class MidiOutputDevice {
             }
 
             synchronized (waiterThread.queue) {
-                waiterThread.queue.add(transferDataStream.toByteArray());
+                // allocating new byte[] here...
+                waiterThread.queue.add(sysexTransferDataStream.toByteArray());
             }
 
             // message has been queued, so interrupt the waiter thread
             waiterThread.interrupt();
-        } else if (systemExclusive.length == 3) {
-            while (bufferPool.isEmpty()) {
-                Log.d(Constants.TAG, "MidiOutputDevice: buffer pool is empty");
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ignored) {
-
-                }
+        } else {
+            switch (systemExclusive.length) {
+                case 1:
+                    // sysex end with 1 byte
+                    sendMidiMessage(0x5, cable & 0xf, systemExclusive[0], 0, 0);
+                    break;
+                case 2:
+                    // sysex end with 2 bytes
+                    sendMidiMessage(0x6, cable & 0xf, systemExclusive[0], systemExclusive[1], 0);
+                    break;
+                case 3:
+                    // sysex end with 3 bytes
+                    sendMidiMessage(0x7, cable & 0xf, systemExclusive[0], systemExclusive[1], systemExclusive[2]);
+                    break;
             }
-
-            synchronized (waiterThread.queue) {
-                byte[] writeBuffer = bufferPool.remove(0);
-
-                writeBuffer[0] = (byte) (((cable & 0xf) << 4) | 0x7);
-                writeBuffer[1] = systemExclusive[0];
-                writeBuffer[2] = systemExclusive[1];
-                writeBuffer[3] = systemExclusive[2];
-
-                waiterThread.queue.add(writeBuffer);
-            }
-
-            // message has been queued, so interrupt the waiter thread
-            waiterThread.interrupt();
-        } else if (systemExclusive.length == 2) {
-            while (bufferPool.isEmpty()) {
-                Log.d(Constants.TAG, "MidiOutputDevice: buffer pool is empty");
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ignored) {
-
-                }
-            }
-
-            synchronized (waiterThread.queue) {
-                byte[] writeBuffer = bufferPool.remove(0);
-
-                writeBuffer[0] = (byte) (((cable & 0xf) << 4) | 0x6);
-                writeBuffer[1] = systemExclusive[0];
-                writeBuffer[2] = systemExclusive[1];
-                writeBuffer[3] = 0;
-
-                waiterThread.queue.add(writeBuffer);
-
-                // message has been queued, so interrupt the waiter thread
-                waiterThread.interrupt();
-            }
-
-            // message has been queued, so interrupt the waiter thread
-            waiterThread.interrupt();
         }
-	}
+    }
 
 	/**
 	 * Note-off Code Index Number : 0x8
