@@ -275,6 +275,76 @@ public final class SingleMidiService extends Service {
         }
 
         @Override
+        public void onMidiTimeCodeQuarterFrame(@NonNull MidiInputDevice sender, int cable, int timing) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiTimeCodeQuarterFrame(sender, cable, timing);
+            }
+        }
+
+        @Override
+        public void onMidiSongSelect(@NonNull MidiInputDevice sender, int cable, int song) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiSongSelect(sender, cable, song);
+            }
+        }
+
+        @Override
+        public void onMidiSongPositionPointer(@NonNull MidiInputDevice sender, int cable, int position) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiSongPositionPointer(sender, cable, position);
+            }
+        }
+
+        @Override
+        public void onMidiTuneRequest(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiTuneRequest(sender, cable);
+            }
+        }
+
+        @Override
+        public void onMidiTimingClock(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiTimingClock(sender, cable);
+            }
+        }
+
+        @Override
+        public void onMidiStart(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiStart(sender, cable);
+            }
+        }
+
+        @Override
+        public void onMidiContinue(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiContinue(sender, cable);
+            }
+        }
+
+        @Override
+        public void onMidiStop(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiStop(sender, cable);
+            }
+        }
+
+        @Override
+        public void onMidiActiveSensing(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiActiveSensing(sender, cable);
+            }
+        }
+
+        @Override
+        public void onMidiReset(@NonNull MidiInputDevice sender, int cable) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiReset(sender, cable);
+            }
+        }
+
+        @Override
         public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
             if (midiInputEventListener != null) {
                 midiInputEventListener.onMidiRPNReceived(sender, cable, channel, function, valueMSB, valueLSB);

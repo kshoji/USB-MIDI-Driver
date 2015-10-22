@@ -228,6 +228,56 @@ public final class UsbMidiTransmitter implements MidiDeviceTransmitter {
 		}
 
 		@Override
+		public void onMidiTimeCodeQuarterFrame(@NonNull MidiInputDevice sender, int cable, int timing) {
+			// already processed on onMidiSystemCommonMessage, ignore this event
+		}
+
+		@Override
+		public void onMidiSongSelect(@NonNull MidiInputDevice sender, int cable, int song) {
+			// already processed on onMidiSystemCommonMessage, ignore this event
+		}
+
+		@Override
+		public void onMidiSongPositionPointer(@NonNull MidiInputDevice sender, int cable, int position) {
+			// already processed on onMidiSystemCommonMessage, ignore this event
+		}
+
+		@Override
+		public void onMidiTuneRequest(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
+		public void onMidiTimingClock(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
+		public void onMidiStart(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
+		public void onMidiContinue(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
+		public void onMidiStop(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
+		public void onMidiActiveSensing(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
+		public void onMidiReset(@NonNull MidiInputDevice sender, int cable) {
+			// already processed on onMidiSingleByte, ignore this event
+		}
+
+		@Override
 		public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
 			// do nothing in this implementation
 		}

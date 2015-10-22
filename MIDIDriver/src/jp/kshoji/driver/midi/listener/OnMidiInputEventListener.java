@@ -136,8 +136,8 @@ public interface OnMidiInputEventListener {
 	 * @param amount 0(low)-8192(center)-16383(high)
 	 */
 	void onMidiPitchWheel(@NonNull MidiInputDevice sender, int cable, int channel, int amount);
-	
-	/**
+
+    /**
 	 * Single Byte
 	 * Code Index Number : 0xf
 	 *
@@ -147,7 +147,90 @@ public interface OnMidiInputEventListener {
 	 */
 	void onMidiSingleByte(@NonNull MidiInputDevice sender, int cable, int byte1);
 
-	/**
+    /**
+     * MIDI Time Code(MTC) Quarter Frame
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     * @param timing 0-16383
+     */
+    void onMidiTimeCodeQuarterFrame(@NonNull MidiInputDevice sender, int cable, int timing);
+
+    /**
+     * Song Select
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     * @param song 0-127
+     */
+    void onMidiSongSelect(@NonNull MidiInputDevice sender, int cable, int song);
+
+    /**
+     * Song Position Pointer
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     * @param position 0-16383
+     */
+    void onMidiSongPositionPointer(@NonNull MidiInputDevice sender, int cable, int position);
+
+    /**
+     * Tune Request
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiTuneRequest(@NonNull MidiInputDevice sender, int cable);
+
+    /**
+     * Timing Clock
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiTimingClock(@NonNull MidiInputDevice sender, int cable);
+
+    /**
+     * Start Playing
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiStart(@NonNull MidiInputDevice sender, int cable);
+
+    /**
+     * Continue Playing
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiContinue(@NonNull MidiInputDevice sender, int cable);
+
+    /**
+     * Stop Playing
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiStop(@NonNull MidiInputDevice sender, int cable);
+
+    /**
+     * Active Sensing
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiActiveSensing(@NonNull MidiInputDevice sender, int cable);
+
+    /**
+     * Reset Device
+     *
+     * @param sender the device sent this message
+     * @param cable the cable ID 0-15
+     */
+    void onMidiReset(@NonNull MidiInputDevice sender, int cable);
+
+    /**
 	 * RPN message, the value will be calculated as  `(valueMSB << 7) | valueLSB`
 	 *
      * @param sender the Object which the event sent

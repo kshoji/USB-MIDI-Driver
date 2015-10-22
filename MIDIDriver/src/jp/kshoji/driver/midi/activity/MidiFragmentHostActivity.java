@@ -348,6 +348,86 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
 	}
 
 	@Override
+	public void onMidiTimeCodeQuarterFrame(@NonNull MidiInputDevice sender, int cable, int timing) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiTimeCodeQuarterFrame(sender, cable, timing);
+		}
+	}
+
+	@Override
+	public void onMidiSongSelect(@NonNull MidiInputDevice sender, int cable, int song) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiSongSelect(sender, cable, song);
+		}
+	}
+
+	@Override
+	public void onMidiSongPositionPointer(@NonNull MidiInputDevice sender, int cable, int position) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiSongPositionPointer(sender, cable, position);
+		}
+	}
+
+	@Override
+	public void onMidiTuneRequest(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiTuneRequest(sender, cable);
+		}
+	}
+
+	@Override
+	public void onMidiTimingClock(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiTimingClock(sender, cable);
+		}
+	}
+
+	@Override
+	public void onMidiStart(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiStart(sender, cable);
+		}
+	}
+
+	@Override
+	public void onMidiContinue(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiContinue(sender, cable);
+		}
+	}
+
+	@Override
+	public void onMidiStop(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiStop(sender, cable);
+		}
+	}
+
+	@Override
+	public void onMidiActiveSensing(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiActiveSensing(sender, cable);
+		}
+	}
+
+	@Override
+	public void onMidiReset(@NonNull MidiInputDevice sender, int cable) {
+		List<AbstractMidiFragment> midiFragments = getMidiFragments();
+		for (AbstractMidiFragment fragment : midiFragments) {
+			fragment.onMidiReset(sender, cable);
+		}
+	}
+
+	@Override
     public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
         // deprecated method.
         // do nothing

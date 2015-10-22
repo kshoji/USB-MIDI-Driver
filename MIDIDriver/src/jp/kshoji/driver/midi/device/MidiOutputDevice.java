@@ -602,6 +602,82 @@ public final class MidiOutputDevice {
     }
 
     /**
+     * MIDI Time Code(MTC) Quarter Frame
+     *
+     * @param timing 0-127
+     */
+    public final void sendMidiTimeCodeQuarterFrame(int cable, int timing) {
+        sendMidiSystemCommonMessage(cable, new byte[] {(byte) 0xf1, (byte) (timing & 0x7f)});
+    }
+
+    /**
+     * Song Select
+     *
+     * @param song 0-127
+     */
+    public final void sendMidiSongSelect(int cable, int song) {
+        sendMidiSystemCommonMessage(cable, new byte[] {(byte) 0xf3, (byte) (song & 0x7f)});
+    }
+
+    /**
+     * Song Position Pointer
+     *
+     * @param position 0-16383
+     */
+    public final void sendMidiSongPositionPointer(int cable, int position) {
+        sendMidiSystemCommonMessage(cable, new byte[] {(byte) 0xf2, (byte) (position & 0x7f), (byte) ((position >> 7) & 0x7f)});
+    }
+
+    /**
+     * Tune Request
+     */
+    public final void sendMidiTuneRequest(int cable) {
+        sendMidiSingleByte(cable, 0xf6);
+    }
+
+    /**
+     * Timing Clock
+     */
+    public final void sendMidiTimingClock(int cable) {
+        sendMidiSingleByte(cable, 0xf8);
+    }
+
+    /**
+     * Start Playing
+     */
+    public final void sendMidiStart(int cable) {
+        sendMidiSingleByte(cable, 0xfa);
+    }
+
+    /**
+     * Continue Playing
+     */
+    public final void sendMidiContinue(int cable) {
+        sendMidiSingleByte(cable, 0xfb);
+    }
+
+    /**
+     * Stop Playing
+     */
+    public final void sendMidiStop(int cable) {
+        sendMidiSingleByte(cable, 0xfc);
+    }
+
+    /**
+     * Active Sensing
+     */
+    public final void sendMidiActiveSensing(int cable) {
+        sendMidiSingleByte(cable, 0xfe);
+    }
+
+    /**
+     * Reset Device
+     */
+    public final void sendMidiReset(int cable) {
+        sendMidiSingleByte(cable, 0xff);
+    }
+
+    /**
      * RPN message
      *
      * @param cable    the cable ID 0-15
