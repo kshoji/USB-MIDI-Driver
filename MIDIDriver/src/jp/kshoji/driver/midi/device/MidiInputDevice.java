@@ -322,7 +322,33 @@ public final class MidiInputDevice {
                             synchronized (systemExclusive[cable]) {
                                 systemExclusive[cable].write(byte1);
                                 if (midiEventListener != null) {
-                                    midiEventListener.onMidiSystemExclusive(sender, cable, systemExclusive[cable].toByteArray());
+                                    byte[] sysexBytes = systemExclusive[cable].toByteArray();
+                                    if (sysexBytes.length == 1) {
+                                        switch (sysexBytes[0] & 0xff) {
+                                            case 0xf6:
+                                                midiEventListener.onMidiTuneRequest(sender, cable);
+                                                break;
+                                            case 0xf8:
+                                                midiEventListener.onMidiTimingClock(sender, cable);
+                                                break;
+                                            case 0xfa:
+                                                midiEventListener.onMidiStart(sender, cable);
+                                                break;
+                                            case 0xfb:
+                                                midiEventListener.onMidiContinue(sender, cable);
+                                                break;
+                                            case 0xfc:
+                                                midiEventListener.onMidiStop(sender, cable);
+                                                break;
+                                            case 0xfe:
+                                                midiEventListener.onMidiActiveSensing(sender, cable);
+                                                break;
+                                            case 0xff:
+                                                midiEventListener.onMidiReset(sender, cable);
+                                                break;
+                                        }
+                                    }
+                                    midiEventListener.onMidiSystemExclusive(sender, cable, sysexBytes);
                                 }
                                 systemExclusive[cable].reset();
                             }
