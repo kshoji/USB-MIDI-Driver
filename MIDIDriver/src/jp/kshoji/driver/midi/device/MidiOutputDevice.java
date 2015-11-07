@@ -6,16 +6,13 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Handler.Callback;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
 /**
@@ -32,18 +29,23 @@ public final class MidiOutputDevice {
 
     final WaiterThread waiterThread;
 
+    private static final int BUFFER_POOL_SIZE = 1024;
+	final LinkedList<byte[]> bufferPool = new LinkedList<>();
+
+    private ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
+
     /**
-     * Constructor
-     *
-     * @param usbDevice           the UsbDevice
-     * @param usbDeviceConnection the UsbDeviceConnection
-     * @param usbInterface        the UsbInterface
-     * @param usbEndpoint         the UsbEndpoint
-     */
-    public MidiOutputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) {
-        this.usbDevice = usbDevice;
-        this.usbDeviceConnection = usbDeviceConnection;
-        this.usbInterface = usbInterface;
+	 * Constructor
+	 *
+	 * @param usbDevice the UsbDevice
+	 * @param usbDeviceConnection the UsbDeviceConnection
+	 * @param usbInterface the UsbInterface
+	 * @param usbEndpoint the UsbEndpoint
+	 */
+	public MidiOutputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) {
+		this.usbDevice = usbDevice;
+		this.usbDeviceConnection = usbDeviceConnection;
+		this.usbInterface = usbInterface;
 
         waiterThread = new WaiterThread();
 
@@ -52,8 +54,12 @@ public final class MidiOutputDevice {
         this.usbDeviceConnection.claimInterface(this.usbInterface, true);
 
         waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
-        waiterThread.start();
-    }
+		waiterThread.start();
+
+		for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
+			bufferPool.addLast(new byte[4]);
+		}
+	}
 
     /**
      * stop to use this device.
@@ -146,61 +152,35 @@ public final class MidiOutputDevice {
         return outputEndpoint;
     }
 
-    /**
-     * Sending thread for output data. Loops infinitely while stopFlag == false.
-     *
-     * @author K.Shoji
-     */
+	/**
+	 * Sending thread for output data. Loops infinitely while stopFlag == false.
+	 *
+	 * @author K.Shoji
+	 */
     @SuppressLint("NewApi")
-    private final class WaiterThread extends Thread {
+	private final class WaiterThread extends Thread {
         final Queue<byte[]> queue = new LinkedList<>();
 
-        volatile boolean stopFlag;
-        volatile boolean suspendFlag;
+		volatile boolean stopFlag;
+		volatile boolean suspendFlag;
 
         /**
-         * Constructor
-         */
-        WaiterThread() {
-            stopFlag = false;
-            suspendFlag = false;
-        }
+		 * Constructor
+		 */
+		WaiterThread() {
+			stopFlag = false;
+			suspendFlag = false;
+		}
 
-        private final Handler handler = new Handler(new Callback() {
-            @Override
-            public synchronized boolean handleMessage(Message msg) {
-                if (!(msg.obj instanceof byte[])) {
-                    return false;
-                }
-
-                byte[] writeBuffer = (byte[]) msg.obj;
-
-                synchronized (queue) {
-                    queue.add(writeBuffer);
-                }
-
-                // message has been queued, so interrupt the waiter thread
-                waiterThread.interrupt();
-
-                // message handled successfully
-                return true;
-            }
-        });
-
-        @NonNull
-        Handler getHandler() {
-            return handler;
-        }
-
-        @Override
-        public void run() {
-            byte[] dequedDataBuffer;
+		@Override
+		public void run() {
+			byte[] dequedDataBuffer;
             int dequedDataBufferLength;
-            int queueSize;
-            final int maxPacketSize = outputEndpoint.getMaxPacketSize();
-            byte[] endpointBuffer = new byte[maxPacketSize];
-            int endpointBufferLength;
-            int bufferPosition;
+			int queueSize;
+			final int maxPacketSize = outputEndpoint.getMaxPacketSize();
+			byte[] endpointBuffer = new byte[maxPacketSize];
+			int endpointBufferLength;
+			int bufferPosition;
             int usbRequestFailCount;
             int bytesWritten;
 
@@ -270,43 +250,61 @@ public final class MidiOutputDevice {
                             }
                         }
                     }
-                }
 
-                // no more data in queue, sleep.
-                if (queueSize == 0 && !interrupted()) {
-                    try {
-                        // sleep until interrupted
-                        sleep(500);
-                    } catch (InterruptedException e) {
-                        // interrupted: event queued, or stopFlag changed.
+                    if (dequedDataBuffer.length == 4) {
+                        synchronized (queue) {
+                            bufferPool.addLast(dequedDataBuffer);
+                        }
                     }
                 }
+
+				// no more data in queue, sleep.
+				if (queueSize == 0 && !interrupted()) {
+					try {
+						// sleep until interrupted
+						sleep(500);
+					} catch (InterruptedException e) {
+						// interrupted: event queued, or stopFlag changed.
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Sends MIDI message to output device.
+	 *
+	 * @param codeIndexNumber Code Index Number(CIN)
+	 * @param cable the cable ID 0-15
+	 * @param byte1 the first byte
+	 * @param byte2 the second byte
+	 * @param byte3 the third byte
+	 */
+	private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
+        while (bufferPool.isEmpty()) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ignored) {
+
             }
         }
-    }
 
-    /**
-     * Sends MIDI message to output device.
-     *
-     * @param codeIndexNumber Code Index Number(CIN)
-     * @param cable           the cable ID 0-15
-     * @param byte1           the first byte
-     * @param byte2           the second byte
-     * @param byte3           the third byte
-     */
-    private void sendMidiMessage(int codeIndexNumber, int cable, int byte1, int byte2, int byte3) {
-        byte[] writeBuffer = new byte[4];
+        synchronized (waiterThread.queue) {
+			byte[] writeBuffer = bufferPool.removeFirst();
 
-        writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
-        writeBuffer[1] = (byte) byte1;
-        writeBuffer[2] = (byte) byte2;
-        writeBuffer[3] = (byte) byte3;
+			writeBuffer[0] = (byte) (((cable & 0xf) << 4) | (codeIndexNumber & 0xf));
+			writeBuffer[1] = (byte) byte1;
+			writeBuffer[2] = (byte) byte2;
+			writeBuffer[3] = (byte) byte3;
 
-        Handler handler = waiterThread.getHandler();
-        handler.sendMessage(Message.obtain(handler, 0, writeBuffer));
-    }
+			waiterThread.queue.add(writeBuffer);
+		}
 
-    /**
+		// message has been queued, so interrupt the waiter thread
+		waiterThread.interrupt();
+	}
+
+	/**
      * Send a MIDI message with 3 bytes raw MIDI data
      *
      * @param cable the cable ID 0-15
@@ -451,56 +449,76 @@ public final class MidiOutputDevice {
      * SysEx Code Index Number : 0x4, 0x5, 0x6, 0x7
      *
      * @param cable           the cable ID 0-15
-     * @param systemExclusive : start with 'F0', and end with 'F7'
-     */
+	 * @param systemExclusive : start with 'F0', and end with 'F7'
+	 */
     public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
-        ByteArrayOutputStream transferDataStream = new ByteArrayOutputStream();
+        if (systemExclusive.length > 3) {
+            sysexTransferDataStream.reset();
 
-        for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
-            if ((sysexIndex + 3 < systemExclusive.length)) {
-                // sysex starts or continues...
-                transferDataStream.write((((cable & 0xf) << 4) | 0x4));
-                transferDataStream.write(systemExclusive[sysexIndex] & 0xff);
-                transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-                transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
-            } else {
-                switch (systemExclusive.length % 3) {
-                    case 1:
-                        // sysex end with 1 byte
-                        transferDataStream.write((((cable & 0xf) << 4) | 0x5));
-                        transferDataStream.write(systemExclusive[sysexIndex] & 0xff);
-                        transferDataStream.write(0);
-                        transferDataStream.write(0);
-                        break;
-                    case 2:
-                        // sysex end with 2 bytes
-                        transferDataStream.write((((cable & 0xf) << 4) | 0x6));
-                        transferDataStream.write(systemExclusive[sysexIndex] & 0xff);
-                        transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-                        transferDataStream.write(0);
-                        break;
-                    case 0:
-                        // sysex end with 3 bytes
-                        transferDataStream.write((((cable & 0xf) << 4) | 0x7));
-                        transferDataStream.write(systemExclusive[sysexIndex] & 0xff);
-                        transferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
-                        transferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
-                        break;
-                    default:
-                        break;
+            for (int sysexIndex = 0; sysexIndex < systemExclusive.length; sysexIndex += 3) {
+                if ((sysexIndex + 3 < systemExclusive.length)) {
+                    // sysex starts or continues...
+                    sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x4));
+                    sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                    sysexTransferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                    sysexTransferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+                } else {
+                    switch (systemExclusive.length % 3) {
+                        case 1:
+                            // sysex end with 1 byte
+                            sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x5));
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                            sysexTransferDataStream.write(0);
+                            sysexTransferDataStream.write(0);
+                            break;
+                        case 2:
+                            // sysex end with 2 bytes
+                            sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x6));
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                            sysexTransferDataStream.write(0);
+                            break;
+                        case 0:
+                            // sysex end with 3 bytes
+                            sysexTransferDataStream.write((((cable & 0xf) << 4) | 0x7));
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex] & 0xff);
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex + 1] & 0xff);
+                            sysexTransferDataStream.write(systemExclusive[sysexIndex + 2] & 0xff);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
+
+            synchronized (waiterThread.queue) {
+                // allocating new byte[] here...
+                waiterThread.queue.add(sysexTransferDataStream.toByteArray());
+            }
+
+            // message has been queued, so interrupt the waiter thread
+            waiterThread.interrupt();
+        } else {
+            switch (systemExclusive.length) {
+                case 1:
+                    // sysex end with 1 byte
+                    sendMidiMessage(0x5, cable & 0xf, systemExclusive[0], 0, 0);
+                    break;
+                case 2:
+                    // sysex end with 2 bytes
+                    sendMidiMessage(0x6, cable & 0xf, systemExclusive[0], systemExclusive[1], 0);
+                    break;
+                case 3:
+                    // sysex end with 3 bytes
+                    sendMidiMessage(0x7, cable & 0xf, systemExclusive[0], systemExclusive[1], systemExclusive[2]);
+                    break;
+            }
         }
-
-        byte[] buffer = transferDataStream.toByteArray();
-
-        Handler handler = waiterThread.getHandler();
-        handler.sendMessage(Message.obtain(handler, 0, buffer));
     }
 
-    /**
-     * Note-off Code Index Number : 0x8
-     *
+	/**
+	 * Note-off Code Index Number : 0x8
+	 *
 	 * @param cable
 	 *            0-15
 	 * @param channel
