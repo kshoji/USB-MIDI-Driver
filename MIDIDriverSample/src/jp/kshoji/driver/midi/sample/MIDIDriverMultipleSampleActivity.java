@@ -417,7 +417,57 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 		}
 	}
 
-	@Override
+    @Override
+    public void onMidiTimeCodeQuarterFrame(@NonNull MidiInputDevice sender, int cable, int timing) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "TimeCodeQuarterFrame from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", timing: " + timing));
+    }
+
+    @Override
+    public void onMidiSongSelect(@NonNull MidiInputDevice sender, int cable, int song) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "SongSelect from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", song: " + song));
+    }
+
+    @Override
+    public void onMidiSongPositionPointer(@NonNull MidiInputDevice sender, int cable, int position) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "SongPositionPointer from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", position: " + position));
+    }
+
+    @Override
+    public void onMidiTuneRequest(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "TuneRequest from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
+    public void onMidiTimingClock(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "TimingClock from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
+    public void onMidiStart(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "Start from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
+    public void onMidiContinue(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "Continue from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
+    public void onMidiStop(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "Stop from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
+    public void onMidiActiveSensing(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "ActiveSensing from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
+    public void onMidiReset(@NonNull MidiInputDevice sender, int cable) {
+        midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "Reset from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable));
+    }
+
+    @Override
 	public void onMidiMiscellaneousFunctionCodes(@NonNull final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
 		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, "MiscellaneousFunctionCodes from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3));
 
