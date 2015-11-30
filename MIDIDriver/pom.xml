@@ -115,18 +115,18 @@
 
 	<dependencies>
 		<!-- install dependency using https://github.com/mosabua/maven-android-sdk-deployer -->
-		<!-- mvn install -P5.0 -->
+		<!-- mvn install -P6.0 -->
         <dependency>
             <groupId>android</groupId>
             <artifactId>android</artifactId>
-            <version>5.0.1_r2</version>
+            <version>6.0_r2</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>support-annotations</artifactId>
-            <version>22.0.0</version>
+            <version>23.1.1</version>
             <scope>provided</scope>
         </dependency>
 
