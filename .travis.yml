@@ -23,8 +23,8 @@ before_install:
   # install maven 3.1.1
   - "wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz && tar xfz apache-maven-3.1.1-bin.tar.gz && sudo mv apache-maven-3.1.1 /usr/local/maven-3.1.1 && sudo rm -f /usr/local/maven && sudo ln -s /usr/local/maven-3.1.1 /usr/local/maven"
   - mvn --version
-  - git clone https://github.com/simpligility/maven-android-sdk-deployer && cd ./maven-android-sdk-deployer && mvn install -P6.0 -Dandroid.sdk.path=$ANDROID_HOME && cd ..
+  - git clone https://github.com/simpligility/maven-android-sdk-deployer && cd ./maven-android-sdk-deployer && mvn install -P5.0 -Dandroid.sdk.path=$ANDROID_HOME && cd ..
 script:
   - ./gradlew check
+  - cat MIDIDriver/build/outputs/lint-results.xml
   - cd ./MIDIDriver && mvn install -DskipTests=true -Dandroid.sdk.path=$ANDROID_HOME
-  - cat library/build/outputs/lint-results.xml
