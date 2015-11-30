@@ -7,7 +7,7 @@ before_install:
   - if [ `uname -m` = x86_64 ]; then sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch > /dev/null; fi
   # install Android SDK
   - wget http://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
-  - tar xzf android-sdk_r24.0.2-linux.tgz
+  - tar xzf android-sdk_r24.4.1-linux.tgz
   - export ANDROID_HOME=`pwd`/android-sdk-linux
   - echo $ANDROID_HOME
   - echo "sdk.dir=$ANDROID_HOME" > local.properties
