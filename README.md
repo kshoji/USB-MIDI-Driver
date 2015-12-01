@@ -1,9 +1,3 @@
-##NOTICE
-I'm sorry that I couldn't reply to issues and emails for a long period of time.  
-I'll quit my current job at July 2015, and now I'm busy to seek a new workplace.  
-If the next my office found, I'll restart developing soon.  
-Regards, Kaoru
-
 Android USB MIDI Driver
 ====
 [![Build Status](https://travis-ci.org/kshoji/USB-MIDI-Driver.svg?branch=master)](https://travis-ci.org/kshoji/USB-MIDI-Driver)
