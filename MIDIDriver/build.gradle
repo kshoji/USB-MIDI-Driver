@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    compile 'jp.kshoji:javax-sound-midi:0.0.2:@aar'
+    compile 'jp.kshoji:javax-sound-midi:0.0.3:@aar'
     compile 'com.android.support:support-annotations:23.1.1'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
@@ -52,7 +52,7 @@ group = 'jp.kshoji'
 uploadArchives {
     repositories.mavenDeployer {
         repository url: 'file://' + file('snapshots').absolutePath
-        pom.version = '0.1.3-SNAPSHOT'
+        pom.version = '0.1.3'
         pom.artifactId = 'midi-driver'
     }
 }
