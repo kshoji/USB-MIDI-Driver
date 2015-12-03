@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jp.kshoji</groupId>
 	<artifactId>midi-driver</artifactId>
-	<version>0.1.2</version>
+	<version>0.1.3</version>
 	<packaging>aar</packaging>
 	<name>Android USB MIDI Driver Library</name>
 	<description>USB MIDI Driver for Android tablets(3.1 or higher)</description>
@@ -70,7 +70,7 @@
 					<androidManifestFile>${project.basedir}/AndroidManifest.xml</androidManifestFile>
 					<resourceDirectory>${project.basedir}/res</resourceDirectory>
 					<sdk>
-						<platform>21</platform>
+						<platform>23</platform>
 					</sdk>
 					<undeployBeforeDeploy>true</undeployBeforeDeploy>
 				</configuration>
@@ -115,25 +115,25 @@
 
 	<dependencies>
 		<!-- install dependency using https://github.com/mosabua/maven-android-sdk-deployer -->
-		<!-- mvn install -P5.0 -->
+		<!-- mvn install -P6.0 -->
         <dependency>
             <groupId>android</groupId>
             <artifactId>android</artifactId>
-            <version>5.0.1_r2</version>
+            <version>6.0_r2</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>support-annotations</artifactId>
-            <version>22.0.0</version>
+            <version>23.1.1</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>jp.kshoji</groupId>
             <artifactId>javax-sound-midi</artifactId>
-            <version>0.0.2</version>
+            <version>0.0.3</version>
             <type>aar</type>
         </dependency>
 	</dependencies>
