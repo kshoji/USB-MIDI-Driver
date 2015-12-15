@@ -52,7 +52,7 @@ group = 'jp.kshoji'
 uploadArchives {
     repositories.mavenDeployer {
         repository url: 'file://' + file('snapshots').absolutePath
-        pom.version = '0.1.3'
+        pom.version = '0.1.4'
         pom.artifactId = 'midi-driver'
     }
 }
