@@ -1,5 +1,5 @@
 language: java
-jdk: openjdk7
+jdk: oraclejdk7
 before_install:
   # make executable gradlew
   - chmod +x gradlew
