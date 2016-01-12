@@ -38,7 +38,7 @@ public final class UsbMidiDevice implements MidiDevice {
      * @param midiInputDevice the MidiInputDevice
      * @param midiOutputDevice the MidiOutputDevice
      */
-	public UsbMidiDevice(@Nullable MidiInputDevice midiInputDevice, @Nullable MidiOutputDevice midiOutputDevice) {
+	public UsbMidiDevice(@Nullable final MidiInputDevice midiInputDevice, @Nullable final MidiOutputDevice midiOutputDevice) {
         if (midiInputDevice == null && midiOutputDevice == null) {
             throw new NullPointerException("Both of MidiInputDevice and MidiOutputDevice are null.");
         }
@@ -55,7 +55,7 @@ public final class UsbMidiDevice implements MidiDevice {
 
         try {
             open();
-        } catch (MidiUnavailableException e) {
+        } catch (final MidiUnavailableException e) {
             Log.e(Constants.TAG, e.getMessage(), e);
         }
     }
@@ -65,15 +65,20 @@ public final class UsbMidiDevice implements MidiDevice {
 	public Info getDeviceInfo() {
         UsbDevice usbDevice = null;
 
-        for (MidiInputDevice midiInputDevice : transmitters.keySet()) {
+        for (final MidiInputDevice midiInputDevice : transmitters.keySet()) {
             usbDevice = midiInputDevice.getUsbDevice();
             break;
         }
         if (usbDevice == null) {
-            for (MidiOutputDevice midiOutputDevice : receivers.keySet()) {
+            for (final MidiOutputDevice midiOutputDevice : receivers.keySet()) {
                 usbDevice = midiOutputDevice.getUsbDevice();
                 break;
             }
+        }
+
+        if (usbDevice == null) {
+            // XXX returns `null` information
+            return new Info("(null)", "(null)", "(null)", "(null)");
         }
 
         return new Info(usbDevice.getDeviceName(), //
@@ -144,41 +149,41 @@ public final class UsbMidiDevice implements MidiDevice {
         return transmitters.size();
 	}
 
-    @Nullable
-	@Override
+    @NonNull
+    @Override
 	public Receiver getReceiver() throws MidiUnavailableException {
-        for (Receiver receiver : receivers.values()) {
+        for (final Receiver receiver : receivers.values()) {
             // returns first one
             return receiver;
         }
 
-        return null;
+        throw new MidiUnavailableException("Receiver not found");
 	}
 
     @NonNull
 	@Override
 	public List<Receiver> getReceivers() {
-        List<Receiver> result = new ArrayList<Receiver>();
+        final List<Receiver> result = new ArrayList<>();
         result.addAll(receivers.values());
 
 		return Collections.unmodifiableList(result);
 	}
 
-    @Nullable
-	@Override
+    @NonNull
+    @Override
 	public Transmitter getTransmitter() throws MidiUnavailableException {
-        for (Transmitter transmitter : transmitters.values()) {
+        for (final Transmitter transmitter : transmitters.values()) {
             // returns first one
             return transmitter;
         }
 
-        return null;
+        throw new MidiUnavailableException("Transmitter not found");
 	}
 
     @NonNull
 	@Override
 	public List<Transmitter> getTransmitters() {
-        List<Transmitter> result = new ArrayList<Transmitter>();
+        final List<Transmitter> result = new ArrayList<>();
         result.addAll(transmitters.values());
 
 		return Collections.unmodifiableList(result);
@@ -189,9 +194,9 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiInputDevice the MidiInputDevice to add
      */
-    public void addMidiInputDevice(@NonNull MidiInputDevice midiInputDevice) {
+    public void addMidiInputDevice(@NonNull final MidiInputDevice midiInputDevice) {
         if (!transmitters.containsKey(midiInputDevice)) {
-            UsbMidiTransmitter transmitter = new UsbMidiTransmitter(this, midiInputDevice);
+            final UsbMidiTransmitter transmitter = new UsbMidiTransmitter(this, midiInputDevice);
             transmitters.put(midiInputDevice, transmitter);
             transmitter.open();
         }
@@ -202,9 +207,9 @@ public final class UsbMidiDevice implements MidiDevice {
      * 
      * @param midiInputDevice the MidiInputDevice to remove
      */
-    public void removeMidiInputDevice(@NonNull MidiInputDevice midiInputDevice) {
+    public void removeMidiInputDevice(@NonNull final MidiInputDevice midiInputDevice) {
         if (transmitters.containsKey(midiInputDevice)) {
-            Transmitter transmitter = transmitters.remove(midiInputDevice);
+            final Transmitter transmitter = transmitters.remove(midiInputDevice);
             transmitter.close();
         }
     }
@@ -224,9 +229,9 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiOutputDevice the MidiOutputDevice to add
      */
-    public void addMidiOutputDevice(@NonNull MidiOutputDevice midiOutputDevice) {
+    public void addMidiOutputDevice(@NonNull final MidiOutputDevice midiOutputDevice) {
         if (!receivers.containsKey(midiOutputDevice)) {
-            UsbMidiReceiver receiver = new UsbMidiReceiver(this, midiOutputDevice);
+            final UsbMidiReceiver receiver = new UsbMidiReceiver(this, midiOutputDevice);
             receivers.put(midiOutputDevice, receiver);
             receiver.open();
         }
@@ -237,9 +242,9 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiOutputDevice the MidiOutputDevice to remove
      */
-    public void removeMidiOutputDevice(@NonNull MidiOutputDevice midiOutputDevice) {
+    public void removeMidiOutputDevice(@NonNull final MidiOutputDevice midiOutputDevice) {
         if (receivers.containsKey(midiOutputDevice)) {
-            Receiver receiver = receivers.remove(midiOutputDevice);
+            final Receiver receiver = receivers.remove(midiOutputDevice);
             receiver.close();
         }
     }
