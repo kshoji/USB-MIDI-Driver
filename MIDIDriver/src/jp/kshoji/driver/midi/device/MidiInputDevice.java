@@ -37,9 +37,9 @@ public final class MidiInputDevice {
     /**
      * Constructor
      *
-     * @param usbDevice the UsbDevice
+     * @param usbDevice           the UsbDevice
      * @param usbDeviceConnection the UsbDeviceConnection
-     * @param usbInterface the UsbInterface
+     * @param usbInterface        the UsbInterface
      * @throws IllegalArgumentException endpoint not found.
      */
     public MidiInputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) throws IllegalArgumentException {
@@ -64,6 +64,7 @@ public final class MidiInputDevice {
      */
     public void setMidiEventListener(OnMidiInputEventListener midiEventListener) {
         this.midiEventListener = midiEventListener;
+        this.waiterThread.setOnMidiInputEventListener(midiEventListener);
     }
 
     /**
@@ -127,6 +128,7 @@ public final class MidiInputDevice {
 
     /**
      * Get the device name(linux device path)
+     *
      * @return the device name(linux device path)
      */
     @NonNull
@@ -170,6 +172,11 @@ public final class MidiInputDevice {
         volatile boolean stopFlag;
         final Object suspendSignal = new Object();
         volatile boolean suspendFlag;
+        private OnMidiInputEventListener midiEventListener = MidiInputDevice.this.midiEventListener;
+
+        public void setOnMidiInputEventListener(OnMidiInputEventListener listener) {
+            midiEventListener = listener;
+        }
 
         /**
          * Constructor
@@ -185,7 +192,6 @@ public final class MidiInputDevice {
             final UsbEndpoint usbEndpoint = inputEndpoint;
             final int maxPacketSize = inputEndpoint.getMaxPacketSize();
             final MidiInputDevice sender = MidiInputDevice.this;
-            final OnMidiInputEventListener midiEventListener = MidiInputDevice.this.midiEventListener;
 
             // prepare buffer variables
             final byte[] bulkReadBuffer = new byte[maxPacketSize];
@@ -305,7 +311,7 @@ public final class MidiInputDevice {
                                         break;
                                 }
 
-                                byte[] bytes = new byte[] { (byte) byte1, (byte) byte2 };
+                                byte[] bytes = new byte[]{(byte) byte1, (byte) byte2};
                                 midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
                             }
                             break;
@@ -318,7 +324,7 @@ public final class MidiInputDevice {
                                         break;
                                 }
 
-                                byte[] bytes = new byte[] { (byte) byte1, (byte) byte2, (byte) byte3 };
+                                byte[] bytes = new byte[]{(byte) byte1, (byte) byte2, (byte) byte3};
                                 midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
                             }
                             break;
