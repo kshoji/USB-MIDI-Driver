@@ -32,6 +32,8 @@ public final class UsbMidiDevice implements MidiDevice {
 
 	private boolean isOpened;
 
+    private Info cachedInfo = null;
+
     /**
      * Constructor
      *
@@ -63,6 +65,8 @@ public final class UsbMidiDevice implements MidiDevice {
     @NonNull
 	@Override
 	public Info getDeviceInfo() {
+        if (cachedInfo != null)
+            return cachedInfo;
         UsbDevice usbDevice = null;
 
         for (final MidiInputDevice midiInputDevice : transmitters.keySet()) {
@@ -78,10 +82,10 @@ public final class UsbMidiDevice implements MidiDevice {
 
         if (usbDevice == null) {
             // XXX returns `null` information
-            return new Info("(null)", "(null)", "(null)", "(null)");
+            return cachedInfo = new Info("(null)", "(null)", "(null)", "(null)");
         }
 
-        return new Info(usbDevice.getDeviceName(), //
+        return cachedInfo = new Info(usbDevice.getDeviceName(), //
 				String.format("vendorId: %x, productId: %x", usbDevice.getVendorId(), usbDevice.getProductId()), //
 				"deviceId:" + usbDevice.getDeviceId(), //
 				usbDevice.getDeviceName());
