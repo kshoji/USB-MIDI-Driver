@@ -174,7 +174,7 @@ public final class MidiInputDevice {
         volatile boolean suspendFlag;
         private OnMidiInputEventListener midiEventListener = MidiInputDevice.this.midiEventListener;
 
-        public void setOnMidiInputEventListener(OnMidiInputEventListener listener) {
+        void setOnMidiInputEventListener(OnMidiInputEventListener listener) {
             midiEventListener = listener;
         }
 
