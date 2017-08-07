@@ -65,8 +65,9 @@ public final class UsbMidiDevice implements MidiDevice {
     @NonNull
 	@Override
 	public Info getDeviceInfo() {
-        if (cachedInfo != null)
+        if (cachedInfo != null) {
             return cachedInfo;
+        }
         UsbDevice usbDevice = null;
 
         for (final MidiInputDevice midiInputDevice : transmitters.keySet()) {
