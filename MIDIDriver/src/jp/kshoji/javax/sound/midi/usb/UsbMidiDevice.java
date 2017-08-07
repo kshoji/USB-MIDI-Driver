@@ -22,25 +22,25 @@ import jp.kshoji.javax.sound.midi.Transmitter;
 
 /**
  * {@link jp.kshoji.javax.sound.midi.MidiDevice} implementation
- * 
+ *
  * @author K.Shoji
  */
 public final class UsbMidiDevice implements MidiDevice {
 
-	private final Map<MidiOutputDevice, Receiver> receivers = new HashMap<MidiOutputDevice, Receiver>();
-	private final Map<MidiInputDevice , Transmitter> transmitters = new HashMap<MidiInputDevice, Transmitter>();
+    private final Map<MidiOutputDevice, Receiver> receivers = new HashMap<MidiOutputDevice, Receiver>();
+    private final Map<MidiInputDevice, Transmitter> transmitters = new HashMap<MidiInputDevice, Transmitter>();
 
-	private boolean isOpened;
+    private boolean isOpened;
 
     private Info cachedInfo = null;
 
     /**
      * Constructor
      *
-     * @param midiInputDevice the MidiInputDevice
+     * @param midiInputDevice  the MidiInputDevice
      * @param midiOutputDevice the MidiOutputDevice
      */
-	public UsbMidiDevice(@Nullable final MidiInputDevice midiInputDevice, @Nullable final MidiOutputDevice midiOutputDevice) {
+    public UsbMidiDevice(@Nullable final MidiInputDevice midiInputDevice, @Nullable final MidiOutputDevice midiOutputDevice) {
         if (midiInputDevice == null && midiOutputDevice == null) {
             throw new NullPointerException("Both of MidiInputDevice and MidiOutputDevice are null.");
         }
@@ -53,7 +53,7 @@ public final class UsbMidiDevice implements MidiDevice {
             transmitters.put(midiInputDevice, new UsbMidiTransmitter(this, midiInputDevice));
         }
 
-		isOpened = false;
+        isOpened = false;
 
         try {
             open();
@@ -63,10 +63,11 @@ public final class UsbMidiDevice implements MidiDevice {
     }
 
     @NonNull
-	@Override
-	public Info getDeviceInfo() {
-        if (cachedInfo != null)
+    @Override
+    public Info getDeviceInfo() {
+        if (cachedInfo != null) {
             return cachedInfo;
+        }
         UsbDevice usbDevice = null;
 
         for (final MidiInputDevice midiInputDevice : transmitters.keySet()) {
@@ -86,112 +87,112 @@ public final class UsbMidiDevice implements MidiDevice {
         }
 
         return cachedInfo = new Info(usbDevice.getDeviceName(), //
-				String.format("vendorId: %x, productId: %x", usbDevice.getVendorId(), usbDevice.getProductId()), //
-				"deviceId:" + usbDevice.getDeviceId(), //
-				usbDevice.getDeviceName());
-	}
+                String.format("vendorId: %x, productId: %x", usbDevice.getVendorId(), usbDevice.getProductId()), //
+                "deviceId:" + usbDevice.getDeviceId(), //
+                usbDevice.getDeviceName());
+    }
 
-	@Override
-	public void open() throws MidiUnavailableException {
-		if (isOpened) {
-			return;
-		}
-		
-		for (final Receiver receiver : receivers.values()) {
-			if (receiver instanceof UsbMidiReceiver) {
-				final UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
-				// claimInterface will be called
-				usbMidiReceiver.open();
-			}
-		}
-		for (final Transmitter transmitter : transmitters.values()) {
-			if (transmitter instanceof UsbMidiTransmitter) {
-				final UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
-				// claimInterface will be called
-				usbMidiTransmitter.open();
-			}
-		}
-		isOpened = true;
-	}
+    @Override
+    public void open() throws MidiUnavailableException {
+        if (isOpened) {
+            return;
+        }
 
-	@Override
-	public void close() {
-		if (!isOpened) {
-			return;
-		}
+        for (final Receiver receiver : receivers.values()) {
+            if (receiver instanceof UsbMidiReceiver) {
+                final UsbMidiReceiver usbMidiReceiver = (UsbMidiReceiver) receiver;
+                // claimInterface will be called
+                usbMidiReceiver.open();
+            }
+        }
+        for (final Transmitter transmitter : transmitters.values()) {
+            if (transmitter instanceof UsbMidiTransmitter) {
+                final UsbMidiTransmitter usbMidiTransmitter = (UsbMidiTransmitter) transmitter;
+                // claimInterface will be called
+                usbMidiTransmitter.open();
+            }
+        }
+        isOpened = true;
+    }
 
-		for (final Transmitter transmitter : transmitters.values()) {
-			transmitter.close();
-		}
-		transmitters.clear();
-		for (final Receiver receiver : receivers.values()) {
-			receiver.close();
-		}
-		receivers.clear();
+    @Override
+    public void close() {
+        if (!isOpened) {
+            return;
+        }
+
+        for (final Transmitter transmitter : transmitters.values()) {
+            transmitter.close();
+        }
+        transmitters.clear();
+        for (final Receiver receiver : receivers.values()) {
+            receiver.close();
+        }
+        receivers.clear();
 
         isOpened = false;
-	}
+    }
 
-	@Override
-	public boolean isOpen() {
-		return isOpened;
-	}
+    @Override
+    public boolean isOpen() {
+        return isOpened;
+    }
 
-	@Override
-	public long getMicrosecondPosition() {
-		// time-stamping is not supported
-		return -1;
-	}
+    @Override
+    public long getMicrosecondPosition() {
+        // time-stamping is not supported
+        return -1;
+    }
 
-	@Override
-	public int getMaxReceivers() {
+    @Override
+    public int getMaxReceivers() {
         return receivers.size();
-	}
+    }
 
-	@Override
-	public int getMaxTransmitters() {
+    @Override
+    public int getMaxTransmitters() {
         return transmitters.size();
-	}
+    }
 
     @NonNull
     @Override
-	public Receiver getReceiver() throws MidiUnavailableException {
+    public Receiver getReceiver() throws MidiUnavailableException {
         for (final Receiver receiver : receivers.values()) {
             // returns first one
             return receiver;
         }
 
         throw new MidiUnavailableException("Receiver not found");
-	}
-
-    @NonNull
-	@Override
-	public List<Receiver> getReceivers() {
-        final List<Receiver> result = new ArrayList<>();
-        result.addAll(receivers.values());
-
-		return Collections.unmodifiableList(result);
-	}
+    }
 
     @NonNull
     @Override
-	public Transmitter getTransmitter() throws MidiUnavailableException {
+    public List<Receiver> getReceivers() {
+        final List<Receiver> result = new ArrayList<>();
+        result.addAll(receivers.values());
+
+        return Collections.unmodifiableList(result);
+    }
+
+    @NonNull
+    @Override
+    public Transmitter getTransmitter() throws MidiUnavailableException {
         for (final Transmitter transmitter : transmitters.values()) {
             // returns first one
             return transmitter;
         }
 
         throw new MidiUnavailableException("Transmitter not found");
-	}
+    }
 
     @NonNull
-	@Override
-	public List<Transmitter> getTransmitters() {
+    @Override
+    public List<Transmitter> getTransmitters() {
         final List<Transmitter> result = new ArrayList<>();
         result.addAll(transmitters.values());
 
-		return Collections.unmodifiableList(result);
-	}
+        return Collections.unmodifiableList(result);
+    }
 
     /**
      * Add a MidiInputDevice to this device
@@ -208,7 +209,7 @@ public final class UsbMidiDevice implements MidiDevice {
 
     /**
      * Remove a MidiInputDevice from this device
-     * 
+     *
      * @param midiInputDevice the MidiInputDevice to remove
      */
     public void removeMidiInputDevice(@NonNull final MidiInputDevice midiInputDevice) {
