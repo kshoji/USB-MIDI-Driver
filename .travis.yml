@@ -1,5 +1,5 @@
 language: java
-jdk: oraclejdk7
+jdk: oraclejdk8
 before_install:
   # make executable gradlew
   - chmod +x gradlew
@@ -15,7 +15,7 @@ before_install:
   - echo ${PATH}
   # install Android libraries
   - echo yes | android update sdk --all --filter platform-tools --no-ui --force
-  - echo yes | android update sdk --all --filter build-tools-23.0.2 --no-ui --force
+  - echo yes | android update sdk --all --filter build-tools-25.0.3 --no-ui --force
   - echo yes | android update sdk --all --filter android-23 --no-ui --force
   - echo yes | android update sdk --all --filter extra-android-support --no-ui --force
   - echo yes | android update sdk --all --filter extra-android-m2repository --no-ui --force
@@ -26,5 +26,5 @@ before_install:
   - git clone https://github.com/simpligility/maven-android-sdk-deployer && cd ./maven-android-sdk-deployer && mvn install -P6.0 -Dandroid.sdk.path=$ANDROID_HOME && cd ..
 script:
   - ./gradlew check
-  - cat MIDIDriver/build/outputs/lint-results.xml
+  # cat MIDIDriver/build/outputs/lint-results.xml
   - cd ./MIDIDriver && mvn install -DskipTests=true -Dandroid.sdk.path=$ANDROID_HOME
