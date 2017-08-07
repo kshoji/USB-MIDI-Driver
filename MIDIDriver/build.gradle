@@ -10,13 +10,13 @@ repositories {
 
 dependencies {
     compile 'jp.kshoji:javax-sound-midi:0.0.4-SNAPSHOT:@aar'
-    compile 'com.android.support:support-annotations:23.1.1'
+    compile 'com.android.support:support-annotations:25.3.1'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
 
 android {
     compileSdkVersion 23
-    buildToolsVersion '25.0.0'
+    buildToolsVersion '25.0.3'
 
     defaultConfig {
         minSdkVersion 12

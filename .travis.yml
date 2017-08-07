@@ -1,5 +1,5 @@
 language: java
-jdk: oraclejdk7
+jdk: oraclejdk8
 before_install:
   # make executable gradlew
   - chmod +x gradlew
@@ -15,7 +15,7 @@ before_install:
   - echo ${PATH}
   # install Android libraries
   - echo yes | android update sdk --all --filter platform-tools --no-ui --force
-  - echo yes | android update sdk --all --filter build-tools-23.0.2 --no-ui --force
+  - echo yes | android update sdk --all --filter build-tools-25.0.3 --no-ui --force
   - echo yes | android update sdk --all --filter android-23 --no-ui --force
   - echo yes | android update sdk --all --filter extra-android-support --no-ui --force
   - echo yes | android update sdk --all --filter extra-android-m2repository --no-ui --force
