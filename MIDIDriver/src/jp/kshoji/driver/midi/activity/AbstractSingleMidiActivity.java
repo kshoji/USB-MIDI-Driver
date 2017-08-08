@@ -19,16 +19,16 @@ import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
  * base Activity for using USB MIDI interface.
  * In this implement, the only one device (connected at first) will be detected.
  * launchMode must be "singleTask" or "singleInstance".
- * 
+ *
  * @author K.Shoji
  */
 public abstract class AbstractSingleMidiActivity extends Activity implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
-	/**
-	 * Implementation for single device connections.
-	 * 
-	 * @author K.Shoji
-	 */
-	final class OnMidiDeviceAttachedListenerImpl implements OnMidiDeviceAttachedListener {
+    /**
+     * Implementation for single device connections.
+     *
+     * @author K.Shoji
+     */
+    final class OnMidiDeviceAttachedListenerImpl implements OnMidiDeviceAttachedListener {
 
         @Override
         public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
@@ -68,13 +68,13 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
             });
         }
     }
-	
-	/**
-	 * Implementation for single device connections.
-	 * 
-	 * @author K.Shoji
-	 */
-	final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
+
+    /**
+     * Implementation for single device connections.
+     *
+     * @author K.Shoji
+     */
+    final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 
         @Override
         public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
@@ -111,78 +111,78 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
             });
         }
     }
-	
-	MidiInputDevice midiInputDevice = null;
-	MidiOutputDevice midiOutputDevice = null;
-	OnMidiDeviceAttachedListener deviceAttachedListener = null;
-	OnMidiDeviceDetachedListener deviceDetachedListener = null;
-	private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
-	@Override
-	protected void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
-		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
-		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl(); 
-		
-		deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		
-		if (deviceConnectionWatcher != null) {
-			deviceConnectionWatcher.stop();
-		}
-		deviceConnectionWatcher = null;
-		
+    MidiInputDevice midiInputDevice = null;
+    MidiOutputDevice midiOutputDevice = null;
+    OnMidiDeviceAttachedListener deviceAttachedListener = null;
+    OnMidiDeviceDetachedListener deviceDetachedListener = null;
+    private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
+
+    @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
+        deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
+        deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
+
+        deviceConnectionWatcher = new MidiDeviceConnectionWatcher(getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.stop();
+        }
+        deviceConnectionWatcher = null;
+
         midiInputDevice = null;
-		midiOutputDevice = null;
-	}
+        midiOutputDevice = null;
+    }
 
 
-	/**
-	 * Suspends receiving/transmitting MIDI messages.
-	 * All events will be discarded until the devices being resumed.
-	 */
-	protected final void suspendMidiDevices() {
-		if (midiInputDevice != null) {
-			midiInputDevice.suspend();
-		}
-		
-		if (midiOutputDevice != null) {
-			midiOutputDevice.suspend();
-		}
-	}
-	
-	/**
-	 * Resumes from {@link #suspendMidiDevices()}
-	 */
-	protected final void resumeMidiDevices() {
-		if (midiInputDevice != null) {
-			midiInputDevice.resume();
-		}
-		
-		if (midiOutputDevice != null) {
-			midiOutputDevice.resume();
-		}
-	}
+    /**
+     * Suspends receiving/transmitting MIDI messages.
+     * All events will be discarded until the devices being resumed.
+     */
+    protected final void suspendMidiDevices() {
+        if (midiInputDevice != null) {
+            midiInputDevice.suspend();
+        }
 
-	/**
-	 * Get MIDI output device, if available.
-	 * 
-	 * @return MidiOutputDevice, null if not available
-	 */
+        if (midiOutputDevice != null) {
+            midiOutputDevice.suspend();
+        }
+    }
+
+    /**
+     * Resumes from {@link #suspendMidiDevices()}
+     */
+    protected final void resumeMidiDevices() {
+        if (midiInputDevice != null) {
+            midiInputDevice.resume();
+        }
+
+        if (midiOutputDevice != null) {
+            midiOutputDevice.resume();
+        }
+    }
+
+    /**
+     * Get MIDI output device, if available.
+     *
+     * @return MidiOutputDevice, null if not available
+     */
     @Nullable
     public final MidiOutputDevice getMidiOutputDevice() {
-		if (deviceConnectionWatcher != null) {
-			deviceConnectionWatcher.checkConnectedDevicesImmediately();
-		}
-		
-		return midiOutputDevice;
-	}
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.checkConnectedDevicesImmediately();
+        }
+
+        return midiOutputDevice;
+    }
 
     @Override
     public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int valueMSB, int valueLSB) {
@@ -194,13 +194,18 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
         // do nothing in this implementation
     }
 
-	@Override
-	public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
-		// do nothing in this implementation
-	}
-	
-	@Override
-	public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
-		// do nothing in this implementation
-	}
+    @Override
+    public void onMidiRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+        // do nothing in this implementation
+    }
+
+    @Override
+    public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
+        // do nothing in this implementation
+    }
+
+    @Override
+    public void onMidiMessage(@NonNull MidiInputDevice sender, int cable, int status, int data1, int data2) {
+        // do nothing in this implementation
+    }
 }

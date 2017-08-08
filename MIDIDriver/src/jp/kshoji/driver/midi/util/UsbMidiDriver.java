@@ -278,4 +278,9 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
     public void onMidiNRPNReceived(@NonNull MidiInputDevice sender, int cable, int channel, int function, int value) {
         // do nothing in this implementation
     }
+
+    @Override
+    public void onMidiMessage(@NonNull MidiInputDevice sender, int cable, int status, int data1, int data2) {
+        // do nothing in this implementation
+    }
 }

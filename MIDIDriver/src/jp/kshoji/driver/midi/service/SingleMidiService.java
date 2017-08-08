@@ -371,5 +371,12 @@ public final class SingleMidiService extends Service {
                 midiInputEventListener.onMidiNRPNReceived(sender, cable, channel, function, value);
             }
         }
+
+        @Override
+        public void onMidiMessage(@NonNull MidiInputDevice sender, int cable, int status, int data1, int data2) {
+            if (midiInputEventListener != null) {
+                midiInputEventListener.onMidiMessage(sender, cable, status, data1, data2);
+            }
+        }
     };
 }
