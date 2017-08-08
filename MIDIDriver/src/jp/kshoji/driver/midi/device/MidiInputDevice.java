@@ -292,11 +292,13 @@ public final class MidiInputDevice {
                         case 0:
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiMiscellaneousFunctionCodes(sender, cable, byte1, byte2, byte3);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 1:
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiCableEvents(sender, cable, byte1, byte2, byte3);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 2:
@@ -313,6 +315,7 @@ public final class MidiInputDevice {
 
                                 byte[] bytes = new byte[]{(byte) byte1, (byte) byte2};
                                 midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, 0);
                             }
                             break;
                         case 3:
@@ -326,6 +329,7 @@ public final class MidiInputDevice {
 
                                 byte[] bytes = new byte[]{(byte) byte1, (byte) byte2, (byte) byte3};
                                 midiEventListener.onMidiSystemCommonMessage(sender, cable, bytes);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 4:
@@ -399,6 +403,7 @@ public final class MidiInputDevice {
                         case 8:
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiNoteOff(sender, cable, byte1 & 0xf, byte2, byte3);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 9:
@@ -408,18 +413,21 @@ public final class MidiInputDevice {
                                 } else {
                                     midiEventListener.onMidiNoteOn(sender, cable, byte1 & 0xf, byte2, byte3);
                                 }
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 10:
                             // poly key press
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiPolyphonicAftertouch(sender, cable, byte1 & 0xf, byte2, byte3);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 11:
                             // control change
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiControlChange(sender, cable, byte1 & 0xf, byte2, byte3);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
 
                             // process RPN/NRPN messages
@@ -508,18 +516,21 @@ public final class MidiInputDevice {
                             // program change
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiProgramChange(sender, cable, byte1 & 0xf, byte2);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 13:
                             // channel pressure
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiChannelAftertouch(sender, cable, byte1 & 0xf, byte2);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 14:
                             // pitch bend
                             if (midiEventListener != null) {
                                 midiEventListener.onMidiPitchWheel(sender, cable, byte1 & 0xf, byte2 | (byte3 << 7));
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         case 15:
@@ -550,6 +561,7 @@ public final class MidiInputDevice {
                                 }
 
                                 midiEventListener.onMidiSingleByte(sender, cable, byte1);
+                                midiEventListener.onMidiMessage(sender, cable, byte1, byte2, byte3);
                             }
                             break;
                         default:
