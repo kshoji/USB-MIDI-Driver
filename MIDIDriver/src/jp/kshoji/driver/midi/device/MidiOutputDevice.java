@@ -208,7 +208,7 @@ public final class MidiOutputDevice {
 
                     synchronized (usbDeviceConnection) {
                         // usb can't send data larger than maxPacketSize. split the data.
-                        for (bufferPosition = 0; bufferPosition < dequedDataBufferLength; bufferPosition += maxPacketSize) {
+                        for (bufferPosition = 0; bufferPosition < dequedDataBufferLength; bufferPosition += bytesWritten) {
                             endpointBufferLength = dequedDataBufferLength - bufferPosition;
                             if (endpointBufferLength > maxPacketSize) {
                                 endpointBufferLength = maxPacketSize;
