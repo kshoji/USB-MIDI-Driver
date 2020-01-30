@@ -241,7 +241,13 @@ public final class MidiInputDevice {
 
             // Don't allocate instances in the loop, as much as possible.
             while (!stopFlag) {
-                length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 10);
+
+                // Certain timeout values for this bulkTransfer method can cause different issues:
+                // timeout = 0 (infinite): causes freezes with React. See https://github.com/flowkey/NativePlayer/issues/419
+                // timeout = 10 (ms): causes some MIDI events to be dropped, probably because 10ms is sometimes not enough time to
+                //                    receive many MIDI events at once.
+                // timeout = 1000 (ms): apparently doesn't cause either of the two issues above
+                length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 1000);
 
                 synchronized (suspendSignal) {
                     if (suspendFlag) {
