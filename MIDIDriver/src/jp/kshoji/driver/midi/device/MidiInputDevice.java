@@ -53,7 +53,7 @@ public final class MidiInputDevice {
 
         usbDeviceConnection.claimInterface(usbInterface, true);
         waiterThread.setPriority(8);
-        waiterThread.setName("MidiInputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
+        waiterThread.setName("MidiInputDevice[" + usbDevice.getDeviceName() + "].MidiInputWaiterThread");
         waiterThread.start();
     }
 
@@ -70,21 +70,11 @@ public final class MidiInputDevice {
     /**
      * stops the watching thread
      */
-    void stop() {
+    void stop(Runnable onStopped) {
         midiEventListener = null;
         usbDeviceConnection.releaseInterface(usbInterface);
 
-        waiterThread.stopFlag = true;
-        resume();
-
-        // blocks while the thread will stop
-        while (waiterThread.isAlive()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-        }
+        waiterThread.stopThread(onStopped);
     }
 
     /**
@@ -169,7 +159,8 @@ public final class MidiInputDevice {
      * @author K.Shoji
      */
     final class WaiterThread extends Thread {
-        volatile boolean stopFlag;
+        private volatile boolean stopFlag;
+        private Runnable onStopped = null;
         final Object suspendSignal = new Object();
         volatile boolean suspendFlag;
         private OnMidiInputEventListener midiEventListener = MidiInputDevice.this.midiEventListener;
@@ -186,10 +177,14 @@ public final class MidiInputDevice {
             suspendFlag = false;
         }
 
+        void stopThread(Runnable onStopped) {
+            this.onStopped = onStopped;
+            stopFlag = true;
+            MidiInputDevice.this.resume();
+        }
+
         @Override
         public void run() {
-            final UsbDeviceConnection deviceConnection = usbDeviceConnection;
-            final UsbEndpoint usbEndpoint = inputEndpoint;
             final int maxPacketSize = inputEndpoint.getMaxPacketSize();
             final MidiInputDevice sender = MidiInputDevice.this;
 
@@ -241,7 +236,7 @@ public final class MidiInputDevice {
 
             // Don't allocate instances in the loop, as much as possible.
             while (!stopFlag) {
-                length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 10);
+                length = usbDeviceConnection.bulkTransfer(inputEndpoint, bulkReadBuffer, maxPacketSize, 10);
 
                 synchronized (suspendSignal) {
                     if (suspendFlag) {
@@ -557,6 +552,9 @@ public final class MidiInputDevice {
                             break;
                     }
                 }
+            }
+            if (onStopped != null) {
+                onStopped.run();
             }
         }
     }

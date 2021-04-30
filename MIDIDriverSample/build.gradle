@@ -9,11 +9,11 @@ repositories {
 }
 
 dependencies {
-    compile project(':MIDIDriver')
+    implementation project(':MIDIDriver')
 }
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 30
     buildToolsVersion '25.0.3'
 
     defaultConfig {

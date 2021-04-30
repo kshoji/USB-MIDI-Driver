@@ -9,14 +9,13 @@ repositories {
 }
 
 dependencies {
-    compile 'jp.kshoji:javax-sound-midi:0.0.4-SNAPSHOT:@aar'
-    compile 'com.android.support:support-annotations:25.3.1'
-    compile fileTree(dir: 'libs', include: '*.jar')
+    api 'jp.kshoji:javax-sound-midi:0.0.4-SNAPSHOT:@aar'
+    api 'com.android.support:support-annotations:28.0.0'
+    api fileTree(dir: 'libs', include: '*.jar')
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion '25.0.3'
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 12
@@ -52,7 +51,7 @@ group = 'jp.kshoji'
 uploadArchives {
     repositories.mavenDeployer {
         repository url: 'file://' + file('snapshots').absolutePath
-        pom.version = '0.1.4'
+        pom.version = '0.1.5-SNAPSHOT'
         pom.artifactId = 'midi-driver'
     }
 }

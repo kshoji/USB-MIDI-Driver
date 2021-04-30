@@ -2,9 +2,11 @@ package jp.kshoji.driver.midi.sample;
 
 import android.graphics.PorterDuff.Mode;
 import android.hardware.usb.UsbDevice;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
@@ -24,11 +26,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import jp.kshoji.driver.midi.activity.AbstractMultipleMidiActivity;
+import jp.kshoji.driver.midi.device.Midi2InputDevice;
+import jp.kshoji.driver.midi.device.Midi2OutputDevice;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.sample.util.SoundMaker;
@@ -76,7 +81,7 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 	Timer timer;
 	TimerTask timerTask;
 	SoundMaker soundMaker;
-	final Set<Tone> tones = new HashSet<Tone>();
+	final Set<Tone> tones = new HashSet<>();
 	int currentProgram = 0;
 
 	/**
@@ -99,24 +104,44 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 		return null;
 	}
 
+	/**
+	 * Choose device from spinner
+	 * 
+	 * @return the MidiOutputDevice from spinner
+	 */
+	@Nullable Midi2OutputDevice getMidi2OutputDeviceFromSpinner() {
+		if (deviceSpinner != null && deviceSpinner.getSelectedItemPosition() >= 0 && connectedDevicesAdapter != null && !connectedDevicesAdapter.isEmpty()) {
+			UsbDevice device = connectedDevicesAdapter.getItem(deviceSpinner.getSelectedItemPosition());
+			if (device != null) {
+				Set<Midi2OutputDevice> midiOutputDevices = getMidi2OutputDevices();
+				
+				if (midiOutputDevices.size() > 0) {
+					// returns the first one.
+					return (Midi2OutputDevice) midiOutputDevices.toArray()[0];
+				}
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		
-		ListView midiInputEventListView = (ListView) findViewById(R.id.midiInputEventListView);
-		midiInputEventAdapter = new ArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
+		ListView midiInputEventListView = findViewById(R.id.midiInputEventListView);
+		midiInputEventAdapter = new ArrayAdapter<>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
 		midiInputEventListView.setAdapter(midiInputEventAdapter);
 
-		ListView midiOutputEventListView = (ListView) findViewById(R.id.midiOutputEventListView);
-		midiOutputEventAdapter = new ArrayAdapter<String>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
+		ListView midiOutputEventListView = findViewById(R.id.midiOutputEventListView);
+		midiOutputEventAdapter = new ArrayAdapter<>(this, R.layout.midi_event, R.id.midiEventDescriptionTextView);
 		midiOutputEventListView.setAdapter(midiOutputEventAdapter);
 
-		thruToggleButton = (ToggleButton) findViewById(R.id.toggleButtonThru);
-		cableIdSpinner = (Spinner) findViewById(R.id.cableIdSpinner);
-		deviceSpinner = (Spinner) findViewById(R.id.deviceNameSpinner);
+		thruToggleButton = findViewById(R.id.toggleButtonThru);
+		cableIdSpinner = findViewById(R.id.cableIdSpinner);
+		deviceSpinner = findViewById(R.id.deviceNameSpinner);
 		
-		connectedDevicesAdapter = new ArrayAdapter<UsbDevice>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, android.R.id.text1, new ArrayList<UsbDevice>());
+		connectedDevicesAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, android.R.id.text1, new ArrayList<UsbDevice>());
 		deviceSpinner.setAdapter(connectedDevicesAdapter);
 
 		OnTouchListener onToneButtonTouchListener = new OnTouchListener() {
@@ -124,19 +149,32 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				MidiOutputDevice midiOutputDevice = getMidiOutputDeviceFromSpinner();
-				if (midiOutputDevice == null) {
+				Midi2OutputDevice midi2OutputDevice = getMidi2OutputDeviceFromSpinner();
+				if (midiOutputDevice == null && midi2OutputDevice == null) {
 					return false;
 				}
 
 				int note = 60 + Integer.parseInt((String) v.getTag());
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
-					midiOutputDevice.sendMidiNoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
-					midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "NoteOn to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127"));
+					if (midiOutputDevice != null) {
+						midiOutputDevice.sendMidiNoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
+						midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "NoteOn to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127"));
+					}
+					if (midi2OutputDevice != null) {
+						midi2OutputDevice.sendMidi2NoteOn(cableIdSpinner.getSelectedItemPosition(), 0, note, 65535);
+						midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "NoteOn to: " + midi2OutputDevice.getUsbDevice().getDeviceName() + ", group: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 65535"));
+					}
 					break;
 				case MotionEvent.ACTION_UP:
-					midiOutputDevice.sendMidiNoteOff(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
-					midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "NoteOff to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127"));
+					if (midiOutputDevice != null) {
+						midiOutputDevice.sendMidiNoteOff(cableIdSpinner.getSelectedItemPosition(), 0, note, 127);
+						midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "NoteOff to: " + midiOutputDevice.getUsbDevice().getDeviceName() + ", cableId: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 127"));
+					}
+					if (midi2OutputDevice != null) {
+						midi2OutputDevice.sendMidi2NoteOff(cableIdSpinner.getSelectedItemPosition(), 0, note, 65535, 0, 0);
+						midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "NoteOff to: " + midi2OutputDevice.getUsbDevice().getDeviceName() + ", group: " + cableIdSpinner.getSelectedItemPosition() + ", note: " + note + ", velocity: 65535"));
+					}
 					break;
 				default:
 					// do nothing.
@@ -239,8 +277,19 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 	 * @return AudioTrack
 	 */
 	private static @NonNull AudioTrack prepareAudioTrack(int samplingRate) {
-		AudioTrack result = new AudioTrack(AudioManager.STREAM_MUSIC, samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT, AudioTrack.getMinBufferSize(samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT), AudioTrack.MODE_STREAM);
-		result.setStereoVolume(1f, 1f);
+		AudioTrack result;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			result = new AudioTrack(
+					new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setLegacyStreamType(AudioManager.STREAM_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build(),
+					new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setSampleRate(samplingRate).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build(),
+					AudioTrack.getMinBufferSize(samplingRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT),
+					AudioTrack.MODE_STREAM,
+					AudioManager.AUDIO_SESSION_ID_GENERATE);
+			result.setVolume(1f);
+		} else {
+			result = new AudioTrack(AudioManager.STREAM_MUSIC, samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT, AudioTrack.getMinBufferSize(samplingRate, AudioFormat.CHANNEL_CONFIGURATION_MONO, AudioFormat.ENCODING_PCM_16BIT), AudioTrack.MODE_STREAM);
+			result.setStereoVolume(1f, 1f);
+		}
 		result.play();
 		return result;
 	}
@@ -263,10 +312,25 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
             connectedDevicesAdapter.add(midiOutputDevice.getUsbDevice());
             connectedDevicesAdapter.notifyDataSetChanged();
         }
-        Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+        Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI 1.0 Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
     }
 
-    @Override
+	@Override
+	public void onMidi2InputDeviceAttached(@NonNull Midi2InputDevice midiInputDevice) {
+
+	}
+
+	@Override
+	public void onMidi2OutputDeviceAttached(@NonNull final Midi2OutputDevice midiOutputDevice) {
+		if (connectedDevicesAdapter != null) {
+			connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
+			connectedDevicesAdapter.add(midiOutputDevice.getUsbDevice());
+			connectedDevicesAdapter.notifyDataSetChanged();
+		}
+		Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI 2.0 Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been attached.", Toast.LENGTH_LONG).show();
+	}
+
+	@Override
     public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
         // deprecated method.
         // do nothing
@@ -283,8 +347,22 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
             connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
             connectedDevicesAdapter.notifyDataSetChanged();
         }
-        Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+        Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI 1.0 Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
     }
+
+	@Override
+	public void onMidi2InputDeviceDetached(@NonNull Midi2InputDevice midiInputDevice) {
+
+	}
+
+	@Override
+	public void onMidi2OutputDeviceDetached(@NonNull Midi2OutputDevice midiOutputDevice) {
+		if (connectedDevicesAdapter != null) {
+			connectedDevicesAdapter.remove(midiOutputDevice.getUsbDevice());
+			connectedDevicesAdapter.notifyDataSetChanged();
+		}
+		Toast.makeText(MIDIDriverMultipleSampleActivity.this, "USB MIDI 2.0 Device " + midiOutputDevice.getUsbDevice().getDeviceName() + " has been detached.", Toast.LENGTH_LONG).show();
+	}
 
 	@Override
 	public void onMidiNoteOff(@NonNull final MidiInputDevice sender, int cable, int channel, int note, int velocity) {
@@ -486,4 +564,435 @@ public class MIDIDriverMultipleSampleActivity extends AbstractMultipleMidiActivi
 			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, "CableEvents from: " + sender.getUsbDevice().getDeviceName() + ", cable: " + cable + ", byte1: " + byte1 + ", byte2: " + byte2 + ", byte3: " + byte3));
 		}
 	}
+
+	// region MIDI 2.0
+	@Override
+	public void onMidiNoop(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Noop group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiNoop(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiJitterReductionClock(Midi2InputDevice sender, int group, int senderClockTime) {
+		String message = String.format(Locale.ROOT, "Jitter Reduction Clock group: %d, senderClockTime: %d", group, senderClockTime);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiJitterReductionClock(group, senderClockTime);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiJitterReductionTimestamp(Midi2InputDevice sender, int group, int senderClockTimestamp) {
+		String message = String.format(Locale.ROOT, "Jitter Reduction Timestamp group: %d, senderClockTimestamp: %d", group, senderClockTimestamp);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiJitterReductionTimestamp(group, senderClockTimestamp);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiTimeCodeQuarterFrame(Midi2InputDevice sender, int group, int timing) {
+		String message = String.format(Locale.ROOT, "Time Code Quarter Frame group: %d, timing: %d", group, timing);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiTimeCodeQuarterFrame(group, timing);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiSongSelect(Midi2InputDevice sender, int group, int song) {
+		String message = String.format(Locale.ROOT, "Song Select group: %d, song: %d", group, song);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiSongSelect(group, song);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiSongPositionPointer(Midi2InputDevice sender, int group, int position) {
+		String message = String.format(Locale.ROOT, "Song Position Pointer group: %d, position: %d", group, position);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiSongPositionPointer(group, position);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiTuneRequest(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Tune Request group: %d,", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiTuneRequest(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiTimingClock(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Timing Clock group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiTimingClock(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiStart(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Start group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiStart(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiContinue(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Continue group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiContinue(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiStop(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Stop group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiStop(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiActiveSensing(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Active Sensing group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiActiveSensing(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiReset(Midi2InputDevice sender, int group) {
+		String message = String.format(Locale.ROOT, "Reset group: %d", group);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiReset(group);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1NoteOff(Midi2InputDevice sender, int group, int channel, int note, int velocity) {
+		String message = String.format(Locale.ROOT, "Note Off group: %d, channel: %d, note: %d, velocity: %d", group, channel, note, velocity);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1NoteOff(group, channel, note, velocity);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1NoteOn(Midi2InputDevice sender, int group, int channel, int note, int velocity) {
+		String message = String.format(Locale.ROOT, "Note On group: %d, channel: %d, note: %d, velocity: %d", group, channel, note, velocity);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1NoteOn(group, channel, note, velocity);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1PolyphonicAftertouch(Midi2InputDevice sender, int group, int channel, int note, int pressure) {
+		String message = String.format(Locale.ROOT, "Polyphonic Aftertouch group: %d, channel: %d, note: %d, pressure: %d", group, channel, note, pressure);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1PolyphonicAftertouch(group, channel, note, pressure);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1ControlChange(Midi2InputDevice sender, int group, int channel, int function, int value) {
+		String message = String.format(Locale.ROOT, "Control Change group: %d, channel: %d, function: %d, value: %d", group, channel, function, value);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1ControlChange(group, channel, function, value);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1ProgramChange(Midi2InputDevice sender, int group, int channel, int program) {
+		String message = String.format(Locale.ROOT, "Program Change group: %d, channel: %d, program: %d", group, channel, program);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1ProgramChange(group, channel, program);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1ChannelAftertouch(Midi2InputDevice sender, int group, int channel, int pressure) {
+		String message = String.format(Locale.ROOT, "Channel Aftertouch group: %d, channel: %d, pressure: %d", group, channel, pressure);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1ChannelAftertouch(group, channel, pressure);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1PitchWheel(Midi2InputDevice sender, int group, int channel, int amount) {
+		String message = String.format(Locale.ROOT, "Pitch Wheel group: %d, channel: %d, amount: %d", group, channel, amount);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1PitchWheel(group, channel, amount);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi1SystemExclusive(Midi2InputDevice sender, int group, @NonNull byte[] systemExclusive) {
+		String message = String.format(Locale.ROOT, "System Exclusive group: %d, data: %s", group, Arrays.toString(systemExclusive));
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi1SystemExclusive(group, systemExclusive);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2NoteOff(Midi2InputDevice sender, int group, int channel, int note, int velocity, int attributeType, int attributeData) {
+		String message = String.format(Locale.ROOT, "Note Off group: %d, channel: %d, note: %d, velocity: %d, attributeType: %d, attributeData: %d", group, channel, note, velocity, attributeType, attributeData);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2NoteOff(group, channel, note, velocity, attributeType, attributeData);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2NoteOn(Midi2InputDevice sender, int group, int channel, int note, int velocity, int attributeType, int attributeData) {
+		String message = String.format(Locale.ROOT, "Note On group: %d, channel: %d, note: %d, velocity: %d, attributeType: %d, attributeData: %d", group, channel, note, velocity, attributeType, attributeData);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2NoteOn(group, channel, note, velocity, attributeType, attributeData);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2PolyphonicAftertouch(Midi2InputDevice sender, int group, int channel, int note, long pressure) {
+		String message = String.format(Locale.ROOT, "Polyphonic Aftertouch group: %d, channel: %d, note: %d, pressure: %d", group, channel, note, pressure);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2PolyphonicAftertouch(group, channel, note, pressure);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2ControlChange(Midi2InputDevice sender, int group, int channel, int index, long value) {
+		String message = String.format(Locale.ROOT, "Control Change group: %d, channel: %d, index: %d, value: %d", group, channel, index, value);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2ControlChange(group, channel, index, value);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2ProgramChange(Midi2InputDevice sender, int group, int channel, int optionFlags, int program, int bank) {
+		String message = String.format(Locale.ROOT, "Noop group: %d, channel: %d, optionFlags: %d, program: %d, bank: %d", group, channel, optionFlags, program, bank);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2ProgramChange(group, channel, optionFlags, program, bank);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2ChannelAftertouch(Midi2InputDevice sender, int group, int channel, long pressure) {
+		String message = String.format(Locale.ROOT, "Channel Aftertouch group: %d, channel: %d, pressure: %d", group, channel, pressure);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2ChannelAftertouch(group, channel, pressure);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2PitchWheel(Midi2InputDevice sender, int group, int channel, long amount) {
+		String message = String.format(Locale.ROOT, "Pitch Wheel group: %d, channel: %d, amount: %d", group, channel, amount);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2PitchWheel(group, channel, amount);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiPerNotePitchWheel(Midi2InputDevice sender, int group, int channel, int note, long amount) {
+		String message = String.format(Locale.ROOT, "Per Note Pitch Wheel group: %d, channel: %d, note: %d, amount: %d", group, channel, note, amount);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiPerNotePitchWheel(group, channel, note, amount);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiPerNoteManagement(Midi2InputDevice sender, int group, int channel, int note, int optionFlags) {
+		String message = String.format(Locale.ROOT, "Per Note Management group: %d, channel: %d, note: %d, optionFlags: %d", group, channel, note, optionFlags);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiPerNoteManagement(group, channel, note, optionFlags);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiRegisteredPerNoteController(Midi2InputDevice sender, int group, int channel, int note, int index, long data) {
+		String message = String.format(Locale.ROOT, "Registered Per Note Controller group: %d, channel: %d, note: %d, data: %d", group, channel, note, data);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiRegisteredPerNoteController(group, channel, note, index, data);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiAssignablePerNoteController(Midi2InputDevice sender, int group, int channel, int note, int index, long data) {
+		String message = String.format(Locale.ROOT, "Assignable Per Note Controller group: %d, channel: %d, note: %d, data: %d", group, channel, note, data);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiAssignablePerNoteController(group, channel, note, index, data);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiRegisteredController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+		String message = String.format(Locale.ROOT, "Registered Controller group: %d, channel: %d, bank: %d, index: %d, data: %d", group, channel, bank, index, data);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiRegisteredController(group, channel, bank, index, data);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiAssignableController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+		String message = String.format(Locale.ROOT, "Assignable Controller group: %d, channel: %d, bank: %d, index: %d, data: %d", group, channel, bank, index, data);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiAssignableController(group, channel, bank, index, data);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiRelativeRegisteredController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+		String message = String.format(Locale.ROOT, "Relative Registered Controller group: %d, channel: %d, bank: %d, index: %d, data: %d", group, channel, bank, index, data);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiRelativeRegisteredController(group, channel, bank, index, data);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiRelativeAssignableController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+		String message = String.format(Locale.ROOT, "Relative Assignable Controller group: %d, channel: %d, bank: %d, index: %d, data: %d", group, channel, bank, index, data);
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiRelativeAssignableController(group, channel, bank, index, data);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidi2SystemExclusive(Midi2InputDevice sender, int group, int streamId, @NonNull byte[] systemExclusive) {
+		String message = String.format(Locale.ROOT, "System Exclusive group: %d, streamId: %d, data: %s", group, streamId, Arrays.toString(systemExclusive));
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidi2SystemExclusive(group, streamId, systemExclusive);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiMixedDataSetHeader(Midi2InputDevice sender, int group, int mdsId, @NonNull byte[] headers) {
+		String message = String.format(Locale.ROOT, "Mixed Data Set Header group: %d, mdsId: %d, headers: %s", group, mdsId, Arrays.toString(headers));
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiMixedDataSetHeader(group, mdsId, headers);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+
+	@Override
+	public void onMidiMixedDataSetPayload(Midi2InputDevice sender, int group, int mdsId, @NonNull byte[] payloads) {
+		String message = String.format(Locale.ROOT, "Mixed Data Set Payload group: %d, mdsId: %d, payloads: %s", group, mdsId, Arrays.toString(payloads));
+		midiInputEventHandler.sendMessage(Message.obtain(midiInputEventHandler, 0, message));
+
+		if (thruToggleButton != null && thruToggleButton.isChecked() && getMidi2OutputDeviceFromSpinner() != null) {
+			getMidi2OutputDeviceFromSpinner().sendMidiMixedDataSetPayload(group, mdsId, payloads);
+			midiOutputEventHandler.sendMessage(Message.obtain(midiOutputEventHandler, 0, message));
+		}
+	}
+	// endregion
 }

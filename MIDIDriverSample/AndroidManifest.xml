@@ -4,8 +4,7 @@
     android:versionCode="9"
     android:versionName="1.8" >
 
-    <uses-feature android:name="android.hardware.usb.host" /> 
-    <uses-sdk android:minSdkVersion="12" />
+    <uses-feature android:name="android.hardware.usb.host" />
 
     <application
         android:icon="@drawable/ic_launcher"

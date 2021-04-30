@@ -9,9 +9,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import jp.kshoji.driver.midi.device.Midi2InputDevice;
+import jp.kshoji.driver.midi.device.Midi2OutputDevice;
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
+import jp.kshoji.driver.midi.listener.OnMidi2InputEventListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
@@ -21,8 +24,37 @@ import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
  *
  * @author K.Shoji
  */
-public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener {
+public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnMidiDeviceAttachedListener, OnMidiInputEventListener, OnMidi2InputEventListener {
     private boolean isOpen = false;
+
+    Set<Midi2InputDevice> midi2InputDevices = null;
+    Set<Midi2OutputDevice> midi2OutputDevices = null;
+
+    Set<UsbDevice> connectedUsbDevices = null;
+    Set<MidiInputDevice> midiInputDevices = null;
+    Set<MidiOutputDevice> midiOutputDevices = null;
+
+    /**
+     * Get MIDI 2.0 output device for specified UsbDevice, if available.
+     *
+     * @param usbDevice the UsbDevice
+     * @return {@link Set<Midi2OutputDevice>}
+     */
+    @NonNull
+    public final Set<Midi2OutputDevice> getMidi2OutputDevices(@NonNull UsbDevice usbDevice) {
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.checkConnectedDevicesImmediately();
+        }
+
+        Set<Midi2OutputDevice> result = new HashSet<>();
+        for (Midi2OutputDevice midi2OutputDevice : midi2OutputDevices) {
+            if (midi2OutputDevice.getUsbDevice().equals(usbDevice)) {
+                result.add(midi2OutputDevice);
+            }
+        }
+
+        return Collections.unmodifiableSet(result);
+    }
 
     /**
      * Implementation for multiple device connections.
@@ -55,44 +87,26 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
 
             UsbMidiDriver.this.onMidiOutputDeviceAttached(midiOutputDevice);
         }
-    }
-
-    /**
-     * Implementation for multiple device connections.
-     *
-     * @author K.Shoji
-     */
-    final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
 
         @Override
-        public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
-            connectedUsbDevices.remove(usbDevice);
-            UsbMidiDriver.this.onDeviceDetached(usbDevice);
-        }
-
-        @Override
-        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-            if (midiInputDevices != null) {
-                midiInputDevices.remove(midiInputDevice);
+        public void onMidi2InputDeviceAttached(@NonNull Midi2InputDevice midi2InputDevice) {
+            if (midi2InputDevices != null) {
+                midi2InputDevices.add(midi2InputDevice);
             }
-            midiInputDevice.setMidiEventListener(null);
+            midi2InputDevice.setMidiEventListener(UsbMidiDriver.this);
 
-            UsbMidiDriver.this.onMidiInputDeviceDetached(midiInputDevice);
+            UsbMidiDriver.this.onMidi2InputDeviceAttached(midi2InputDevice);
         }
 
         @Override
-        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-            if (midiOutputDevices != null) {
-                midiOutputDevices.remove(midiOutputDevice);
+        public void onMidi2OutputDeviceAttached(@NonNull Midi2OutputDevice midi2OutputDevice) {
+            if (midi2OutputDevices != null) {
+                midi2OutputDevices.add(midi2OutputDevice);
             }
 
-            UsbMidiDriver.this.onMidiOutputDeviceDetached(midiOutputDevice);
+            UsbMidiDriver.this.onMidi2OutputDeviceAttached(midi2OutputDevice);
         }
     }
-
-    Set<UsbDevice> connectedUsbDevices = null;
-    Set<MidiInputDevice> midiInputDevices = null;
-    Set<MidiOutputDevice> midiOutputDevices = null;
     OnMidiDeviceAttachedListener deviceAttachedListener = null;
     OnMidiDeviceDetachedListener deviceDetachedListener = null;
     MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
@@ -123,6 +137,8 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         connectedUsbDevices = new HashSet<>();
         midiInputDevices = new HashSet<>();
         midiOutputDevices = new HashSet<>();
+        midi2InputDevices = new HashSet<>();
+        midi2OutputDevices = new HashSet<>();
 
         UsbManager usbManager = (UsbManager) context.getApplicationContext().getSystemService(Context.USB_SERVICE);
         deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
@@ -144,23 +160,37 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         }
         isOpen = false;
 
-        deviceConnectionWatcher.stop();
-        deviceConnectionWatcher = null;
+        deviceConnectionWatcher.stop(new Runnable() {
+            @Override
+            public void run() {
+                deviceConnectionWatcher = null;
 
-        if (midiInputDevices != null) {
-            midiInputDevices.clear();
-        }
-        midiInputDevices = null;
+                if (midiInputDevices != null) {
+                    midiInputDevices.clear();
+                }
+                midiInputDevices = null;
 
-        if (midiOutputDevices != null) {
-            midiOutputDevices.clear();
-        }
-        midiOutputDevices = null;
+                if (midiOutputDevices != null) {
+                    midiOutputDevices.clear();
+                }
+                midiOutputDevices = null;
 
-        if (connectedUsbDevices != null) {
-            connectedUsbDevices.clear();
-        }
-        connectedUsbDevices = null;
+                if (midi2InputDevices != null) {
+                    midi2InputDevices.clear();
+                }
+                midi2InputDevices = null;
+
+                if (midi2OutputDevices != null) {
+                    midi2OutputDevices.clear();
+                }
+                midi2OutputDevices = null;
+
+                if (connectedUsbDevices != null) {
+                    connectedUsbDevices.clear();
+                }
+                connectedUsbDevices = null;
+            }
+        });
     }
 
     /**
@@ -243,6 +273,58 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         }
 
         return Collections.unmodifiableSet(result);
+    }
+
+    /**
+     * Implementation for multiple device connections.
+     *
+     * @author K.Shoji
+     */
+    final class OnMidiDeviceDetachedListenerImpl implements OnMidiDeviceDetachedListener {
+
+        @Override
+        public void onDeviceDetached(@NonNull UsbDevice usbDevice) {
+            connectedUsbDevices.remove(usbDevice);
+            UsbMidiDriver.this.onDeviceDetached(usbDevice);
+        }
+
+        @Override
+        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+            if (midiInputDevices != null) {
+                midiInputDevices.remove(midiInputDevice);
+            }
+            midiInputDevice.setMidiEventListener(null);
+
+            UsbMidiDriver.this.onMidiInputDeviceDetached(midiInputDevice);
+        }
+
+        @Override
+        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
+            if (midiOutputDevices != null) {
+                midiOutputDevices.remove(midiOutputDevice);
+            }
+
+            UsbMidiDriver.this.onMidiOutputDeviceDetached(midiOutputDevice);
+        }
+
+        @Override
+        public void onMidi2InputDeviceDetached(@NonNull Midi2InputDevice midiInputDevice) {
+            if (midi2InputDevices != null) {
+                midi2InputDevices.remove(midiInputDevice);
+            }
+            midiInputDevice.setMidiEventListener(null);
+
+            UsbMidiDriver.this.onMidi2InputDeviceDetached(midiInputDevice);
+        }
+
+        @Override
+        public void onMidi2OutputDeviceDetached(@NonNull Midi2OutputDevice midiOutputDevice) {
+            if (midi2OutputDevices != null) {
+                midi2OutputDevices.remove(midiOutputDevice);
+            }
+
+            UsbMidiDriver.this.onMidi2OutputDeviceDetached(midiOutputDevice);
+        }
     }
 
     /**

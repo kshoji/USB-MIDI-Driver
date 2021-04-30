@@ -7,6 +7,7 @@ import java.util.List;
 
 import jp.kshoji.javax.sound.midi.Instrument;
 import jp.kshoji.javax.sound.midi.MidiChannel;
+import jp.kshoji.javax.sound.midi.MidiDevice;
 import jp.kshoji.javax.sound.midi.MidiUnavailableException;
 import jp.kshoji.javax.sound.midi.Patch;
 import jp.kshoji.javax.sound.midi.Receiver;
@@ -22,7 +23,7 @@ import jp.kshoji.javax.sound.midi.impl.MidiChannelImpl;
  * @author K.Shoji
  */
 public class UsbMidiSynthesizer implements Synthesizer {
-    private final UsbMidiDevice usbMidiDevice;
+    private final MidiDevice usbMidiDevice;
     private MidiChannel[] channels;
     private VoiceStatus[] voiceStatuses;
 
@@ -31,7 +32,7 @@ public class UsbMidiSynthesizer implements Synthesizer {
      *
      * @param usbMidiDevice the device
      */
-    public UsbMidiSynthesizer(final UsbMidiDevice usbMidiDevice) {
+    public UsbMidiSynthesizer(final MidiDevice usbMidiDevice) {
         this.usbMidiDevice = usbMidiDevice;
 
         Receiver receiver = null;

@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import jp.kshoji.driver.midi.device.Midi2InputDevice;
+import jp.kshoji.driver.midi.device.Midi2OutputDevice;
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
@@ -49,6 +51,8 @@ public final class MultipleMidiService extends Service {
 
     private final Set<MidiInputDevice> midiInputDevices = new HashSet<>();
     private final Set<MidiOutputDevice> midiOutputDevices = new HashSet<>();
+    private final Set<Midi2InputDevice> midi2InputDevices = new HashSet<>();
+    private final Set<Midi2OutputDevice> midi2OutputDevices = new HashSet<>();
     private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
     private OnMidiDeviceAttachedListener midiDeviceAttachedListener = null;
@@ -76,22 +80,52 @@ public final class MultipleMidiService extends Service {
     public IBinder onBind(Intent intent) {
         return binder;
     }
+    private final OnMidiDeviceAttachedListener serviceMidiDeviceAttachedListener = new OnMidiDeviceAttachedListener() {
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (deviceConnectionWatcher != null) {
-            deviceConnectionWatcher.stop();
+        @Override
+        public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
+            Log.d(Constants.TAG, "USB MIDI Device " + usbDevice.getDeviceName() + " has been attached.");
+            if (midiDeviceAttachedListener != null) {
+                midiDeviceAttachedListener.onDeviceAttached(usbDevice);
+            }
         }
-        deviceConnectionWatcher = null;
 
-        midiInputDevices.clear();
+        @Override
+        public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+            midiInputDevices.add(midiInputDevice);
 
-        midiOutputDevices.clear();
+            if (midiDeviceAttachedListener != null) {
+                midiDeviceAttachedListener.onMidiInputDeviceAttached(midiInputDevice);
+            }
+        }
 
-        Log.d(Constants.TAG, "MIDI service stopped.");
-    }
+        @Override
+        public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
+            midiOutputDevices.add(midiOutputDevice);
+
+            if (midiDeviceAttachedListener != null) {
+                midiDeviceAttachedListener.onMidiOutputDeviceAttached(midiOutputDevice);
+            }
+        }
+
+        @Override
+        public void onMidi2InputDeviceAttached(@NonNull Midi2InputDevice midi2InputDevice) {
+            midi2InputDevices.add(midi2InputDevice);
+
+            if (midiDeviceAttachedListener != null) {
+                midiDeviceAttachedListener.onMidi2InputDeviceAttached(midi2InputDevice);
+            }
+        }
+
+        @Override
+        public void onMidi2OutputDeviceAttached(@NonNull Midi2OutputDevice midi2OutputDevice) {
+            midi2OutputDevices.add(midi2OutputDevice);
+
+            if (midiDeviceAttachedListener != null) {
+                midiDeviceAttachedListener.onMidi2OutputDeviceAttached(midi2OutputDevice);
+            }
+        }
+    };
 
     /**
      * Set {@link jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener} to listen MIDI devices have been connected
@@ -110,30 +144,81 @@ public final class MultipleMidiService extends Service {
     public void setOnMidiDeviceDetachedListener(@Nullable OnMidiDeviceDetachedListener midiDeviceDetachedListener) {
         this.midiDeviceDetachedListener = midiDeviceDetachedListener;
     }
-
-    /**
-     * Suspends event listening / sending
-     */
-    public void suspend() {
-        for (MidiInputDevice midiInputDevice : midiInputDevices) {
-            midiInputDevice.suspend();
+    private final OnMidiDeviceDetachedListener serviceMidiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
+        @Override
+        public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
+            Log.d(Constants.TAG, "USB MIDI Device " + detachedDevice.getDeviceName() + " has been detached.");
+            if (midiDeviceDetachedListener != null) {
+                midiDeviceDetachedListener.onDeviceDetached(detachedDevice);
+            }
         }
 
-        for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
-            midiOutputDevice.suspend();
-        }
-    }
+        @Override
+        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+            midiInputDevice.setMidiEventListener(null);
+            midiInputDevices.remove(midiInputDevice);
 
-    /**
-     * Resumes from {@link #suspend()}
-     */
-    public void resume() {
-        for (MidiInputDevice midiInputDevice : midiInputDevices) {
-            midiInputDevice.resume();
+            if (midiDeviceDetachedListener != null) {
+                midiDeviceDetachedListener.onMidiInputDeviceDetached(midiInputDevice);
+            }
         }
 
-        for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
-            midiOutputDevice.resume();
+        @Override
+        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
+            midiOutputDevices.remove(midiOutputDevice);
+
+            if (midiDeviceDetachedListener != null) {
+                midiDeviceDetachedListener.onMidiOutputDeviceDetached(midiOutputDevice);
+            }
+        }
+
+        @Override
+        public void onMidi2InputDeviceDetached(@NonNull Midi2InputDevice midiInputDevice) {
+            midiInputDevice.setMidiEventListener(null);
+            midi2InputDevices.remove(midiInputDevice);
+
+            if (midiDeviceDetachedListener != null) {
+                midiDeviceDetachedListener.onMidi2InputDeviceDetached(midiInputDevice);
+            }
+        }
+
+        @Override
+        public void onMidi2OutputDeviceDetached(@NonNull Midi2OutputDevice midiOutputDevice) {
+            midi2OutputDevices.remove(midiOutputDevice);
+
+            if (midiDeviceDetachedListener != null) {
+                midiDeviceDetachedListener.onMidi2OutputDeviceDetached(midiOutputDevice);
+            }
+        }
+    };
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.stop(new Runnable() {
+                @Override
+                public void run() {
+                    deviceConnectionWatcher = null;
+
+                    midiInputDevices.clear();
+                    midi2InputDevices.clear();
+
+                    midiOutputDevices.clear();
+                    midi2OutputDevices.clear();
+
+                    Log.d(Constants.TAG, "MIDI service stopped.");
+                }
+            });
+        } else {
+            midiInputDevices.clear();
+            midi2InputDevices.clear();
+
+            midiOutputDevices.clear();
+            midi2OutputDevices.clear();
+
+            Log.d(Constants.TAG, "MIDI service stopped.");
         }
     }
 
@@ -165,61 +250,59 @@ public final class MultipleMidiService extends Service {
         return Collections.unmodifiableSet(midiOutputDevices);
     }
 
-    private OnMidiDeviceAttachedListener serviceMidiDeviceAttachedListener = new OnMidiDeviceAttachedListener() {
-
-        @Override
-        public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
-            Log.d(Constants.TAG, "USB MIDI Device " + usbDevice.getDeviceName() + " has been attached.");
-            if (midiDeviceAttachedListener != null) {
-                midiDeviceAttachedListener.onDeviceAttached(usbDevice);
-            }
+    /**
+     * Suspends event listening / sending
+     */
+    public void suspend() {
+        for (MidiInputDevice midiInputDevice : midiInputDevices) {
+            midiInputDevice.suspend();
         }
 
-        @Override
-        public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
-            midiInputDevices.add(midiInputDevice);
-
-            if (midiDeviceAttachedListener != null) {
-                midiDeviceAttachedListener.onMidiInputDeviceAttached(midiInputDevice);
-            }
+        for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
+            midiOutputDevice.suspend();
         }
 
-        @Override
-        public void onMidiOutputDeviceAttached(@NonNull MidiOutputDevice midiOutputDevice) {
-            midiOutputDevices.add(midiOutputDevice);
-
-            if (midiDeviceAttachedListener != null) {
-                midiDeviceAttachedListener.onMidiOutputDeviceAttached(midiOutputDevice);
-            }
-        }
-    };
-
-    private OnMidiDeviceDetachedListener serviceMidiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
-        @Override
-        public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
-            Log.d(Constants.TAG, "USB MIDI Device " + detachedDevice.getDeviceName() + " has been detached.");
-            if (midiDeviceDetachedListener != null) {
-                midiDeviceDetachedListener.onDeviceDetached(detachedDevice);
-            }
+        for (Midi2InputDevice midiInputDevice : midi2InputDevices) {
+            midiInputDevice.suspend();
         }
 
-        @Override
-        public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-            midiInputDevice.setMidiEventListener(null);
-            midiInputDevices.remove(midiInputDevice);
+        for (Midi2OutputDevice midiOutputDevice : midi2OutputDevices) {
+            midiOutputDevice.suspend();
+        }
+    }
 
-            if (midiDeviceDetachedListener != null) {
-                midiDeviceDetachedListener.onMidiInputDeviceDetached(midiInputDevice);
-            }
+    /**
+     * Resumes from {@link #suspend()}
+     */
+    public void resume() {
+        for (MidiInputDevice midiInputDevice : midiInputDevices) {
+            midiInputDevice.resume();
         }
 
-        @Override
-        public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-            midiOutputDevices.remove(midiOutputDevice);
-
-            if (midiDeviceDetachedListener != null) {
-                midiDeviceDetachedListener.onMidiOutputDeviceDetached(midiOutputDevice);
-            }
+        for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
+            midiOutputDevice.resume();
         }
-    };
+
+        for (Midi2InputDevice midiInputDevice : midi2InputDevices) {
+            midiInputDevice.resume();
+        }
+
+        for (Midi2OutputDevice midiOutputDevice : midi2OutputDevices) {
+            midiOutputDevice.resume();
+        }
+    }
+
+    /**
+     * Get {@link Set} of{@link jp.kshoji.driver.midi.device.Midi2OutputDevice} to send MIDI events.
+     *
+     * @return the Set of MidiOutputDevice
+     */
+    @NonNull
+    public Set<Midi2OutputDevice> getMidi2OutputDevices() {
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.checkConnectedDevicesImmediately();
+        }
+
+        return Collections.unmodifiableSet(midi2OutputDevices);
+    }
 }

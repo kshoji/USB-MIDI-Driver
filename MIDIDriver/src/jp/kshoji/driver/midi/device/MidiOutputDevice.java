@@ -32,7 +32,7 @@ public final class MidiOutputDevice {
     private static final int BUFFER_POOL_SIZE = 1024;
 	final LinkedList<byte[]> bufferPool = new LinkedList<>();
 
-    private ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
+    private final ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
 
     /**
 	 * Constructor
@@ -53,8 +53,8 @@ public final class MidiOutputDevice {
 
         this.usbDeviceConnection.claimInterface(this.usbInterface, true);
 
-        waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
-		waiterThread.start();
+        waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].MidiOutputWaiterThread");
+        waiterThread.start();
 
 		for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
 			bufferPool.addLast(new byte[4]);
@@ -64,21 +64,10 @@ public final class MidiOutputDevice {
     /**
      * stop to use this device.
      */
-    void stop() {
+    void stop(Runnable onStopped) {
         usbDeviceConnection.releaseInterface(usbInterface);
 
-        resume();
-        waiterThread.stopFlag = true;
-
-        // blocks while the thread will stop
-        while (waiterThread.isAlive()) {
-            try {
-                waiterThread.interrupt();
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-        }
+        waiterThread.stopThread(onStopped);
     }
 
     /**
@@ -161,7 +150,8 @@ public final class MidiOutputDevice {
 	private final class WaiterThread extends Thread {
         final Queue<byte[]> queue = new LinkedList<>();
 
-		volatile boolean stopFlag;
+        private volatile boolean stopFlag;
+        private Runnable onStopped = null;
 		volatile boolean suspendFlag;
 
         /**
@@ -172,7 +162,13 @@ public final class MidiOutputDevice {
 			suspendFlag = false;
 		}
 
-		@Override
+        void stopThread(Runnable onStopped) {
+		    this.onStopped = onStopped;
+            stopFlag = true;
+            MidiOutputDevice.this.resume();
+        }
+
+        @Override
 		public void run() {
 			byte[] dequedDataBuffer;
             int dequedDataBufferLength;
@@ -268,8 +264,11 @@ public final class MidiOutputDevice {
 					}
 				}
 			}
+            if (onStopped != null) {
+                onStopped.run();
+            }
 		}
-	}
+    }
 
 	/**
 	 * Sends MIDI message to output device.
@@ -425,7 +424,7 @@ public final class MidiOutputDevice {
      * @param cable the cable ID 0-15
      * @param bytes bytes.length:1, 2, or 3
      */
-    public void sendMidiSystemCommonMessage(int cable, byte bytes[]) {
+    public void sendMidiSystemCommonMessage(int cable, byte[] bytes) {
         if (bytes == null) {
             return;
         }

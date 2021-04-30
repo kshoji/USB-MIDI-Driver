@@ -10,18 +10,15 @@ import java.util.Set;
 public class SoundMaker {
 	private static final SoundMaker instance;
 
-	private static double sinTable[] = new double[1024];
-	private static double sawTable[] = new double[1024];
-	private static double triangleTable[] = new double[1024];
-	private static double squareTable[] = new double[1024];
+	private static final double[] sinTable = new double[1024];
+	private static final double[] sawTable = new double[1024];
+	private static final double[] triangleTable = new double[1024];
+	private static final double[] squareTable = new double[1024];
 
 	private static int iter = 0;
 
 	private static final int samplingRate = 44100 / 2;
 
-	/**
-	 * Initializes wave table
-	 */
 	static {
 		for (int i = 0; i < 1024; i++) {
 			sawTable[i] = (i / 512.0) - 1.0;

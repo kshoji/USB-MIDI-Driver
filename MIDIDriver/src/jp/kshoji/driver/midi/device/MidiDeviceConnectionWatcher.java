@@ -9,8 +9,8 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
-import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -22,10 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.util.Constants;
+import jp.kshoji.driver.midi.util.MidiCapabilityNegotiator;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
 
@@ -48,48 +52,75 @@ public final class MidiDeviceConnectionWatcher {
     final Queue<UsbDevice> deviceGrantQueue = new LinkedList<>();
     final HashSet<UsbDevice> grantedDevices = new HashSet<>();
 
-    Map<UsbDevice, UsbDeviceConnection> deviceConnections = new HashMap<>();
-    Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = new HashMap<>();
-    Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = new HashMap<>();
+    final Map<UsbDevice, UsbDeviceConnection> deviceConnections = new HashMap<>();
+    final Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = new HashMap<>();
+    final Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = new HashMap<>();
+    final Map<UsbDevice, Set<Midi2InputDevice>> midi2InputDevices = new HashMap<>();
+    final Map<UsbDevice, Set<Midi2OutputDevice>> midi2OutputDevices = new HashMap<>();
+
+    static class UsbDeviceDetachedTaskRunner {
+        private final Executor executor = Executors.newSingleThreadExecutor();
+        private final Handler handler = new Handler(Looper.getMainLooper());
+
+        interface UsbDeviceCallback {
+            void onComplete(UsbDevice result);
+        }
+
+        public void executeAsync(final Callable<UsbDevice> callable, final UsbDeviceCallback callback) {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        final UsbDevice result = callable.call();
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onComplete(result);
+                            }
+                        });
+                    } catch (Exception ignored) {
+
+                    }
+                }
+            });
+        }
+    }
 
     /**
-	 * Constructor
-	 *
-     * @param context the Context
-	 * @param usbManager the UsbManager
+     * Constructor
+     *
+     * @param context                the Context
+     * @param usbManager             the UsbManager
      * @param deviceAttachedListener the OnMidiDeviceAttachedListener
      */
-	public MidiDeviceConnectionWatcher(@NonNull Context context, @NonNull UsbManager usbManager, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener, @NonNull final OnMidiDeviceDetachedListener deviceDetachedListener) {
-		this.context = context;
+    public MidiDeviceConnectionWatcher(@NonNull Context context, @NonNull UsbManager usbManager, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener, @NonNull final OnMidiDeviceDetachedListener deviceDetachedListener) {
+        this.context = context;
         this.usbManager = usbManager;
-		isGranting = false;
+        isGranting = false;
         grantingDevice = null;
         this.deviceDetachedListener = deviceDetachedListener;
+        final UsbDeviceDetachedTaskRunner taskRunner = new UsbDeviceDetachedTaskRunner();
 
         deviceDetachedHandler = new Handler(new Handler.Callback() {
             @Override
-            public boolean handleMessage(Message message) {
-                AsyncTask<UsbDevice, Void, Void> task = new AsyncTask<UsbDevice, Void, Void>() {
-
+            public boolean handleMessage(final Message message) {
+                final UsbDevice usbDevice = (UsbDevice) message.obj;
+                taskRunner.executeAsync(new Callable<UsbDevice>() {
                     @Override
-                    protected Void doInBackground(UsbDevice... params) {
-                        if (params == null || params.length < 1) {
-                            return null;
-                        }
-
-                        UsbDevice usbDevice = params[0];
-                        onDeviceDetached(usbDevice);
-
-                        return null;
+                    public UsbDevice call() {
+                        return usbDevice;
                     }
-                };
-
-                UsbDevice detachedDevice = (UsbDevice) message.obj;
-                task.execute(detachedDevice);
+                }, new UsbDeviceDetachedTaskRunner.UsbDeviceCallback() {
+                    @Override
+                    public void onComplete(UsbDevice detachedDevice) {
+                        onDeviceDetached(detachedDevice);
+                    }
+                });
 
                 return true;
             }
         });
+
 
 		thread = new MidiDeviceConnectionWatchThread(usbManager, deviceAttachedListener, deviceDetachedHandler);
         thread.setName("MidiDeviceConnectionWatchThread");
@@ -107,11 +138,14 @@ public final class MidiDeviceConnectionWatcher {
         // Stop input device's thread.
         Set<MidiInputDevice> inputDevices = midiInputDevices.get(detachedDevice);
         if (inputDevices != null && inputDevices.size() > 0) {
-            for (MidiInputDevice inputDevice : inputDevices) {
+            for (final MidiInputDevice inputDevice : inputDevices) {
                 if (inputDevice != null) {
-                    inputDevice.stop();
-
-                    deviceDetachedListener.onMidiInputDeviceDetached(inputDevice);
+                    inputDevice.stop(new Runnable() {
+                        @Override
+                        public void run() {
+                            deviceDetachedListener.onMidiInputDeviceDetached(inputDevice);
+                        }
+                    });
                 }
             }
             midiInputDevices.remove(detachedDevice);
@@ -119,14 +153,46 @@ public final class MidiDeviceConnectionWatcher {
 
         Set<MidiOutputDevice> outputDevices = midiOutputDevices.get(detachedDevice);
         if (outputDevices != null) {
-            for (MidiOutputDevice outputDevice : outputDevices) {
+            for (final MidiOutputDevice outputDevice : outputDevices) {
                 if (outputDevice != null) {
-                    outputDevice.stop();
-
-                    deviceDetachedListener.onMidiOutputDeviceDetached(outputDevice);
+                    outputDevice.stop(new Runnable() {
+                        @Override
+                        public void run() {
+                            deviceDetachedListener.onMidiOutputDeviceDetached(outputDevice);
+                        }
+                    });
                 }
             }
             midiOutputDevices.remove(detachedDevice);
+        }
+        Set<Midi2InputDevice> inputDevices2 = midi2InputDevices.get(detachedDevice);
+        if (inputDevices2 != null && inputDevices2.size() > 0) {
+            for (final Midi2InputDevice inputDevice : inputDevices2) {
+                if (inputDevice != null) {
+                    inputDevice.stop(new Runnable() {
+                        @Override
+                        public void run() {
+                            deviceDetachedListener.onMidi2InputDeviceDetached(inputDevice);
+                        }
+                    });
+                }
+            }
+            midi2InputDevices.remove(detachedDevice);
+        }
+
+        Set<Midi2OutputDevice> outputDevices2 = midi2OutputDevices.get(detachedDevice);
+        if (outputDevices2 != null) {
+            for (final Midi2OutputDevice outputDevice : outputDevices2) {
+                if (outputDevice != null) {
+                    outputDevice.stop(new Runnable() {
+                        @Override
+                        public void run() {
+                            deviceDetachedListener.onMidi2OutputDeviceDetached(outputDevice);
+                        }
+                    });
+                }
+            }
+            midi2OutputDevices.remove(detachedDevice);
         }
 
         UsbDeviceConnection deviceConnection = deviceConnections.get(detachedDevice);
@@ -150,18 +216,8 @@ public final class MidiDeviceConnectionWatcher {
 	 * Note: Takes one second until the thread stops.
 	 * The device attached / detached events will be noticed until the thread will completely stops.
 	 */
-	public void stop() {
-		thread.stopFlag = true;
-        thread.interrupt();
-
-		// blocks while the thread will stop
-		while (thread.isAlive()) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// ignore
-			}
-		}
+	public void stop(Runnable onStopped) {
+	    thread.stopThread(onStopped);
 	}
 	
 	/**
@@ -234,8 +290,59 @@ public final class MidiDeviceConnectionWatcher {
                         }
                     }
 
+                    // MIDI 2.0
+                    final Set<Midi2InputDevice> foundMidi2InputDevices = UsbMidiDeviceUtils.findMidi2InputDevices(device, deviceConnection);
+                    final Set<Midi2OutputDevice> foundMidi2OutputDevices = UsbMidiDeviceUtils.findMidi2OutputDevices(device, deviceConnection);
+
+                    // use first device to negotiation
+                    Midi2InputDevice firstInputDevice = null;
+                    if (foundMidi2InputDevices.size() > 0) {
+                        firstInputDevice = foundMidi2InputDevices.iterator().next();
+                    }
+                    Midi2OutputDevice firstOutputDevice = null;
+                    if (foundMidi2OutputDevices.size() > 0) {
+                        firstOutputDevice = foundMidi2OutputDevices.iterator().next();
+                    }
+                    MidiCapabilityNegotiator negotiator = new MidiCapabilityNegotiator(firstInputDevice, firstOutputDevice);
+                    negotiator.startProtocolNegotiation(new MidiCapabilityNegotiator.MidiNegotiationCallback() {
+                        @Override
+                        public void onMidiNegotiated(MidiCapabilityNegotiator.MidiProtocol midiProtocol, MidiCapabilityNegotiator.MidiExtension midiExtension) {
+                            for (Midi2InputDevice midiInputDevice : foundMidi2InputDevices) {
+                                try {
+                                    Set<Midi2InputDevice> inputDevices = midi2InputDevices.get(device);
+                                    if (inputDevices == null) {
+                                        inputDevices = new HashSet<>();
+                                    }
+                                    midiInputDevice.setProtocolInformation(midiProtocol, midiExtension);
+                                    inputDevices.add(midiInputDevice);
+                                    midi2InputDevices.put(device, inputDevices);
+
+                                    deviceAttachedListener.onMidi2InputDeviceAttached(midiInputDevice);
+                                } catch (IllegalArgumentException iae) {
+                                    Log.d(Constants.TAG, "This device didn't have any input endpoints.", iae);
+                                }
+                            }
+
+                            for (Midi2OutputDevice midiOutputDevice : foundMidi2OutputDevices) {
+                                try {
+                                    Set<Midi2OutputDevice> outputDevices = midi2OutputDevices.get(device);
+                                    if (outputDevices == null) {
+                                        outputDevices = new HashSet<>();
+                                    }
+                                    midiOutputDevice.setProtocolInformation(midiProtocol, midiExtension);
+                                    outputDevices.add(midiOutputDevice);
+                                    midi2OutputDevices.put(device, outputDevices);
+
+                                    deviceAttachedListener.onMidi2OutputDeviceAttached(midiOutputDevice);
+                                } catch (IllegalArgumentException iae) {
+                                    Log.d(Constants.TAG, "This device didn't have any output endpoints.", iae);
+                                }
+                            }
+                        }
+                    }, true);
+
                     Log.d(Constants.TAG, "Device " + device.getDeviceName() + " has been attached.");
-				}
+                }
 
                 // reset the 'isGranting' to false
                 isGranting = false;
@@ -251,12 +358,13 @@ public final class MidiDeviceConnectionWatcher {
 	 * @author K.Shoji
 	 */
 	private final class MidiDeviceConnectionWatchThread extends Thread {
-		private UsbManager usbManager;
-		private OnMidiDeviceAttachedListener deviceAttachedListener;
-		private Handler deviceDetachedHandler;
-		private Set<UsbDevice> connectedDevices;
-		boolean stopFlag;
-		private List<DeviceFilter> deviceFilters;
+		private final UsbManager usbManager;
+		private final OnMidiDeviceAttachedListener deviceAttachedListener;
+		private final Handler deviceDetachedHandler;
+		private final Set<UsbDevice> connectedDevices;
+		private Runnable onStopped = null;
+		private boolean stopFlag;
+		private final List<DeviceFilter> deviceFilters;
 
 		/**
 		 * Constructor
@@ -273,6 +381,12 @@ public final class MidiDeviceConnectionWatcher {
 			stopFlag = false;
 			deviceFilters = DeviceFilter.getDeviceFilters(context);
 		}
+
+        void stopThread(Runnable onStopped) {
+            this.onStopped = onStopped;
+            stopFlag = true;
+            interrupt();
+        }
 
 		@Override
 		public void run() {
@@ -306,6 +420,9 @@ public final class MidiDeviceConnectionWatcher {
                 onDeviceDetached(device);
             }
             grantedDevices.clear();
+            if (onStopped != null) {
+                onStopped.run();
+            }
 		}
 
 		/**
@@ -351,5 +468,5 @@ public final class MidiDeviceConnectionWatcher {
 			connectedDevices.clear();
             connectedDevices.addAll(deviceMap.values());
 		}
-	}
+    }
 }

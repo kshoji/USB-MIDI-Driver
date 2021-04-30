@@ -11,9 +11,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import jp.kshoji.driver.midi.device.Midi2InputDevice;
+import jp.kshoji.driver.midi.device.Midi2OutputDevice;
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
+import jp.kshoji.driver.midi.listener.OnMidi2InputEventListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
@@ -47,8 +50,285 @@ public final class SingleMidiService extends Service {
 
     private MidiInputDevice midiInputDevice = null;
     private MidiOutputDevice midiOutputDevice = null;
+    private final OnMidi2InputEventListener midi2InputEventListener = null;
+    private final OnMidi2InputEventListener serviceMidi2InputEventListener = new OnMidi2InputEventListener() {
+
+        @Override
+        public void onMidiNoop(Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiNoop(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiJitterReductionClock(Midi2InputDevice sender, int group, int senderClockTime) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiJitterReductionClock(sender, group, senderClockTime);
+            }
+        }
+
+        @Override
+        public void onMidiJitterReductionTimestamp(Midi2InputDevice sender, int group, int senderClockTimestamp) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiJitterReductionTimestamp(sender, group, senderClockTimestamp);
+            }
+        }
+
+        @Override
+        public void onMidiTimeCodeQuarterFrame(@NonNull Midi2InputDevice sender, int group, int timing) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiTimeCodeQuarterFrame(sender, group, timing);
+            }
+        }
+
+        @Override
+        public void onMidiSongSelect(@NonNull Midi2InputDevice sender, int group, int song) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiSongSelect(sender, group, song);
+            }
+        }
+
+        @Override
+        public void onMidiSongPositionPointer(@NonNull Midi2InputDevice sender, int group, int position) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiSongPositionPointer(sender, group, position);
+            }
+        }
+
+        @Override
+        public void onMidiTuneRequest(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiTuneRequest(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiTimingClock(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiTimingClock(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiStart(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiStart(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiContinue(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiContinue(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiStop(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiStop(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiActiveSensing(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiActiveSensing(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidiReset(@NonNull Midi2InputDevice sender, int group) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiReset(sender, group);
+            }
+        }
+
+        @Override
+        public void onMidi1NoteOff(Midi2InputDevice sender, int group, int channel, int note, int velocity) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1NoteOff(sender, group, channel, note, velocity);
+            }
+        }
+
+        @Override
+        public void onMidi1NoteOn(Midi2InputDevice sender, int group, int channel, int note, int velocity) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1NoteOn(sender, group, channel, note, velocity);
+            }
+        }
+
+        @Override
+        public void onMidi1PolyphonicAftertouch(Midi2InputDevice sender, int group, int channel, int note, int pressure) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1PolyphonicAftertouch(sender, group, channel, note, pressure);
+            }
+        }
+
+        @Override
+        public void onMidi1ControlChange(Midi2InputDevice sender, int group, int channel, int function, int value) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1ControlChange(sender, group, channel, function, value);
+            }
+        }
+
+        @Override
+        public void onMidi1ProgramChange(Midi2InputDevice sender, int group, int channel, int program) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1ProgramChange(sender, group, channel, program);
+            }
+        }
+
+        @Override
+        public void onMidi1ChannelAftertouch(Midi2InputDevice sender, int group, int channel, int pressure) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1ChannelAftertouch(sender, group, channel, pressure);
+            }
+        }
+
+        @Override
+        public void onMidi1PitchWheel(Midi2InputDevice sender, int group, int channel, int amount) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1PitchWheel(sender, group, channel, amount);
+            }
+        }
+
+        @Override
+        public void onMidi1SystemExclusive(Midi2InputDevice sender, int group, @NonNull byte[] systemExclusive) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi1SystemExclusive(sender, group, systemExclusive);
+            }
+        }
+
+        @Override
+        public void onMidi2NoteOff(Midi2InputDevice sender, int group, int channel, int note, int velocity, int attributeType, int attributeData) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2NoteOff(sender, group, channel, note, velocity, attributeType, attributeData);
+            }
+        }
+
+        @Override
+        public void onMidi2NoteOn(Midi2InputDevice sender, int group, int channel, int note, int velocity, int attributeType, int attributeData) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2NoteOn(sender, group, channel, note, velocity, attributeType, attributeData);
+            }
+        }
+
+        @Override
+        public void onMidi2PolyphonicAftertouch(Midi2InputDevice sender, int group, int channel, int note, long pressure) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2PolyphonicAftertouch(sender, group, channel, note, pressure);
+            }
+        }
+
+        @Override
+        public void onMidi2ControlChange(Midi2InputDevice sender, int group, int channel, int index, long value) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2ControlChange(sender, group, channel, index, value);
+            }
+        }
+
+        @Override
+        public void onMidi2ProgramChange(Midi2InputDevice sender, int group, int channel, int optionFlags, int program, int bank) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2ProgramChange(sender, group, channel, optionFlags, program, bank);
+            }
+        }
+
+        @Override
+        public void onMidi2ChannelAftertouch(Midi2InputDevice sender, int group, int channel, long pressure) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2ChannelAftertouch(sender, group, channel, pressure);
+            }
+        }
+
+        @Override
+        public void onMidi2PitchWheel(Midi2InputDevice sender, int group, int channel, long amount) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2PitchWheel(sender, group, channel, amount);
+            }
+        }
+
+        @Override
+        public void onMidiPerNotePitchWheel(Midi2InputDevice sender, int group, int channel, int note, long amount) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiPerNotePitchWheel(sender, group, channel, note, amount);
+            }
+        }
+
+        @Override
+        public void onMidiPerNoteManagement(Midi2InputDevice sender, int group, int channel, int note, int optionFlags) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiPerNoteManagement(sender, group, channel, note, optionFlags);
+            }
+        }
+
+        @Override
+        public void onMidiRegisteredPerNoteController(Midi2InputDevice sender, int group, int channel, int note, int index, long data) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiRegisteredPerNoteController(sender, group, channel, note, index, data);
+            }
+        }
+
+        @Override
+        public void onMidiAssignablePerNoteController(Midi2InputDevice sender, int group, int channel, int note, int index, long data) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiAssignablePerNoteController(sender, group, channel, note, index, data);
+            }
+        }
+
+        @Override
+        public void onMidiRegisteredController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiRegisteredController(sender, group, channel, bank, index, data);
+            }
+        }
+
+        @Override
+        public void onMidiAssignableController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiAssignableController(sender, group, channel, bank, index, data);
+            }
+        }
+
+        @Override
+        public void onMidiRelativeRegisteredController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiRelativeRegisteredController(sender, group, channel, bank, index, data);
+            }
+        }
+
+        @Override
+        public void onMidiRelativeAssignableController(Midi2InputDevice sender, int group, int channel, int bank, int index, long data) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiRelativeAssignableController(sender, group, channel, bank, index, data);
+            }
+        }
+
+        @Override
+        public void onMidi2SystemExclusive(Midi2InputDevice sender, int group, int streamId, @NonNull byte[] systemExclusive) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidi2SystemExclusive(sender, group, streamId, systemExclusive);
+            }
+        }
+
+        @Override
+        public void onMidiMixedDataSetHeader(Midi2InputDevice sender, int group, int mdsId, @NonNull byte[] headers) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiMixedDataSetHeader(sender, group, mdsId, headers);
+            }
+        }
+
+        @Override
+        public void onMidiMixedDataSetPayload(Midi2InputDevice sender, int group, int mdsId, @NonNull byte[] payloads) {
+            if (midi2InputEventListener != null) {
+                midi2InputEventListener.onMidiMixedDataSetPayload(sender, group, mdsId, payloads);
+            }
+        }
+    };
     private MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
     private OnMidiInputEventListener midiInputEventListener = null;
+    private Midi2InputDevice midi2InputDevice = null;
 
     private boolean isRunning = false;
 
@@ -73,72 +353,8 @@ public final class SingleMidiService extends Service {
         return binder;
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (deviceConnectionWatcher != null) {
-            deviceConnectionWatcher.stop();
-        }
-        deviceConnectionWatcher = null;
-
-        midiInputDevice = null;
-
-        midiOutputDevice = null;
-
-        Log.d(Constants.TAG, "MIDI service stopped.");
-    }
-
-    /**
-     * Suspends event listening / sending
-     */
-    public void suspend() {
-        if (midiInputDevice != null) {
-            midiInputDevice.suspend();
-        }
-
-        if (midiOutputDevice != null) {
-            midiOutputDevice.suspend();
-        }
-    }
-
-    /**
-     * Resumes from {@link #suspend()}
-     */
-    public void resume() {
-        if (midiInputDevice != null) {
-            midiInputDevice.resume();
-        }
-
-        if (midiOutputDevice != null) {
-            midiOutputDevice.resume();
-        }
-    }
-
-    /**
-     * Set the {@link OnMidiInputEventListener} to receive MIDI events.
-     *
-     * @param midiInputEventListener the listener
-     */
-    public void setOnMidiInputEventListener(@Nullable OnMidiInputEventListener midiInputEventListener) {
-        this.midiInputEventListener = midiInputEventListener;
-    }
-
-    /**
-     * Get {@link MidiOutputDevice} to send MIDI events.
-     *
-     * @return the MidiOutputDevice, null if not available
-     */
-    @Nullable
-    public MidiOutputDevice getMidiOutputDevice() {
-        if (deviceConnectionWatcher != null) {
-            deviceConnectionWatcher.checkConnectedDevicesImmediately();
-        }
-
-        return midiOutputDevice;
-    }
-
-    private OnMidiDeviceAttachedListener midiDeviceAttachedListener = new OnMidiDeviceAttachedListener() {
+    private Midi2OutputDevice midi2OutputDevice = null;
+    private final OnMidiDeviceAttachedListener midiDeviceAttachedListener = new OnMidiDeviceAttachedListener() {
 
         @Override
         public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
@@ -163,10 +379,27 @@ public final class SingleMidiService extends Service {
 
             SingleMidiService.this.midiOutputDevice = midiOutputDevice;
         }
+
+        @Override
+        public void onMidi2InputDeviceAttached(@NonNull Midi2InputDevice midi2InputDevice) {
+            if (SingleMidiService.this.midi2InputDevice != null) {
+                return;
+            }
+
+            SingleMidiService.this.midi2InputDevice = midi2InputDevice;
+            SingleMidiService.this.midi2InputDevice.setMidiEventListener(serviceMidi2InputEventListener);
+        }
+
+        @Override
+        public void onMidi2OutputDeviceAttached(@NonNull Midi2OutputDevice midi2OutputDevice) {
+            if (SingleMidiService.this.midi2OutputDevice != null) {
+                return;
+            }
+
+            SingleMidiService.this.midi2OutputDevice = midi2OutputDevice;
+        }
     };
-
-    private OnMidiDeviceDetachedListener midiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
-
+    private final OnMidiDeviceDetachedListener midiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
         @Override
         public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
             Log.d(Constants.TAG, "USB MIDI Device " + detachedDevice.getDeviceName() + " has been detached.");
@@ -174,7 +407,7 @@ public final class SingleMidiService extends Service {
 
         @Override
         public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-            if (SingleMidiService.this.midiInputDevice != null && SingleMidiService.this.midiInputDevice == midiInputDevice) {
+            if (SingleMidiService.this.midiInputDevice == midiInputDevice) {
                 SingleMidiService.this.midiInputDevice.setMidiEventListener(null);
                 SingleMidiService.this.midiInputDevice = null;
             }
@@ -182,13 +415,102 @@ public final class SingleMidiService extends Service {
 
         @Override
         public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-            if (SingleMidiService.this.midiOutputDevice != null && SingleMidiService.this.midiOutputDevice == midiOutputDevice) {
+            if (SingleMidiService.this.midiOutputDevice == midiOutputDevice) {
                 SingleMidiService.this.midiOutputDevice = null;
+            }
+        }
+
+        @Override
+        public void onMidi2InputDeviceDetached(@NonNull Midi2InputDevice midiInputDevice) {
+            if (SingleMidiService.this.midi2InputDevice == midiInputDevice) {
+                SingleMidiService.this.midi2InputDevice.setMidiEventListener(null);
+                SingleMidiService.this.midi2InputDevice = null;
+            }
+        }
+
+        @Override
+        public void onMidi2OutputDeviceDetached(@NonNull Midi2OutputDevice midiOutputDevice) {
+            if (SingleMidiService.this.midi2OutputDevice == midiOutputDevice) {
+                SingleMidiService.this.midi2OutputDevice = null;
             }
         }
     };
 
-    private OnMidiInputEventListener serviceMidiInputEventListener = new OnMidiInputEventListener() {
+    /**
+     * Set the {@link OnMidiInputEventListener} to receive MIDI events.
+     *
+     * @param midiInputEventListener the listener
+     */
+    public void setOnMidiInputEventListener(@Nullable OnMidiInputEventListener midiInputEventListener) {
+        this.midiInputEventListener = midiInputEventListener;
+    }
+
+    /**
+     * Get {@link MidiOutputDevice} to send MIDI events.
+     *
+     * @return the MidiOutputDevice, null if not available
+     */
+    @Nullable
+    public MidiOutputDevice getMidiOutputDevice() {
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.checkConnectedDevicesImmediately();
+        }
+
+        return midiOutputDevice;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (deviceConnectionWatcher != null) {
+            deviceConnectionWatcher.stop(new Runnable() {
+                @Override
+                public void run() {
+                    deviceConnectionWatcher = null;
+
+                    midiInputDevice = null;
+                    midi2InputDevice = null;
+
+                    midiOutputDevice = null;
+                    midi2OutputDevice = null;
+
+                    Log.d(Constants.TAG, "MIDI service stopped.");
+                }
+            });
+        } else {
+            midiInputDevice = null;
+            midi2InputDevice = null;
+
+            midiOutputDevice = null;
+            midi2OutputDevice = null;
+
+            Log.d(Constants.TAG, "MIDI service stopped.");
+        }
+    }
+
+    /**
+     * Suspends event listening / sending
+     */
+    public void suspend() {
+        if (midiInputDevice != null) {
+            midiInputDevice.suspend();
+        }
+
+        if (midiOutputDevice != null) {
+            midiOutputDevice.suspend();
+        }
+
+        if (midi2InputDevice != null) {
+            midi2InputDevice.suspend();
+        }
+
+        if (midi2OutputDevice != null) {
+            midi2OutputDevice.suspend();
+        }
+    }
+
+    private final OnMidiInputEventListener serviceMidiInputEventListener = new OnMidiInputEventListener() {
 
         @Override
         public void onMidiMiscellaneousFunctionCodes(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
@@ -372,4 +694,25 @@ public final class SingleMidiService extends Service {
             }
         }
     };
+
+    /**
+     * Resumes from {@link #suspend()}
+     */
+    public void resume() {
+        if (midiInputDevice != null) {
+            midiInputDevice.resume();
+        }
+
+        if (midiOutputDevice != null) {
+            midiOutputDevice.resume();
+        }
+
+        if (midi2InputDevice != null) {
+            midi2InputDevice.resume();
+        }
+
+        if (midi2OutputDevice != null) {
+            midi2OutputDevice.resume();
+        }
+    }
 }

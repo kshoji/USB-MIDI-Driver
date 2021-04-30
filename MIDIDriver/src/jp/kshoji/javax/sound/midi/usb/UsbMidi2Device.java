@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jp.kshoji.driver.midi.device.MidiInputDevice;
-import jp.kshoji.driver.midi.device.MidiOutputDevice;
+import jp.kshoji.driver.midi.device.Midi2InputDevice;
+import jp.kshoji.driver.midi.device.Midi2OutputDevice;
 import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.javax.sound.midi.MidiDevice;
 import jp.kshoji.javax.sound.midi.MidiUnavailableException;
@@ -21,14 +21,14 @@ import jp.kshoji.javax.sound.midi.Receiver;
 import jp.kshoji.javax.sound.midi.Transmitter;
 
 /**
- * {@link jp.kshoji.javax.sound.midi.MidiDevice} implementation
+ * {@link MidiDevice} implementation
  *
  * @author K.Shoji
  */
-public final class UsbMidiDevice implements MidiDevice {
+public final class UsbMidi2Device implements MidiDevice {
 
-    private final Map<MidiOutputDevice, Receiver> receivers = new HashMap<>();
-    private final Map<MidiInputDevice, Transmitter> transmitters = new HashMap<>();
+    private final Map<Midi2OutputDevice, Receiver> receivers = new HashMap<>();
+    private final Map<Midi2InputDevice, Transmitter> transmitters = new HashMap<>();
 
     private boolean isOpened;
 
@@ -40,17 +40,17 @@ public final class UsbMidiDevice implements MidiDevice {
      * @param midiInputDevice  the MidiInputDevice
      * @param midiOutputDevice the MidiOutputDevice
      */
-    public UsbMidiDevice(@Nullable final MidiInputDevice midiInputDevice, @Nullable final MidiOutputDevice midiOutputDevice) {
+    public UsbMidi2Device(@Nullable final Midi2InputDevice midiInputDevice, @Nullable final Midi2OutputDevice midiOutputDevice) {
         if (midiInputDevice == null && midiOutputDevice == null) {
             throw new NullPointerException("Both of MidiInputDevice and MidiOutputDevice are null.");
         }
 
         if (midiOutputDevice != null) {
-            receivers.put(midiOutputDevice, new UsbMidiReceiver(this, midiOutputDevice));
+            receivers.put(midiOutputDevice, new UsbMidi2Receiver(this, midiOutputDevice));
         }
 
         if (midiInputDevice != null) {
-            transmitters.put(midiInputDevice, new UsbMidiTransmitter(this, midiInputDevice));
+            transmitters.put(midiInputDevice, new UsbMidi2Transmitter(this, midiInputDevice));
         }
 
         isOpened = false;
@@ -70,12 +70,12 @@ public final class UsbMidiDevice implements MidiDevice {
         }
         UsbDevice usbDevice = null;
 
-        for (final MidiInputDevice midiInputDevice : transmitters.keySet()) {
+        for (final Midi2InputDevice midiInputDevice : transmitters.keySet()) {
             usbDevice = midiInputDevice.getUsbDevice();
             break;
         }
         if (usbDevice == null) {
-            for (final MidiOutputDevice midiOutputDevice : receivers.keySet()) {
+            for (final Midi2OutputDevice midiOutputDevice : receivers.keySet()) {
                 usbDevice = midiOutputDevice.getUsbDevice();
                 break;
             }
@@ -198,9 +198,9 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiInputDevice the MidiInputDevice to add
      */
-    public void addMidiInputDevice(@NonNull final MidiInputDevice midiInputDevice) {
+    public void addMidiInputDevice(@NonNull final Midi2InputDevice midiInputDevice) {
         if (!transmitters.containsKey(midiInputDevice)) {
-            final UsbMidiTransmitter transmitter = new UsbMidiTransmitter(this, midiInputDevice);
+            final UsbMidi2Transmitter transmitter = new UsbMidi2Transmitter(this, midiInputDevice);
             transmitters.put(midiInputDevice, transmitter);
             transmitter.open();
         }
@@ -211,7 +211,7 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiInputDevice the MidiInputDevice to remove
      */
-    public void removeMidiInputDevice(@NonNull final MidiInputDevice midiInputDevice) {
+    public void removeMidiInputDevice(@NonNull final Midi2InputDevice midiInputDevice) {
         if (transmitters.containsKey(midiInputDevice)) {
             final Transmitter transmitter = transmitters.remove(midiInputDevice);
             transmitter.close();
@@ -224,7 +224,7 @@ public final class UsbMidiDevice implements MidiDevice {
      * @return the set of MidiInputDevice
      */
     @NonNull
-    public Set<MidiInputDevice> getMidiInputDevices() {
+    public Set<Midi2InputDevice> getMidiInputDevices() {
         return Collections.unmodifiableSet(transmitters.keySet());
     }
 
@@ -233,9 +233,9 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiOutputDevice the MidiOutputDevice to add
      */
-    public void addMidiOutputDevice(@NonNull final MidiOutputDevice midiOutputDevice) {
+    public void addMidiOutputDevice(@NonNull final Midi2OutputDevice midiOutputDevice) {
         if (!receivers.containsKey(midiOutputDevice)) {
-            final UsbMidiReceiver receiver = new UsbMidiReceiver(this, midiOutputDevice);
+            final UsbMidi2Receiver receiver = new UsbMidi2Receiver(this, midiOutputDevice);
             receivers.put(midiOutputDevice, receiver);
             receiver.open();
         }
@@ -246,7 +246,7 @@ public final class UsbMidiDevice implements MidiDevice {
      *
      * @param midiOutputDevice the MidiOutputDevice to remove
      */
-    public void removeMidiOutputDevice(@NonNull final MidiOutputDevice midiOutputDevice) {
+    public void removeMidiOutputDevice(@NonNull final Midi2OutputDevice midiOutputDevice) {
         if (receivers.containsKey(midiOutputDevice)) {
             final Receiver receiver = receivers.remove(midiOutputDevice);
             receiver.close();
@@ -259,7 +259,7 @@ public final class UsbMidiDevice implements MidiDevice {
      * @return the set of MidiOutputDevice
      */
     @NonNull
-    public Set<MidiOutputDevice> getMidiOutputDevices() {
+    public Set<Midi2OutputDevice> getMidiOutputDevices() {
         return Collections.unmodifiableSet(receivers.keySet());
     }
 }
