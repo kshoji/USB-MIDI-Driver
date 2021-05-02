@@ -1,29 +1,18 @@
-language: java
-jdk: oraclejdk9
+language: android
+dist: trusty
+jdk: openjdk9
+android:
+  components:
+    - build-tools-29.0.3
+    - android-29
+    - extra-android-m2repository
+    - extra-google-m2repository
+  licenses:
+    - '.+'
 before_install:
-  # make executable gradlew
   - chmod +x gradlew
-  - sudo apt-get update -qq
-  - if [ `uname -m` = x86_64 ]; then sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch > /dev/null; fi
-  # install Android SDK
-  - wget http://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
-  - tar xzf android-sdk_r24.4.1-linux.tgz
-  - export ANDROID_HOME=`pwd`/android-sdk-linux
-  - echo $ANDROID_HOME
-  - echo "sdk.dir=$ANDROID_HOME" > local.properties
-  - export PATH=$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:${PATH}
-  - echo ${PATH}
-  # install Android libraries
-  - echo yes | android update sdk --all --filter platform-tools --no-ui --force
-  - echo yes | android update sdk --all --filter build-tools-25.0.3 --no-ui --force
-  - echo yes | android update sdk --all --filter android-23 --no-ui --force
-  - echo yes | android update sdk --all --filter extra-android-support --no-ui --force
-  - echo yes | android update sdk --all --filter extra-android-m2repository --no-ui --force
-  - echo yes | android update sdk --all --filter addon-google_apis-google-23 --no-ui --force
-  # install maven 3.1.1
-  - "wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz && tar xfz apache-maven-3.1.1-bin.tar.gz && sudo mv apache-maven-3.1.1 /usr/local/maven-3.1.1 && sudo rm -f /usr/local/maven && sudo ln -s /usr/local/maven-3.1.1 /usr/local/maven"
-  - mvn --version
-  - git clone https://github.com/simpligility/maven-android-sdk-deployer && cd ./maven-android-sdk-deployer && mvn install -P6.0 -Dandroid.sdk.path=$ANDROID_HOME && cd ..
+  - rm "${JAVA_HOME}/lib/security/cacerts"
+  - ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"
 script:
   - ./gradlew check
   # cat MIDIDriver/build/outputs/lint-results.xml
