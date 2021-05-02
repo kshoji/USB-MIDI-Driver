@@ -4,7 +4,6 @@ jdk: openjdk9
 android:
   components:
     - build-tools-29.0.2
-    - android-30
     - extra-android-m2repository
     - extra-google-m2repository
   licenses:
@@ -13,6 +12,7 @@ before_install:
   - chmod +x gradlew
   - rm "${JAVA_HOME}/lib/security/cacerts"
   - ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"
+  - yes | sdkmanager "platforms;android-30"
 script:
   - ./gradlew check
   # cat MIDIDriver/build/outputs/lint-results.xml
