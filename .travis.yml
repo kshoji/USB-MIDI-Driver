@@ -16,4 +16,4 @@ before_install:
 script:
   - ./gradlew check
   # cat MIDIDriver/build/outputs/lint-results.xml
-  - cd ./MIDIDriver && mvn install -DskipTests=true -Dandroid.sdk.path=$ANDROID_HOME
+  # - cd ./MIDIDriver && mvn install -DskipTests=true -Dandroid.sdk.path=$ANDROID_HOME
