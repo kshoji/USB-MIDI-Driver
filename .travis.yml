@@ -11,8 +11,6 @@ android:
     - '.+'
 before_install:
   - chmod +x gradlew
-  - rm "${JAVA_HOME}/lib/security/cacerts"
-  - ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"
   - yes | sdkmanager "build-tools;30.0.2"
 script:
   - ./gradlew check
