@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Locale;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.unity3d.player.UnityPlayer;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
@@ -16,7 +18,7 @@ import jp.kshoji.driver.midi.util.UsbMidiDriver;
  * @author K.Shoji
  */
 public class UsbMidiUnityPlugin {
-    private static final String GAME_OBJECT_NAME = "MidiBehaviour";
+    private static final String GAME_OBJECT_NAME = "MidiManager";
 
     private UsbMidiDriver usbMidiDriver;
     HashMap<String, MidiOutputDevice> midiOutputDeviceMap = new HashMap<>();
@@ -224,6 +226,29 @@ public class UsbMidiUnityPlugin {
         if (usbMidiDriver != null) {
             usbMidiDriver.close();
         }
+    }
+
+    /**
+     * Obtains device name for deviceId
+     * @param deviceId the device id
+     * @return device name, product name, or null
+     */
+    public String getDeviceName(String deviceId) {
+        MidiOutputDevice device = midiOutputDeviceMap.get(deviceId);
+        if (device != null) {
+            if (!TextUtils.isEmpty(device.getProductName())) {
+                return device.getProductName();
+            }
+            if (!TextUtils.isEmpty(device.getUsbDevice().getDeviceName())) {
+                return device.getUsbDevice().getDeviceName();
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (!TextUtils.isEmpty(device.getUsbDevice().getProductName())) {
+                    return device.getUsbDevice().getProductName();
+                }
+            }
+        }
+        return null;
     }
 
     public void sendMidiNoteOn(String serializedMidiMessage) {
