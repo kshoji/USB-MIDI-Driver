@@ -60,52 +60,22 @@ public class UsbMidiUnityPlugin {
             }
 
             private String serializeMidiMessage(String deviceAddress, int[] data) {
-                StringBuilder sb = new StringBuilder(deviceAddress);
+                StringBuilder sb = new StringBuilder(deviceAddress.replaceAll(",", "_"));
                 for (int i = 0; i < data.length; i++) {
-                    sb.append(String.format(Locale.ROOT, "%d", data[i]));
-                    if (i == data.length - 1) {
-                        return sb.toString();
-                    }
                     sb.append(",");
+                    sb.append(String.format(Locale.ROOT, "%d", data[i]));
                 }
                 return sb.toString();
             }
 
             private String serializeMidiMessage(String deviceAddress, int cable, byte[] data) {
-                StringBuilder sb = new StringBuilder(deviceAddress);
+                StringBuilder sb = new StringBuilder(deviceAddress.replaceAll(",", "_"));
                 sb.append(",");
                 sb.append(String.format(Locale.ROOT, "%d", cable));
                 for (int i = 0; i < data.length; i++) {
                     sb.append(",");
                     sb.append(String.format(Locale.ROOT, "%d", data[i] & 0xff));
-                    if (i == data.length - 1) {
-                        return sb.toString();
-                    }
                 }
-                return sb.toString();
-            }
-
-            private String serializeMidiMessage(String deviceAddress, int[] data1, byte[] data2) {
-                StringBuilder sb = new StringBuilder(deviceAddress);
-                for (int i = 0; i < data1.length; i++) {
-                    sb.append(",");
-                    sb.append(String.format(Locale.ROOT, "%d", data1[i]));
-                }
-                for (int i = 0; i < data2.length; i++) {
-                    sb.append(",");
-                    sb.append(String.format(Locale.ROOT, "%d", data2[i] & 0xff));
-                }
-                return sb.toString();
-            }
-
-            private String serializeMidiMessage(String deviceAddress, int[] data1, long data2) {
-                StringBuilder sb = new StringBuilder(deviceAddress);
-                for (int i = 0; i < data1.length; i++) {
-                    sb.append(",");
-                    sb.append(String.format(Locale.ROOT, "%d", data1[i]));
-                }
-                sb.append(",");
-                sb.append(String.format(Locale.ROOT, "%d", data2));
                 return sb.toString();
             }
 
