@@ -103,7 +103,7 @@
         <repository>
             <id>javax-sound-midi-repo</id>
             <name>javax.sound.midi Repository</name>
-            <url>https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository</url>
+            <url>https://github.com/kshoji/javax.sound.midi-for-Android/raw/develop/javax.sound.midi/repository</url>
         </repository>
     </repositories>
 
@@ -111,7 +111,7 @@
 		<dependency>
 			<groupId>jp.kshoji</groupId>
 			<artifactId>midi-driver-library</artifactId>
-			<version>0.1.4</version>
+			<version>0.1.5</version>
 			<type>apklib</type>
 		</dependency>
 

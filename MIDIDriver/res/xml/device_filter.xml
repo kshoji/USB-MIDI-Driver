@@ -9,10 +9,10 @@
     <usb-device vendor-id="1410" />
     <!-- MOTU -->
     <usb-device vendor-id="2045" />
-    <!-- vmeter -->
+    <!-- MCS -->
     <usb-device vendor-id="5840" />
     <!-- korg -->
-    <usb-device vendor-id="0944" />
+    <usb-device vendor-id="2372" />
     <!-- CME -->
-    <usb-device vendor-id="9615" />
+    <usb-device vendor-id="28932" />
 </resources>

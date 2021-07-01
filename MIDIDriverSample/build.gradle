@@ -3,18 +3,17 @@ apply plugin: 'com.android.application'
 
 repositories {
     maven {
-        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository'
+        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/develop/javax.sound.midi/repository'
     }
     mavenCentral()
 }
 
 dependencies {
-    compile project(':MIDIDriver')
+    implementation project(':MIDIDriver')
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 12
