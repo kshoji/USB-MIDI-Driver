@@ -181,12 +181,12 @@ public class UsbMidiUnityPlugin {
 
             @Override
             public void onMidiMiscellaneousFunctionCodes(@NonNull final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
-                UnityPlayer.UnitySendMessage(GAME_OBJECT_NAME, "OnMidiMiscellaneousFunctionCodes", serializeMidiMessage(sender.getDeviceAddress(), new int[] {cable}));
+                UnityPlayer.UnitySendMessage(GAME_OBJECT_NAME, "OnMidiMiscellaneousFunctionCodes", serializeMidiMessage(sender.getDeviceAddress(), new int[] {cable, byte1, byte2, byte3}));
             }
 
             @Override
             public void onMidiCableEvents(@NonNull final MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {
-                UnityPlayer.UnitySendMessage(GAME_OBJECT_NAME, "OnMidiCableEvents", serializeMidiMessage(sender.getDeviceAddress(), new int[] {cable}));
+                UnityPlayer.UnitySendMessage(GAME_OBJECT_NAME, "OnMidiCableEvents", serializeMidiMessage(sender.getDeviceAddress(), new int[] {cable, byte1, byte2, byte3}));
             }
         };
         usbMidiDriver.open();
