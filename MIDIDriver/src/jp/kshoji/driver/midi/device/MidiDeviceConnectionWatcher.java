@@ -286,7 +286,11 @@ public final class MidiDeviceConnectionWatcher {
 						isGranting = true;
 						grantingDevice = deviceGrantQueue.remove();
 						
-						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
+						PendingIntent permissionIntent = PendingIntent.getBroadcast(
+							context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION),
+							android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
+						);
+						
 						context.registerReceiver(new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
 						usbManager.requestPermission(grantingDevice, permissionIntent);
 					}
