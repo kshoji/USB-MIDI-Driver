@@ -13,6 +13,7 @@ env:
     - TARGET_VERSION=31
     - ANDROID_BUILD_TOOLS_VERSION=30.0.2
     - ANDROID_HOME=~/android-sdk
+    - JAVA_TOOL_OPTIONS=-Dhttps.protocols=TLSv1.2
 before_install:
   - chmod +x gradlew
   - touch $HOME/.android/repositories.cfg
