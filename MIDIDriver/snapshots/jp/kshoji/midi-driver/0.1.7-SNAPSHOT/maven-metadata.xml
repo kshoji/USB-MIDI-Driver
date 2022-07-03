@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>jp.kshoji</groupId>
+  <artifactId>midi-driver</artifactId>
+  <version>0.1.7-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <timestamp>20220703.125901</timestamp>
+      <buildNumber>1</buildNumber>
+    </snapshot>
+    <lastUpdated>20220703125901</lastUpdated>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>aar</extension>
+        <value>0.1.7-20220703.125901-1</value>
+        <updated>20220703125901</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>0.1.7-20220703.125901-1</value>
+        <updated>20220703125901</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>
