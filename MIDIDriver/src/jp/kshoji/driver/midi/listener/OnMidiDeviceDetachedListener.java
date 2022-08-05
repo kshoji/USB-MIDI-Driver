@@ -1,7 +1,8 @@
 package jp.kshoji.driver.midi.listener;
 
 import android.hardware.usb.UsbDevice;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
