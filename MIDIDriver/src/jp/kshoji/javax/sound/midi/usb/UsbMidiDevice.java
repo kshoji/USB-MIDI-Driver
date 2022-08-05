@@ -1,9 +1,10 @@
 package jp.kshoji.javax.sound.midi.usb;
 
 import android.hardware.usb.UsbDevice;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;

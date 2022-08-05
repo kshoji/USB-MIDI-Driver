@@ -3,8 +3,9 @@ package jp.kshoji.driver.midi.fragment;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.util.Collections;
 import java.util.HashSet;

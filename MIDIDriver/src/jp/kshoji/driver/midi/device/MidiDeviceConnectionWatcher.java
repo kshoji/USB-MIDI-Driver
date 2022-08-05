@@ -12,8 +12,9 @@ import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.HashSet;

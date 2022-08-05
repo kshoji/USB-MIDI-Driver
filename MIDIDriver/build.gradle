@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     api 'jp.kshoji:javax-sound-midi:0.0.4:@aar'
-    api 'com.android.support:support-annotations:28.0.0'
+    api 'androidx.annotation:annotation:1.4.0'
     compileOnly project(':UnityPlayerMock')
     api fileTree(dir: 'libs', include: '*.jar')
 }
