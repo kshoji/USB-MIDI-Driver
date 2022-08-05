@@ -1,5 +1,7 @@
-apply plugin: 'com.android.library'
-//apply plugin: 'android-library' // Android Studio < 0.8.0
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+}
 
 repositories {
     maven {
@@ -45,15 +47,30 @@ android {
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
     }
-}
 
-apply plugin: 'maven'
-group = 'jp.kshoji'
-uploadArchives {
-    repositories.mavenDeployer {
-        repository url: 'file://' + file('snapshots').absolutePath
-        pom.version = '0.1.7-SNAPSHOT'
-        pom.artifactId = 'midi-driver'
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
     }
 }
-task install(dependsOn: uploadArchives)
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            group = 'jp.kshoji'
+            artifactId = 'midi-driver'
+            version = '0.1.7-SNAPSHOT'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = "${project.projectDir}/snapshots"
+        }
+    }
+}
