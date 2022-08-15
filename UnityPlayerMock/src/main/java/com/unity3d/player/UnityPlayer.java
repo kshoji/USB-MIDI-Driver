@@ -1,6 +1,6 @@
 package com.unity3d.player;
 
 public class UnityPlayer {
-    public static void UnitySendMessage(String gameObjectName, String onMidiInputDeviceAttached, String deviceAddress) {
+    public static void UnitySendMessage(String gameObjectName, String methodName, String parameter) {
     }
 }
