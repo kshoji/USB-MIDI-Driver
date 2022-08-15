@@ -12,7 +12,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -167,7 +167,7 @@ public final class UsbMidiDeviceUtils {
 				}
 			}
 			
-			if (filterMatched == false) {
+			if (!filterMatched) {
 				Log.d(Constants.TAG, "unsupported interface: " + usbInterface);
 				return null;
 			}
@@ -203,16 +203,12 @@ public final class UsbMidiDeviceUtils {
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
 
-            try {
-                byte[] buffer = new byte[255];
-                int indexOfProductName = rawDescriptors[15] & 0xff;
+			byte[] buffer = new byte[255];
+			int indexOfProductName = rawDescriptors[15] & 0xff;
 
-                int productNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfProductName, 0, buffer, 255, 0);
-                return new String(buffer, 2, productNameLength - 2, "UTF-16LE");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
+			int productNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfProductName, 0, buffer, 255, 0);
+			return new String(buffer, 2, productNameLength - 2, StandardCharsets.UTF_16LE);
+		}
 
         return null;
     }
@@ -232,16 +228,12 @@ public final class UsbMidiDeviceUtils {
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
 
-            try {
-                byte[] buffer = new byte[255];
-                int indexOfManufacturerName = rawDescriptors[14] & 0xff;
+			byte[] buffer = new byte[255];
+			int indexOfManufacturerName = rawDescriptors[14] & 0xff;
 
-                int manufacturerNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfManufacturerName, 0, buffer, 255, 0);
-                return new String(buffer, 2, manufacturerNameLength - 2, "UTF-16LE");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
+			int manufacturerNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfManufacturerName, 0, buffer, 255, 0);
+			return new String(buffer, 2, manufacturerNameLength - 2, StandardCharsets.UTF_16LE);
+		}
 
         return null;
     }

@@ -166,7 +166,7 @@ public final class MultipleMidiService extends Service {
         return Collections.unmodifiableSet(midiOutputDevices);
     }
 
-    private OnMidiDeviceAttachedListener serviceMidiDeviceAttachedListener = new OnMidiDeviceAttachedListener() {
+    private final OnMidiDeviceAttachedListener serviceMidiDeviceAttachedListener = new OnMidiDeviceAttachedListener() {
 
         @Override
         public void onDeviceAttached(@NonNull UsbDevice usbDevice) {
@@ -195,7 +195,7 @@ public final class MultipleMidiService extends Service {
         }
     };
 
-    private OnMidiDeviceDetachedListener serviceMidiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
+    private final OnMidiDeviceDetachedListener serviceMidiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
         @Override
         public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
             Log.d(Constants.TAG, "USB MIDI Device " + detachedDevice.getDeviceName() + " has been detached.");

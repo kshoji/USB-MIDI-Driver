@@ -64,7 +64,7 @@ public final class DeviceFilter {
     public static List<DeviceFilter> getDeviceFilters(@NonNull Context context) {
 		// create device filter
 		XmlPullParser parser = context.getResources().getXml(R.xml.device_filter);
-		List<DeviceFilter> deviceFilters = new ArrayList<DeviceFilter>();
+		List<DeviceFilter> deviceFilters = new ArrayList<>();
 		try {
 			int hasNext = XmlPullParser.START_DOCUMENT;
 			while (hasNext != XmlPullParser.END_DOCUMENT) {

@@ -33,7 +33,7 @@ public final class MidiOutputDevice {
     private static final int BUFFER_POOL_SIZE = 1024;
 	final LinkedList<byte[]> bufferPool = new LinkedList<>();
 
-    private ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
+    private final ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
 
     /**
 	 * Constructor
