@@ -163,7 +163,10 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
 
         if (removedDeviceAddress != null) {
             synchronized (midiSynthesizerMap) {
-                MidiSystem.removeSynthesizer(midiSynthesizerMap.get(removedDeviceAddress));
+                UsbMidiSynthesizer synthesizer = midiSynthesizerMap.get(removedDeviceAddress);
+                if (synthesizer != null) {
+                    MidiSystem.removeSynthesizer(synthesizer);
+                }
                 midiSynthesizerMap.remove(removedDeviceAddress);
             }
         }
@@ -190,7 +193,10 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
 
         if (removedDeviceAddress != null) {
             synchronized (midiSynthesizerMap) {
-                MidiSystem.removeSynthesizer(midiSynthesizerMap.get(removedDeviceAddress));
+                UsbMidiSynthesizer synthesizer = midiSynthesizerMap.get(removedDeviceAddress);
+                if (synthesizer != null) {
+                    MidiSystem.removeSynthesizer(synthesizer);
+                }
                 midiSynthesizerMap.remove(removedDeviceAddress);
             }
         }

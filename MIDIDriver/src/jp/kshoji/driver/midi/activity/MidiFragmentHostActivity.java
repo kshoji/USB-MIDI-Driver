@@ -52,15 +52,12 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
                 midiInputDevices.add(midiInputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<AbstractMidiFragment> midiFragments = getMidiFragments();
-                    for (AbstractMidiFragment midiFragment : midiFragments) {
-                        midiFragment.onMidiInputDeviceAttached(midiInputDevice);
-                    }
-                }
-            });
+            runOnUiThread(() -> {
+				List<AbstractMidiFragment> midiFragments = getMidiFragments();
+				for (AbstractMidiFragment midiFragment : midiFragments) {
+					midiFragment.onMidiInputDeviceAttached(midiInputDevice);
+				}
+			});
         }
 
         @Override
@@ -69,15 +66,12 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
                 midiOutputDevices.add(midiOutputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<AbstractMidiFragment> midiFragments = getMidiFragments();
-                    for (AbstractMidiFragment midiFragment : midiFragments) {
-                        midiFragment.onMidiOutputDeviceAttached(midiOutputDevice);
-                    }
-                }
-            });
+            runOnUiThread(() -> {
+				List<AbstractMidiFragment> midiFragments = getMidiFragments();
+				for (AbstractMidiFragment midiFragment : midiFragments) {
+					midiFragment.onMidiOutputDeviceAttached(midiOutputDevice);
+				}
+			});
         }
 	}
 

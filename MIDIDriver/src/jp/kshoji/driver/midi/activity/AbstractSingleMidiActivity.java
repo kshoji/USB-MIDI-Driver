@@ -45,12 +45,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
             midiInputDevice.setMidiEventListener(AbstractSingleMidiActivity.this);
             AbstractSingleMidiActivity.this.midiInputDevice = midiInputDevice;
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractSingleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractSingleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice));
         }
 
         @Override
@@ -85,7 +80,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 
         @Override
         public void onMidiInputDeviceDetached(@NonNull final MidiInputDevice midiInputDevice) {
-            if (AbstractSingleMidiActivity.this.midiInputDevice != null && AbstractSingleMidiActivity.this.midiInputDevice == midiInputDevice) {
+            if (AbstractSingleMidiActivity.this.midiInputDevice == midiInputDevice) {
                 AbstractSingleMidiActivity.this.midiInputDevice = null;
             }
             midiInputDevice.setMidiEventListener(null);
@@ -100,16 +95,11 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 
         @Override
         public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
-            if (AbstractSingleMidiActivity.this.midiOutputDevice != null && AbstractSingleMidiActivity.this.midiOutputDevice == midiOutputDevice) {
+            if (AbstractSingleMidiActivity.this.midiOutputDevice == midiOutputDevice) {
                 AbstractSingleMidiActivity.this.midiOutputDevice = null;
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractSingleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractSingleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice));
         }
     }
 	

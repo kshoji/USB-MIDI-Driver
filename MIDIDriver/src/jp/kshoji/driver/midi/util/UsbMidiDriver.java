@@ -221,7 +221,7 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             return Collections.unmodifiableSet(connectedUsbDevices);
         }
 
-        return Collections.unmodifiableSet(new HashSet<UsbDevice>());
+        return Collections.unmodifiableSet(new HashSet<>());
     }
 
     /**

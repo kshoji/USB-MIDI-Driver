@@ -47,12 +47,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiInputDevices.add(midiInputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice));
         }
 
         @Override
@@ -61,12 +56,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiOutputDevices.add(midiOutputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiOutputDeviceAttached(midiOutputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiOutputDeviceAttached(midiOutputDevice));
         }
     }
 
@@ -90,12 +80,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiInputDevices.remove(midiInputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiInputDeviceDetached(midiInputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiInputDeviceDetached(midiInputDevice));
         }
 
         @Override
@@ -104,12 +89,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiOutputDevices.remove(midiOutputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice));
         }
     }
 
@@ -123,8 +103,8 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		midiInputDevices = new HashSet<MidiInputDevice>();
-		midiOutputDevices = new HashSet<MidiOutputDevice>();
+		midiInputDevices = new HashSet<>();
+		midiOutputDevices = new HashSet<>();
 
 		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
 		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
