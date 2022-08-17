@@ -6,7 +6,8 @@ import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -51,15 +52,12 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
                 midiInputDevices.add(midiInputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<AbstractMidiFragment> midiFragments = getMidiFragments();
-                    for (AbstractMidiFragment midiFragment : midiFragments) {
-                        midiFragment.onMidiInputDeviceAttached(midiInputDevice);
-                    }
-                }
-            });
+            runOnUiThread(() -> {
+				List<AbstractMidiFragment> midiFragments = getMidiFragments();
+				for (AbstractMidiFragment midiFragment : midiFragments) {
+					midiFragment.onMidiInputDeviceAttached(midiInputDevice);
+				}
+			});
         }
 
         @Override
@@ -68,15 +66,12 @@ public class MidiFragmentHostActivity extends Activity implements OnMidiDeviceDe
                 midiOutputDevices.add(midiOutputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<AbstractMidiFragment> midiFragments = getMidiFragments();
-                    for (AbstractMidiFragment midiFragment : midiFragments) {
-                        midiFragment.onMidiOutputDeviceAttached(midiOutputDevice);
-                    }
-                }
-            });
+            runOnUiThread(() -> {
+				List<AbstractMidiFragment> midiFragments = getMidiFragments();
+				for (AbstractMidiFragment midiFragment : midiFragments) {
+					midiFragment.onMidiOutputDeviceAttached(midiOutputDevice);
+				}
+			});
         }
 	}
 

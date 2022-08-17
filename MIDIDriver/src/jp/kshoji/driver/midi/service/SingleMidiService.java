@@ -7,9 +7,10 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
@@ -165,7 +166,7 @@ public final class SingleMidiService extends Service {
         }
     };
 
-    private OnMidiDeviceDetachedListener midiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
+    private final OnMidiDeviceDetachedListener midiDeviceDetachedListener = new OnMidiDeviceDetachedListener() {
 
         @Override
         public void onDeviceDetached(@NonNull UsbDevice detachedDevice) {
@@ -174,7 +175,7 @@ public final class SingleMidiService extends Service {
 
         @Override
         public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
-            if (SingleMidiService.this.midiInputDevice != null && SingleMidiService.this.midiInputDevice == midiInputDevice) {
+            if (SingleMidiService.this.midiInputDevice == midiInputDevice) {
                 SingleMidiService.this.midiInputDevice.setMidiEventListener(null);
                 SingleMidiService.this.midiInputDevice = null;
             }
@@ -182,13 +183,13 @@ public final class SingleMidiService extends Service {
 
         @Override
         public void onMidiOutputDeviceDetached(@NonNull MidiOutputDevice midiOutputDevice) {
-            if (SingleMidiService.this.midiOutputDevice != null && SingleMidiService.this.midiOutputDevice == midiOutputDevice) {
+            if (SingleMidiService.this.midiOutputDevice == midiOutputDevice) {
                 SingleMidiService.this.midiOutputDevice = null;
             }
         }
     };
 
-    private OnMidiInputEventListener serviceMidiInputEventListener = new OnMidiInputEventListener() {
+    private final OnMidiInputEventListener serviceMidiInputEventListener = new OnMidiInputEventListener() {
 
         @Override
         public void onMidiMiscellaneousFunctionCodes(@NonNull MidiInputDevice sender, int cable, int byte1, int byte2, int byte3) {

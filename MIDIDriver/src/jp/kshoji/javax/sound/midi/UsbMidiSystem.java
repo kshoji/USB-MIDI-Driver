@@ -3,7 +3,8 @@ package jp.kshoji.javax.sound.midi;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -162,7 +163,10 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
 
         if (removedDeviceAddress != null) {
             synchronized (midiSynthesizerMap) {
-                MidiSystem.removeSynthesizer(midiSynthesizerMap.get(removedDeviceAddress));
+                UsbMidiSynthesizer synthesizer = midiSynthesizerMap.get(removedDeviceAddress);
+                if (synthesizer != null) {
+                    MidiSystem.removeSynthesizer(synthesizer);
+                }
                 midiSynthesizerMap.remove(removedDeviceAddress);
             }
         }
@@ -189,7 +193,10 @@ public final class UsbMidiSystem implements OnMidiDeviceAttachedListener, OnMidi
 
         if (removedDeviceAddress != null) {
             synchronized (midiSynthesizerMap) {
-                MidiSystem.removeSynthesizer(midiSynthesizerMap.get(removedDeviceAddress));
+                UsbMidiSynthesizer synthesizer = midiSynthesizerMap.get(removedDeviceAddress);
+                if (synthesizer != null) {
+                    MidiSystem.removeSynthesizer(synthesizer);
+                }
                 midiSynthesizerMap.remove(removedDeviceAddress);
             }
         }

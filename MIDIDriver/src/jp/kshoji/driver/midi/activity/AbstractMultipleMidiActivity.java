@@ -5,18 +5,19 @@ import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
 import jp.kshoji.driver.midi.device.MidiOutputDevice;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
-import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 
 /**
  * base Activity for using USB MIDI interface.
@@ -46,12 +47,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiInputDevices.add(midiInputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice));
         }
 
         @Override
@@ -60,12 +56,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiOutputDevices.add(midiOutputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiOutputDeviceAttached(midiOutputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiOutputDeviceAttached(midiOutputDevice));
         }
     }
 
@@ -89,12 +80,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiInputDevices.remove(midiInputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiInputDeviceDetached(midiInputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiInputDeviceDetached(midiInputDevice));
         }
 
         @Override
@@ -103,12 +89,7 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
                 midiOutputDevices.remove(midiOutputDevice);
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractMultipleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractMultipleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice));
         }
     }
 
@@ -122,8 +103,8 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		midiInputDevices = new HashSet<MidiInputDevice>();
-		midiOutputDevices = new HashSet<MidiOutputDevice>();
+		midiInputDevices = new HashSet<>();
+		midiOutputDevices = new HashSet<>();
 
 		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
 		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();

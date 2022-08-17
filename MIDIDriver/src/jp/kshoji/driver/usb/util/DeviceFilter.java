@@ -3,9 +3,10 @@ package jp.kshoji.driver.usb.util;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbInterface;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -63,7 +64,7 @@ public final class DeviceFilter {
     public static List<DeviceFilter> getDeviceFilters(@NonNull Context context) {
 		// create device filter
 		XmlPullParser parser = context.getResources().getXml(R.xml.device_filter);
-		List<DeviceFilter> deviceFilters = new ArrayList<DeviceFilter>();
+		List<DeviceFilter> deviceFilters = new ArrayList<>();
 		try {
 			int hasNext = XmlPullParser.START_DOCUMENT;
 			while (hasNext != XmlPullParser.END_DOCUMENT) {

@@ -6,8 +6,9 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -32,7 +33,7 @@ public final class MidiOutputDevice {
     private static final int BUFFER_POOL_SIZE = 1024;
 	final LinkedList<byte[]> bufferPool = new LinkedList<>();
 
-    private ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
+    private final ReusableByteArrayOutputStream sysexTransferDataStream = new ReusableByteArrayOutputStream();
 
     /**
 	 * Constructor

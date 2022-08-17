@@ -5,8 +5,9 @@ import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import jp.kshoji.driver.midi.device.MidiDeviceConnectionWatcher;
 import jp.kshoji.driver.midi.device.MidiInputDevice;
@@ -44,12 +45,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
             midiInputDevice.setMidiEventListener(AbstractSingleMidiActivity.this);
             AbstractSingleMidiActivity.this.midiInputDevice = midiInputDevice;
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractSingleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractSingleMidiActivity.this.onMidiInputDeviceAttached(midiInputDevice));
         }
 
         @Override
@@ -84,7 +80,7 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 
         @Override
         public void onMidiInputDeviceDetached(@NonNull final MidiInputDevice midiInputDevice) {
-            if (AbstractSingleMidiActivity.this.midiInputDevice != null && AbstractSingleMidiActivity.this.midiInputDevice == midiInputDevice) {
+            if (AbstractSingleMidiActivity.this.midiInputDevice == midiInputDevice) {
                 AbstractSingleMidiActivity.this.midiInputDevice = null;
             }
             midiInputDevice.setMidiEventListener(null);
@@ -99,16 +95,11 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 
         @Override
         public void onMidiOutputDeviceDetached(@NonNull final MidiOutputDevice midiOutputDevice) {
-            if (AbstractSingleMidiActivity.this.midiOutputDevice != null && AbstractSingleMidiActivity.this.midiOutputDevice == midiOutputDevice) {
+            if (AbstractSingleMidiActivity.this.midiOutputDevice == midiOutputDevice) {
                 AbstractSingleMidiActivity.this.midiOutputDevice = null;
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    AbstractSingleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice);
-                }
-            });
+            runOnUiThread(() -> AbstractSingleMidiActivity.this.onMidiOutputDeviceDetached(midiOutputDevice));
         }
     }
 	

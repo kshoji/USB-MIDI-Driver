@@ -1,5 +1,7 @@
 package jp.kshoji.driver.midi.device;
 
+import static jp.kshoji.driver.midi.util.Constants.TAG;
+
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,9 +13,11 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
@@ -66,30 +74,7 @@ public final class MidiDeviceConnectionWatcher {
         grantingDevice = null;
         this.deviceDetachedListener = deviceDetachedListener;
 
-        deviceDetachedHandler = new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message message) {
-                AsyncTask<UsbDevice, Void, Void> task = new AsyncTask<UsbDevice, Void, Void>() {
-
-                    @Override
-                    protected Void doInBackground(UsbDevice... params) {
-                        if (params == null || params.length < 1) {
-                            return null;
-                        }
-
-                        UsbDevice usbDevice = params[0];
-                        onDeviceDetached(usbDevice);
-
-                        return null;
-                    }
-                };
-
-                UsbDevice detachedDevice = (UsbDevice) message.obj;
-                task.execute(detachedDevice);
-
-                return true;
-            }
-        });
+        deviceDetachedHandler = new Handler(Looper.getMainLooper());
 
 		thread = new MidiDeviceConnectionWatchThread(usbManager, deviceAttachedListener, deviceDetachedHandler);
         thread.setName("MidiDeviceConnectionWatchThread");
@@ -214,7 +199,7 @@ public final class MidiDeviceConnectionWatcher {
 
                             deviceAttachedListener.onMidiInputDeviceAttached(midiInputDevice);
                         } catch (IllegalArgumentException iae) {
-                            Log.d(Constants.TAG, "This device didn't have any input endpoints.", iae);
+                            Log.d(TAG, "This device didn't have any input endpoints.", iae);
                         }
                     }
 
@@ -230,11 +215,11 @@ public final class MidiDeviceConnectionWatcher {
 
                             deviceAttachedListener.onMidiOutputDeviceAttached(midiOutputDevice);
                         } catch (IllegalArgumentException iae) {
-                            Log.d(Constants.TAG, "This device didn't have any output endpoints.", iae);
+                            Log.d(TAG, "This device didn't have any output endpoints.", iae);
                         }
                     }
 
-                    Log.d(Constants.TAG, "Device " + device.getDeviceName() + " has been attached.");
+                    Log.d(TAG, "Device " + device.getDeviceName() + " has been attached.");
 				}
 
                 // reset the 'isGranting' to false
@@ -251,7 +236,7 @@ public final class MidiDeviceConnectionWatcher {
 	 * @author K.Shoji
 	 */
 	private final class MidiDeviceConnectionWatchThread extends Thread {
-		private UsbManager usbManager;
+		private final UsbManager usbManager;
 		private OnMidiDeviceAttachedListener deviceAttachedListener;
 		private Handler deviceDetachedHandler;
 		private Set<UsbDevice> connectedDevices;
@@ -286,7 +271,11 @@ public final class MidiDeviceConnectionWatcher {
 						isGranting = true;
 						grantingDevice = deviceGrantQueue.remove();
 						
-						PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION), 0);
+						PendingIntent permissionIntent = PendingIntent.getBroadcast(
+							context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION),
+							android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
+						);
+						
 						context.registerReceiver(new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
 						usbManager.requestPermission(grantingDevice, permissionIntent);
 					}
@@ -322,7 +311,7 @@ public final class MidiDeviceConnectionWatcher {
 
                 Set<UsbInterface> midiInterfaces = UsbMidiDeviceUtils.findAllMidiInterfaces(device, deviceFilters);
                 if (midiInterfaces.size() > 0) {
-                    Log.d(Constants.TAG, "attached deviceName:" + device.getDeviceName() + ", device:" + device);
+                    Log.d(TAG, "attached deviceName:" + device.getDeviceName() + ", device:" + device);
                     synchronized (deviceGrantQueue) {
                         deviceGrantQueue.add(device);
                     }
@@ -340,10 +329,10 @@ public final class MidiDeviceConnectionWatcher {
 
                     grantedDevices.remove(device);
 
-					Log.d(Constants.TAG, "detached deviceName:" + device.getDeviceName() + ", device:" + device);
-                    Message message = deviceDetachedHandler.obtainMessage();
-                    message.obj = device;
-                    deviceDetachedHandler.sendMessage(message);
+					Log.d(TAG, "detached deviceName:" + device.getDeviceName() + ", device:" + device);
+                    deviceDetachedHandler.post(() -> {
+                        onDeviceDetached(device);
+                    });
 				}
 			}
 

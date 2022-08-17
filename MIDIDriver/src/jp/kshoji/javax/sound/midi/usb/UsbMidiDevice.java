@@ -1,9 +1,10 @@
 package jp.kshoji.javax.sound.midi.usb;
 
 import android.hardware.usb.UsbDevice;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,8 +28,8 @@ import jp.kshoji.javax.sound.midi.Transmitter;
  */
 public final class UsbMidiDevice implements MidiDevice {
 
-    private final Map<MidiOutputDevice, Receiver> receivers = new HashMap<MidiOutputDevice, Receiver>();
-    private final Map<MidiInputDevice, Transmitter> transmitters = new HashMap<MidiInputDevice, Transmitter>();
+    private final Map<MidiOutputDevice, Receiver> receivers = new HashMap<>();
+    private final Map<MidiInputDevice, Transmitter> transmitters = new HashMap<>();
 
     private boolean isOpened;
 
@@ -168,8 +169,7 @@ public final class UsbMidiDevice implements MidiDevice {
     @NonNull
     @Override
     public List<Receiver> getReceivers() {
-        final List<Receiver> result = new ArrayList<>();
-        result.addAll(receivers.values());
+        final List<Receiver> result = new ArrayList<>(receivers.values());
 
         return Collections.unmodifiableList(result);
     }
@@ -188,8 +188,7 @@ public final class UsbMidiDevice implements MidiDevice {
     @NonNull
     @Override
     public List<Transmitter> getTransmitters() {
-        final List<Transmitter> result = new ArrayList<>();
-        result.addAll(transmitters.values());
+        final List<Transmitter> result = new ArrayList<>(transmitters.values());
 
         return Collections.unmodifiableList(result);
     }
@@ -215,7 +214,9 @@ public final class UsbMidiDevice implements MidiDevice {
     public void removeMidiInputDevice(@NonNull final MidiInputDevice midiInputDevice) {
         if (transmitters.containsKey(midiInputDevice)) {
             final Transmitter transmitter = transmitters.remove(midiInputDevice);
-            transmitter.close();
+            if (transmitter != null) {
+                transmitter.close();
+            }
         }
     }
 
@@ -250,7 +251,9 @@ public final class UsbMidiDevice implements MidiDevice {
     public void removeMidiOutputDevice(@NonNull final MidiOutputDevice midiOutputDevice) {
         if (receivers.containsKey(midiOutputDevice)) {
             final Receiver receiver = receivers.remove(midiOutputDevice);
-            receiver.close();
+            if (receiver != null) {
+                receiver.close();
+            }
         }
     }
 
