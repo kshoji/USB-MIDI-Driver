@@ -111,7 +111,7 @@
 		<dependency>
 			<groupId>jp.kshoji</groupId>
 			<artifactId>midi-driver-library</artifactId>
-			<version>0.1.7-SNAPSHOT</version>
+			<version>0.1.8</version>
 			<type>apklib</type>
 		</dependency>
 
