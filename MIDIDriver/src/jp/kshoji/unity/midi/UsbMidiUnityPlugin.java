@@ -357,6 +357,44 @@ public class UsbMidiUnityPlugin {
         return null;
     }
 
+    /**
+     * Obtains device vendor id for deviceId
+     * @param deviceId the device id
+     * @return device vendor id, or null
+     */
+    public String getVendorId(String deviceId) {
+        MidiOutputDevice outputDevice = midiOutputDeviceMap.get(deviceId);
+        if (outputDevice != null) {
+            return String.valueOf(outputDevice.getUsbDevice().getVendorId());
+        }
+
+        MidiInputDevice inputDevice = midiInputDeviceMap.get(deviceId);
+        if (inputDevice != null) {
+            return String.valueOf(inputDevice.getUsbDevice().getVendorId());
+        }
+
+        return null;
+    }
+
+    /**
+     * Obtains device product id for deviceId
+     * @param deviceId the device id
+     * @return device product id, or null
+     */
+    public String getProductId(String deviceId) {
+        MidiOutputDevice outputDevice = midiOutputDeviceMap.get(deviceId);
+        if (outputDevice != null) {
+            return String.valueOf(outputDevice.getUsbDevice().getProductId());
+        }
+
+        MidiInputDevice inputDevice = midiInputDeviceMap.get(deviceId);
+        if (inputDevice != null) {
+            return String.valueOf(inputDevice.getUsbDevice().getProductId());
+        }
+
+        return null;
+    }
+
     public void sendMidiNoteOn(String serializedMidiMessage) {
         String[] split = serializedMidiMessage.split(",");
         if (split.length < 5) {
