@@ -25,6 +25,7 @@ public class UsbMidiUnityPlugin {
 
     private UsbMidiDriver usbMidiDriver;
     HashMap<String, MidiOutputDevice> midiOutputDeviceMap = new HashMap<>();
+    HashMap<String, MidiInputDevice> midiInputDeviceMap = new HashMap<>();
 
     OnUsbMidiDeviceConnectionListener onMidiDeviceConnectionListener;
     OnUsbMidiInputEventListener onMidiInputEventListener;
@@ -46,6 +47,7 @@ public class UsbMidiUnityPlugin {
 
             @Override
             public void onMidiInputDeviceAttached(@NonNull MidiInputDevice midiInputDevice) {
+                midiInputDeviceMap.put(midiInputDevice.getDeviceAddress(), midiInputDevice);
                 if (onMidiDeviceConnectionListener != null) {
                     onMidiDeviceConnectionListener.onMidiInputDeviceAttached(midiInputDevice.getDeviceAddress());
                     return;
@@ -71,6 +73,7 @@ public class UsbMidiUnityPlugin {
 
             @Override
             public void onMidiInputDeviceDetached(@NonNull MidiInputDevice midiInputDevice) {
+                midiInputDeviceMap.remove(midiInputDevice.getDeviceAddress());
                 if (onMidiDeviceConnectionListener != null) {
                     onMidiDeviceConnectionListener.onMidiInputDeviceDetached(midiInputDevice.getDeviceAddress());
                     return;
@@ -321,20 +324,36 @@ public class UsbMidiUnityPlugin {
      * @return device name, product name, or null
      */
     public String getDeviceName(String deviceId) {
-        MidiOutputDevice device = midiOutputDeviceMap.get(deviceId);
-        if (device != null) {
-            if (!TextUtils.isEmpty(device.getProductName())) {
-                return device.getProductName();
+        MidiOutputDevice outputDevice = midiOutputDeviceMap.get(deviceId);
+        if (outputDevice != null) {
+            if (!TextUtils.isEmpty(outputDevice.getProductName())) {
+                return outputDevice.getProductName();
             }
-            if (!TextUtils.isEmpty(device.getUsbDevice().getDeviceName())) {
-                return device.getUsbDevice().getDeviceName();
+            if (!TextUtils.isEmpty(outputDevice.getUsbDevice().getDeviceName())) {
+                return outputDevice.getUsbDevice().getDeviceName();
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                if (!TextUtils.isEmpty(device.getUsbDevice().getProductName())) {
-                    return device.getUsbDevice().getProductName();
+                if (!TextUtils.isEmpty(outputDevice.getUsbDevice().getProductName())) {
+                    return outputDevice.getUsbDevice().getProductName();
                 }
             }
         }
+
+        MidiInputDevice inputDevice = midiInputDeviceMap.get(deviceId);
+        if (inputDevice != null) {
+            if (!TextUtils.isEmpty(inputDevice.getProductName())) {
+                return inputDevice.getProductName();
+            }
+            if (!TextUtils.isEmpty(inputDevice.getUsbDevice().getDeviceName())) {
+                return inputDevice.getUsbDevice().getDeviceName();
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (!TextUtils.isEmpty(inputDevice.getUsbDevice().getProductName())) {
+                    return inputDevice.getUsbDevice().getProductName();
+                }
+            }
+        }
+
         return null;
     }
 
