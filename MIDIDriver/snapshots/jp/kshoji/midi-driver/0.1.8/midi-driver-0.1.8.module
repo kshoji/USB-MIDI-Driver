@@ -10,7 +10,7 @@
   },
   "createdBy": {
     "gradle": {
-      "version": "7.3.3"
+      "version": "7.5"
     }
   },
   "variants": [
@@ -55,11 +55,11 @@
         {
           "name": "midi-driver-0.1.8.aar",
           "url": "midi-driver-0.1.8.aar",
-          "size": 82595,
-          "sha512": "28db2d4099c0773185db24f39c40eafaeeb97aec03b79c107ef131fd215c5bb5304e1d33b776925056eac59324eea39e5b8857a40c6b8e1850c2c088f40f77a7",
-          "sha256": "7a2e3bacb1e90c4b59e729d6c9d4e2387f0127c821f8f0c3b512b268e2e6f25b",
-          "sha1": "d471e9dfbaa04e1d1fa71aef003d25f060f26a6c",
-          "md5": "ee0c85964caa1b6bfb4100f809fba461"
+          "size": 82844,
+          "sha512": "ab2dabd7e8f055c74f7548942ef0fba09cbf0f6301e07c09ba4e2dac3ed8ec073fd9d12a8a2022ce08a49d66d72954dd3ff55b7344814a50806fbfab5c812015",
+          "sha256": "4e3564593594b1c06072a1ad84ccac73626f1928c93f6babb07d456403fa9cdc",
+          "sha1": "bf136fa6dc1e6dd1661890dd5303684ae3bceb34",
+          "md5": "f5452f048fdf5f03a7c537d6167d2c8e"
         }
       ]
     },
@@ -104,11 +104,11 @@
         {
           "name": "midi-driver-0.1.8.aar",
           "url": "midi-driver-0.1.8.aar",
-          "size": 82595,
-          "sha512": "28db2d4099c0773185db24f39c40eafaeeb97aec03b79c107ef131fd215c5bb5304e1d33b776925056eac59324eea39e5b8857a40c6b8e1850c2c088f40f77a7",
-          "sha256": "7a2e3bacb1e90c4b59e729d6c9d4e2387f0127c821f8f0c3b512b268e2e6f25b",
-          "sha1": "d471e9dfbaa04e1d1fa71aef003d25f060f26a6c",
-          "md5": "ee0c85964caa1b6bfb4100f809fba461"
+          "size": 82844,
+          "sha512": "ab2dabd7e8f055c74f7548942ef0fba09cbf0f6301e07c09ba4e2dac3ed8ec073fd9d12a8a2022ce08a49d66d72954dd3ff55b7344814a50806fbfab5c812015",
+          "sha256": "4e3564593594b1c06072a1ad84ccac73626f1928c93f6babb07d456403fa9cdc",
+          "sha1": "bf136fa6dc1e6dd1661890dd5303684ae3bceb34",
+          "md5": "f5452f048fdf5f03a7c537d6167d2c8e"
         }
       ]
     },
