@@ -1,5 +1,6 @@
 package jp.kshoji.driver.midi.device;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 import static jp.kshoji.driver.midi.util.Constants.TAG;
 
 import android.app.PendingIntent;
@@ -12,6 +13,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -270,13 +272,23 @@ public final class MidiDeviceConnectionWatcher {
 					if (!deviceGrantQueue.isEmpty() && !isGranting) {
 						isGranting = true;
 						grantingDevice = deviceGrantQueue.remove();
-						
+
+						// it is strongly recommended to not to use FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+						// TODO: make the Intent explicit or the PendingIntent immutable, thereby making the Intent safe.
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(
 							context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION),
-							android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
+							Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT : 0
 						);
-						
-						context.registerReceiver(new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
+
+						UsbMidiGrantedReceiver receiver = new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener);
+						IntentFilter filter = new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
+
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+							context.registerReceiver(receiver, filter, RECEIVER_EXPORTED);
+						} else {
+							context.registerReceiver(receiver, filter);
+						}
+
 						usbManager.requestPermission(grantingDevice, permissionIntent);
 					}
 				}
