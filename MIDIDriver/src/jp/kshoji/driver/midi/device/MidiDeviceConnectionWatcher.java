@@ -1,5 +1,7 @@
 package jp.kshoji.driver.midi.device;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+import static android.content.Context.RECEIVER_NOT_EXPORTED;
 import static jp.kshoji.driver.midi.util.Constants.TAG;
 
 import android.app.PendingIntent;
@@ -12,6 +14,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -242,6 +245,7 @@ public final class MidiDeviceConnectionWatcher {
 		private Set<UsbDevice> connectedDevices;
 		boolean stopFlag;
 		private List<DeviceFilter> deviceFilters;
+		private String packageName;
 
 		/**
 		 * Constructor
@@ -254,6 +258,7 @@ public final class MidiDeviceConnectionWatcher {
 			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedHandler = deviceDetachedHandler;
+			this.packageName = context.getPackageName();
 			connectedDevices = new HashSet<>();
 			stopFlag = false;
 			deviceFilters = DeviceFilter.getDeviceFilters(context);
@@ -270,13 +275,24 @@ public final class MidiDeviceConnectionWatcher {
 					if (!deviceGrantQueue.isEmpty() && !isGranting) {
 						isGranting = true;
 						grantingDevice = deviceGrantQueue.remove();
-						
+
+						Intent intent = new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
+						intent.setPackage(packageName); // make intent explicit
+
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(
-							context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION),
-							android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
+							context, 0, intent, 
+							Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
 						);
-						
-						context.registerReceiver(new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
+
+						UsbMidiGrantedReceiver receiver = new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener);
+						IntentFilter filter = new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
+
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+							context.registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED);
+						} else {
+							context.registerReceiver(receiver, filter);
+						}
+
 						usbManager.requestPermission(grantingDevice, permissionIntent);
 					}
 				}
