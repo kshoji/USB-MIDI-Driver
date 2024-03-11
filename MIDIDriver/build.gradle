@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     api 'jp.kshoji:javax-sound-midi:0.0.4:@aar'
-    api 'androidx.annotation:annotation:1.4.0'
+    api 'androidx.annotation:annotation:1.7.1'
     compileOnly project(':UnityPlayerMock')
     api fileTree(dir: 'libs', include: '*.jar')
 }
@@ -22,7 +22,10 @@ android {
 
     defaultConfig {
         minSdkVersion 12
+        targetSdkVersion 34
     }
+
+    namespace "jp.kshoji.driver.midi"
 
     sourceSets {
         main {

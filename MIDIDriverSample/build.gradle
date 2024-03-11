@@ -17,7 +17,10 @@ android {
 
     defaultConfig {
         minSdkVersion 12
+        targetSdkVersion 34
     }
+
+    namespace "jp.kshoji.driver.midi.sample"
 
     sourceSets {
         main {
