@@ -3,6 +3,7 @@ package jp.kshoji.driver.midi.device;
 import static android.content.Context.RECEIVER_NOT_EXPORTED;
 import static jp.kshoji.driver.midi.util.Constants.TAG;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -256,6 +257,7 @@ public final class MidiDeviceConnectionWatcher {
 			deviceFilters = DeviceFilter.getDeviceFilters(context);
 		}
 
+		@SuppressLint("UnspecifiedRegisterReceiverFlag")
 		@Override
 		public void run() {
 			super.run();
@@ -289,6 +291,7 @@ public final class MidiDeviceConnectionWatcher {
 						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 							context.registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED);
 						} else {
+							// @SuppressLint("UnspecifiedRegisterReceiverFlag")
 							context.registerReceiver(receiver, filter);
 						}
 
