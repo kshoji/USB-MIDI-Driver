@@ -279,15 +279,22 @@ public final class MidiDeviceConnectionWatcher {
 						Intent intent = new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
 						intent.setPackage(packageName); // make intent explicit
 
+						int intentFlags = 0;
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+							intentFlags |= PendingIntent.FLAG_MUTABLE;
+						}
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+							intentFlags |= PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+						}
+
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(
-							context, 0, intent, 
-							Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
+							context, 0, intent, intentFlags
 						);
 
 						UsbMidiGrantedReceiver receiver = new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener);
 						IntentFilter filter = new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
 
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 							context.registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED);
 						} else {
 							context.registerReceiver(receiver, filter);
