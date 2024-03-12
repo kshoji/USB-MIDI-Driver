@@ -1,7 +1,9 @@
 package jp.kshoji.driver.midi.device;
 
+import static android.content.Context.RECEIVER_NOT_EXPORTED;
 import static jp.kshoji.driver.midi.util.Constants.TAG;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,10 +13,9 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
-import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -26,14 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import jp.kshoji.driver.midi.listener.OnMidiDeviceAttachedListener;
 import jp.kshoji.driver.midi.listener.OnMidiDeviceDetachedListener;
-import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 import jp.kshoji.driver.usb.util.DeviceFilter;
 
@@ -242,6 +238,7 @@ public final class MidiDeviceConnectionWatcher {
 		private Set<UsbDevice> connectedDevices;
 		boolean stopFlag;
 		private List<DeviceFilter> deviceFilters;
+		private String packageName;
 
 		/**
 		 * Constructor
@@ -254,11 +251,13 @@ public final class MidiDeviceConnectionWatcher {
 			this.usbManager = usbManager;
 			this.deviceAttachedListener = deviceAttachedListener;
 			this.deviceDetachedHandler = deviceDetachedHandler;
+			this.packageName = context.getPackageName();
 			connectedDevices = new HashSet<>();
 			stopFlag = false;
 			deviceFilters = DeviceFilter.getDeviceFilters(context);
 		}
 
+		@SuppressLint("UnspecifiedRegisterReceiverFlag")
 		@Override
 		public void run() {
 			super.run();
@@ -270,13 +269,32 @@ public final class MidiDeviceConnectionWatcher {
 					if (!deviceGrantQueue.isEmpty() && !isGranting) {
 						isGranting = true;
 						grantingDevice = deviceGrantQueue.remove();
-						
+
+						Intent intent = new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
+						intent.setPackage(packageName); // make intent explicit
+
+						int intentFlags = 0;
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+							intentFlags |= PendingIntent.FLAG_MUTABLE;
+						}
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+							intentFlags |= PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+						}
+
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(
-							context, 0, new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION),
-							android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0
+							context, 0, intent, intentFlags
 						);
-						
-						context.registerReceiver(new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener), new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION));
+
+						UsbMidiGrantedReceiver receiver = new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener);
+						IntentFilter filter = new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
+
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+							context.registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED);
+						} else {
+							// @SuppressLint("UnspecifiedRegisterReceiverFlag")
+							context.registerReceiver(receiver, filter);
+						}
+
 						usbManager.requestPermission(grantingDevice, permissionIntent);
 					}
 				}
