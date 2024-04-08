@@ -51,6 +51,21 @@ android {
         release.setRoot('build-types/release')
     }
 
+    defaultConfig {
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
     publishing {
         singleVariant('release') {
             withSourcesJar()
