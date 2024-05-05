@@ -15,9 +15,8 @@
     <dependency>
       <groupId>jp.kshoji</groupId>
       <artifactId>javax-sound-midi</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.5</version>
       <type>aar</type>
-      <classifier></classifier>
       <scope>compile</scope>
       <exclusions>
         <exclusion>
