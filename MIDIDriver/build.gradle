@@ -5,13 +5,13 @@ plugins {
 
 repositories {
     maven {
-        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/develop/javax.sound.midi/repository'
+        url 'https://github.com/kshoji/javax.sound.midi-for-Android/raw/master/javax.sound.midi/repository'
     }
     mavenCentral()
 }
 
 dependencies {
-    api 'jp.kshoji:javax-sound-midi:0.0.4:@aar'
+    api 'jp.kshoji:javax-sound-midi:0.0.5@aar'
     api 'androidx.annotation:annotation:1.7.1'
     compileOnly project(':UnityPlayerMock')
     api fileTree(dir: 'libs', include: '*.jar')
