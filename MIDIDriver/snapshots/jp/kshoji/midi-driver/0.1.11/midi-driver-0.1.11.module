@@ -27,7 +27,7 @@
           "group": "jp.kshoji",
           "module": "javax-sound-midi",
           "version": {
-            "requires": "0.0.4"
+            "requires": "0.0.5"
           },
           "excludes": [
             {
@@ -76,7 +76,7 @@
           "group": "jp.kshoji",
           "module": "javax-sound-midi",
           "version": {
-            "requires": "0.0.4"
+            "requires": "0.0.5"
           },
           "excludes": [
             {
