@@ -25,6 +25,11 @@ android {
         targetSdkVersion 34
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     namespace "jp.kshoji.driver.midi"
 
     sourceSets {
@@ -79,7 +84,7 @@ publishing {
         release(MavenPublication) {
             group = 'jp.kshoji'
             artifactId = 'midi-driver'
-            version = '0.1.10'
+            version = '0.1.11'
 
             afterEvaluate {
                 from components.release
