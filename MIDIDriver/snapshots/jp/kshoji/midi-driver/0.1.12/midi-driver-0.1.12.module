@@ -1,0 +1,136 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "jp.kshoji",
+    "module": "midi-driver",
+    "version": "0.1.12",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "jp.kshoji",
+          "module": "javax-sound-midi",
+          "version": {
+            "requires": "0.0.6"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "javax-sound-midi",
+              "type": "aar",
+              "extension": "aar"
+            }
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.7.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "midi-driver-0.1.12.aar",
+          "url": "midi-driver-0.1.12.aar",
+          "size": 76800,
+          "sha512": "faa0e22b89e3b4a4e7c01265705034f1691a69a0c4a5c99258d7369d333b745be724f130d556fc9a97f5f2d8d2fe90ebb55c21379b141c6ff5820fe79e987e25",
+          "sha256": "a8f5816c7c85389d26f4ce766631823d9b2dd38312d5ca68bf83f05177b1aec6",
+          "sha1": "98c8297fbdcfd21c5dccfead8ba31e2536068504",
+          "md5": "c171b0745e54b6786d093ddaff24ef07"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "jp.kshoji",
+          "module": "javax-sound-midi",
+          "version": {
+            "requires": "0.0.6"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "javax-sound-midi",
+              "type": "aar",
+              "extension": "aar"
+            }
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.7.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "midi-driver-0.1.12.aar",
+          "url": "midi-driver-0.1.12.aar",
+          "size": 76800,
+          "sha512": "faa0e22b89e3b4a4e7c01265705034f1691a69a0c4a5c99258d7369d333b745be724f130d556fc9a97f5f2d8d2fe90ebb55c21379b141c6ff5820fe79e987e25",
+          "sha256": "a8f5816c7c85389d26f4ce766631823d9b2dd38312d5ca68bf83f05177b1aec6",
+          "sha1": "98c8297fbdcfd21c5dccfead8ba31e2536068504",
+          "md5": "c171b0745e54b6786d093ddaff24ef07"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "midi-driver-0.1.12-sources.jar",
+          "url": "midi-driver-0.1.12-sources.jar",
+          "size": 45536,
+          "sha512": "edb12df54473e77f39c78d70f73cefb70015dc17f84f304ac0061e93c24c5aa85c47b09a6df322900a331063a8ee5f414d5ebaf3a1d472325fb789f09a841bb8",
+          "sha256": "4d7dfd4d1f87e0c55f09af8bf12c160a202d48780ec930901334d0ba0663de94",
+          "sha1": "377c939da9532182466c7d9dbe26f4b9f3198ee9",
+          "md5": "c9e9ef040c12e2e42f256b4e34c8de67"
+        }
+      ]
+    }
+  ]
+}
