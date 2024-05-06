@@ -84,7 +84,7 @@ publishing {
         release(MavenPublication) {
             group = 'jp.kshoji'
             artifactId = 'midi-driver'
-            version = '0.1.12'
+            version = '0.1.13'
 
             afterEvaluate {
                 from components.release
