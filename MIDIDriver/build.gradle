@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    api 'jp.kshoji:javax-sound-midi:0.0.5@aar'
+    api 'jp.kshoji:javax-sound-midi:0.0.6@aar'
     api 'androidx.annotation:annotation:1.7.1'
     compileOnly project(':UnityPlayerMock')
     api fileTree(dir: 'libs', include: '*.jar')
@@ -84,7 +84,7 @@ publishing {
         release(MavenPublication) {
             group = 'jp.kshoji'
             artifactId = 'midi-driver'
-            version = '0.1.11'
+            version = '0.1.12'
 
             afterEvaluate {
                 from components.release
