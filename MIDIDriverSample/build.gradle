@@ -13,11 +13,11 @@ dependencies {
 }
 
 android {
-    compileSdk 34
+    compileSdk = 36
 
     defaultConfig {
         minSdkVersion 12
-        targetSdkVersion 34
+        targetSdkVersion 36
     }
 
     namespace "jp.kshoji.driver.midi.sample"
