@@ -107,6 +107,9 @@ public abstract class AbstractMultipleMidiActivity extends Activity implements O
 		midiOutputDevices = new HashSet<>();
 
 		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
+		if (usbManager == null) {
+			throw new IllegalStateException("UsbManager is not available");
+		}
 		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
 		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
 

@@ -52,7 +52,9 @@ public final class MidiInputDevice {
 
         inputEndpoint = usbEndpoint;
 
-        usbDeviceConnection.claimInterface(usbInterface, true);
+        if (!usbDeviceConnection.claimInterface(usbInterface, true)) {
+            throw new IllegalArgumentException("Failed to claim interface.");
+        }
         waiterThread.setPriority(8);
         waiterThread.setName("MidiInputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
         waiterThread.start();
@@ -73,7 +75,13 @@ public final class MidiInputDevice {
      */
     void stop() {
         midiEventListener = null;
-        usbDeviceConnection.releaseInterface(usbInterface);
+        if (usbDeviceConnection != null && usbInterface != null) {
+            try {
+                usbDeviceConnection.releaseInterface(usbInterface);
+            } catch (Exception e) {
+                // ignore exception on release
+            }
+        }
 
         waiterThread.stopFlag = true;
         resume();
@@ -242,7 +250,15 @@ public final class MidiInputDevice {
 
             // Don't allocate instances in the loop, as much as possible.
             while (!stopFlag) {
-                length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 1000);
+                if (deviceConnection == null || usbEndpoint == null) {
+                    break;
+                }
+                try {
+                    length = deviceConnection.bulkTransfer(usbEndpoint, bulkReadBuffer, maxPacketSize, 1000);
+                } catch (Exception e) {
+                    // device may be disconnected
+                    break;
+                }
 
                 synchronized (suspendSignal) {
                     if (suspendFlag) {
@@ -259,6 +275,11 @@ public final class MidiInputDevice {
 
                 if (length <= 0) {
                     continue;
+                }
+
+                if (readBufferSize + length > readBuffer.length) {
+                    // buffer overflow, force flush
+                    readBufferSize = 0;
                 }
 
                 System.arraycopy(bulkReadBuffer, 0, readBuffer, readBufferSize, length);

@@ -52,7 +52,9 @@ public final class MidiOutputDevice {
 
         outputEndpoint = usbEndpoint;
 
-        this.usbDeviceConnection.claimInterface(this.usbInterface, true);
+        if (!this.usbDeviceConnection.claimInterface(this.usbInterface, true)) {
+            return;
+        }
 
         waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
 		waiterThread.start();
@@ -66,7 +68,13 @@ public final class MidiOutputDevice {
      * stop to use this device.
      */
     void stop() {
-        usbDeviceConnection.releaseInterface(usbInterface);
+        if (usbDeviceConnection != null && usbInterface != null) {
+            try {
+                usbDeviceConnection.releaseInterface(usbInterface);
+            } catch (Exception e) {
+                // ignore exception on release
+            }
+        }
 
         resume();
         waiterThread.stopFlag = true;
@@ -207,47 +215,54 @@ public final class MidiOutputDevice {
                 if (dequedDataBuffer != null) {
                     dequedDataBufferLength = dequedDataBuffer.length;
 
-                    synchronized (usbDeviceConnection) {
-                        // usb can't send data larger than maxPacketSize. split the data.
-                        for (bufferPosition = 0; bufferPosition < dequedDataBufferLength; bufferPosition += maxPacketSize) {
-                            endpointBufferLength = dequedDataBufferLength - bufferPosition;
-                            if (endpointBufferLength > maxPacketSize) {
-                                endpointBufferLength = maxPacketSize;
-                            }
+                    if (usbDeviceConnection != null && outputEndpoint != null) {
+                        synchronized (usbDeviceConnection) {
+                            // usb can't send data larger than maxPacketSize. split the data.
+                            for (bufferPosition = 0; bufferPosition < dequedDataBufferLength; bufferPosition += maxPacketSize) {
+                                endpointBufferLength = dequedDataBufferLength - bufferPosition;
+                                if (endpointBufferLength > maxPacketSize) {
+                                    endpointBufferLength = maxPacketSize;
+                                }
 
-                            usbRequestFailCount = 0;
-                            // if device disconnected, usbDeviceConnection.bulkTransfer returns negative value
-                            while (true) {
-                                // loop until transfer completed
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                                    // JELLY_BEAN_MR2 supports bulkTransfer with offset
-                                    bytesWritten = usbDeviceConnection.bulkTransfer(outputEndpoint, dequedDataBuffer, bufferPosition, endpointBufferLength, 10);
-                                } else {
-                                    if (bufferPosition > 0) {
-                                        // copy the fragment to the endpointBuffer before transfer
-                                        System.arraycopy(dequedDataBuffer, bufferPosition, endpointBuffer, 0, endpointBufferLength);
-                                        bytesWritten = usbDeviceConnection.bulkTransfer(outputEndpoint, endpointBuffer, endpointBufferLength, 10);
+                                usbRequestFailCount = 0;
+                                // if device disconnected, usbDeviceConnection.bulkTransfer returns negative value
+                                while (true) {
+                                    // loop until transfer completed
+                                    try {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                                            // JELLY_BEAN_MR2 supports bulkTransfer with offset
+                                            bytesWritten = usbDeviceConnection.bulkTransfer(outputEndpoint, dequedDataBuffer, bufferPosition, endpointBufferLength, 10);
+                                        } else {
+                                            if (bufferPosition > 0) {
+                                                // copy the fragment to the endpointBuffer before transfer
+                                                System.arraycopy(dequedDataBuffer, bufferPosition, endpointBuffer, 0, endpointBufferLength);
+                                                bytesWritten = usbDeviceConnection.bulkTransfer(outputEndpoint, endpointBuffer, endpointBufferLength, 10);
+                                            } else {
+                                                // it's the first fragment.. copy is not required
+                                                bytesWritten = usbDeviceConnection.bulkTransfer(outputEndpoint, dequedDataBuffer, endpointBufferLength, 10);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        // device may be disconnected
+                                        bytesWritten = -1;
+                                    }
+
+                                    if (bytesWritten < 0) {
+                                        usbRequestFailCount++;
                                     } else {
-                                        // it's the first fragment.. copy is not required
-                                        bytesWritten = usbDeviceConnection.bulkTransfer(outputEndpoint, dequedDataBuffer, endpointBufferLength, 10);
+                                        break;
+                                    }
+
+                                    if (usbRequestFailCount > 10) {
+                                        // maybe disconnected
+                                        stopFlag = true;
+                                        break;
                                     }
                                 }
 
-                                if (bytesWritten < 0) {
-                                    usbRequestFailCount++;
-                                } else {
+                                if (stopFlag) {
                                     break;
                                 }
-
-                                if (usbRequestFailCount > 10) {
-                                    // maybe disconnected
-                                    stopFlag = true;
-                                    break;
-                                }
-                            }
-
-                            if (stopFlag) {
-                                break;
                             }
                         }
                     }
@@ -453,6 +468,9 @@ public final class MidiOutputDevice {
 	 * @param systemExclusive : start with 'F0', and end with 'F7'
 	 */
     public void sendMidiSystemExclusive(int cable, @NonNull byte[] systemExclusive) {
+        if (systemExclusive == null) {
+            return;
+        }
         if (systemExclusive.length > 3) {
             sysexTransferDataStream.reset();
 

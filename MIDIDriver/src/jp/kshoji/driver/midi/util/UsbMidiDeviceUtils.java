@@ -154,7 +154,7 @@ public final class UsbMidiDeviceUtils {
 		if (usbInterface.getInterfaceClass() == 1 && usbInterface.getInterfaceSubclass() == 3) {
 			for (int endpointIndex = 0; endpointIndex < endpointCount; endpointIndex++) {
 				UsbEndpoint endpoint = usbInterface.getEndpoint(endpointIndex);
-				if (endpoint.getDirection() == direction) {
+				if (endpoint != null && endpoint.getDirection() == direction) {
 					return endpoint;
 				}
 			}
@@ -175,7 +175,7 @@ public final class UsbMidiDeviceUtils {
 			// non standard USB MIDI interface
 			for (int endpointIndex = 0; endpointIndex < endpointCount; endpointIndex++) {
 				UsbEndpoint endpoint = usbInterface.getEndpoint(endpointIndex);
-				if ((endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT)) {
+				if (endpoint != null && (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK || endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT)) {
 					if (endpoint.getDirection() == direction) {
 						return endpoint;
 					}
@@ -199,15 +199,32 @@ public final class UsbMidiDeviceUtils {
     @Nullable
     public static String getProductName(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return usbDevice.getProductName();
+            try {
+                return usbDevice.getProductName();
+            } catch (Exception e) {
+                return null;
+            }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
+            try {
+                byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
+                if (rawDescriptors == null || rawDescriptors.length < 16) {
+                    return null;
+                }
 
-			byte[] buffer = new byte[255];
-			int indexOfProductName = rawDescriptors[15] & 0xff;
+                byte[] buffer = new byte[255];
+                int indexOfProductName = rawDescriptors[15] & 0xff;
+                if (indexOfProductName == 0) {
+                    return null;
+                }
 
-			int productNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfProductName, 0, buffer, 255, 0);
-			return new String(buffer, 2, productNameLength - 2, StandardCharsets.UTF_16LE);
+                int productNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfProductName, 0, buffer, 255, 0);
+                if (productNameLength < 2) {
+                    return null;
+                }
+                return new String(buffer, 2, productNameLength - 2, StandardCharsets.UTF_16LE);
+            } catch (Exception e) {
+                return null;
+            }
 		}
 
         return null;
@@ -224,15 +241,32 @@ public final class UsbMidiDeviceUtils {
     @Nullable
     public static String getManufacturerName(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return usbDevice.getManufacturerName();
+            try {
+                return usbDevice.getManufacturerName();
+            } catch (Exception e) {
+                return null;
+            }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
+            try {
+                byte[] rawDescriptors = usbDeviceConnection.getRawDescriptors();
+                if (rawDescriptors == null || rawDescriptors.length < 15) {
+                    return null;
+                }
 
-			byte[] buffer = new byte[255];
-			int indexOfManufacturerName = rawDescriptors[14] & 0xff;
+                byte[] buffer = new byte[255];
+                int indexOfManufacturerName = rawDescriptors[14] & 0xff;
+                if (indexOfManufacturerName == 0) {
+                    return null;
+                }
 
-			int manufacturerNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfManufacturerName, 0, buffer, 255, 0);
-			return new String(buffer, 2, manufacturerNameLength - 2, StandardCharsets.UTF_16LE);
+                int manufacturerNameLength = usbDeviceConnection.controlTransfer(UsbConstants.USB_DIR_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DATA_TYPE_STRING << 8) | indexOfManufacturerName, 0, buffer, 255, 0);
+                if (manufacturerNameLength < 2) {
+                    return null;
+                }
+                return new String(buffer, 2, manufacturerNameLength - 2, StandardCharsets.UTF_16LE);
+            } catch (Exception e) {
+                return null;
+            }
 		}
 
         return null;

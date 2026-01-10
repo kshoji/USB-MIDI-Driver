@@ -126,6 +126,9 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         midiOutputDevices = new HashSet<>();
 
         UsbManager usbManager = (UsbManager) context.getApplicationContext().getSystemService(Context.USB_SERVICE);
+        if (usbManager == null) {
+            throw new IllegalStateException("UsbManager is not available");
+        }
         deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
         deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
 
@@ -237,9 +240,11 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         }
 
         Set<MidiOutputDevice> result = new HashSet<>();
-        for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
-            if (midiOutputDevice.getUsbDevice().equals(usbDevice)) {
-                result.add(midiOutputDevice);
+        if (midiOutputDevices != null) {
+            for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
+                if (midiOutputDevice != null && midiOutputDevice.getUsbDevice() != null && midiOutputDevice.getUsbDevice().equals(usbDevice)) {
+                    result.add(midiOutputDevice);
+                }
             }
         }
 
@@ -257,7 +262,10 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
             deviceConnectionWatcher.checkConnectedDevicesImmediately();
         }
 
-        return Collections.unmodifiableSet(midiOutputDevices);
+        if (midiOutputDevices != null) {
+            return Collections.unmodifiableSet(midiOutputDevices);
+        }
+        return Collections.unmodifiableSet(new HashSet<>());
     }
 
     @Override

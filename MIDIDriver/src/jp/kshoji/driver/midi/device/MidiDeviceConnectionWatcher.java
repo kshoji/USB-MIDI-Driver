@@ -318,8 +318,11 @@ public final class MidiDeviceConnectionWatcher {
 		/**
 		 * checks Attached/Detached devices
 		 */
-		synchronized void checkConnectedDevices() {
-			HashMap<String, UsbDevice> deviceMap = usbManager.getDeviceList();
+	synchronized void checkConnectedDevices() {
+		HashMap<String, UsbDevice> deviceMap = usbManager.getDeviceList();
+		if (deviceMap == null) {
+			deviceMap = new HashMap<>();
+		}
 			
 			// check attached device
 			for (UsbDevice device : deviceMap.values()) {

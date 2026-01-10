@@ -59,6 +59,10 @@ public final class SingleMidiService extends Service {
             Log.d(Constants.TAG, "MIDI service starting.");
 
             UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+            if (usbManager == null) {
+                Log.e(Constants.TAG, "UsbManager is not available");
+                return START_NOT_STICKY;
+            }
 
             // runs in separate thread
             deviceConnectionWatcher = new MidiDeviceConnectionWatcher(this, usbManager, midiDeviceAttachedListener, midiDeviceDetachedListener);

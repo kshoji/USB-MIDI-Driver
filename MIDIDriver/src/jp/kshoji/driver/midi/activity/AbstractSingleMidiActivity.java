@@ -114,6 +114,9 @@ public abstract class AbstractSingleMidiActivity extends Activity implements OnM
 		super.onCreate(savedInstanceState);
 		
 		UsbManager usbManager = (UsbManager) getApplicationContext().getSystemService(Context.USB_SERVICE);
+		if (usbManager == null) {
+			throw new IllegalStateException("UsbManager is not available");
+		}
 		deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
 		deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl(); 
 		
