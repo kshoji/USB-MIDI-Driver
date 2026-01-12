@@ -4,12 +4,15 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.os.Process;
+import android.util.Log;
 import android.util.SparseIntArray;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import jp.kshoji.driver.midi.listener.OnMidiInputEventListener;
+import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
@@ -55,7 +58,6 @@ public final class MidiInputDevice {
         if (!usbDeviceConnection.claimInterface(usbInterface, true)) {
             throw new IllegalArgumentException("Failed to claim interface.");
         }
-        waiterThread.setPriority(8);
         waiterThread.setName("MidiInputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
         waiterThread.start();
     }
@@ -71,7 +73,11 @@ public final class MidiInputDevice {
     }
 
     /**
-     * stops the watching thread
+     * Stops the watching thread
+     * <p>
+     * Note: This method may block the calling thread. If called from the main thread,
+     * consider using a background thread or async mechanism to avoid ANR.
+     * </p>
      */
     void stop() {
         midiEventListener = null;
@@ -79,20 +85,29 @@ public final class MidiInputDevice {
             try {
                 usbDeviceConnection.releaseInterface(usbInterface);
             } catch (Exception e) {
-                // ignore exception on release
+                // Ignore exception on release - device may already be disconnected
             }
         }
 
         waiterThread.stopFlag = true;
         resume();
 
-        // blocks while the thread will stop
-        while (waiterThread.isAlive()) {
+        // Wait for thread to stop with timeout to avoid blocking indefinitely
+        long timeout = System.currentTimeMillis() + 2000; // 2 second timeout
+        while (waiterThread.isAlive() && System.currentTimeMillis() < timeout) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                // ignore
+                // Restore interrupted status
+                Thread.currentThread().interrupt();
+                break;
             }
+        }
+        
+        if (waiterThread.isAlive()) {
+            // Thread did not stop within timeout - this may indicate a problem
+            // but we continue to avoid blocking the caller indefinitely
+            Log.w(Constants.TAG, "MidiInputDevice.stop(): Thread did not stop within timeout. Device: " + getDeviceAddress());
         }
     }
 
@@ -197,6 +212,10 @@ public final class MidiInputDevice {
 
         @Override
         public void run() {
+            // Set thread priority using Android's recommended method
+            // This should be done in the thread's run() method, not before start()
+            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+            
             final UsbDeviceConnection deviceConnection = usbDeviceConnection;
             final UsbEndpoint usbEndpoint = inputEndpoint;
             final int maxPacketSize = inputEndpoint.getMaxPacketSize();

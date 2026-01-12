@@ -98,15 +98,16 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
     OnMidiDeviceDetachedListener deviceDetachedListener = null;
     MidiDeviceConnectionWatcher deviceConnectionWatcher = null;
 
-    private final Context context;
+    private final Context applicationContext;
 
     /**
      * Constructor
      *
-     * @param context Activity context
+     * @param context the Context (will be converted to ApplicationContext internally)
      */
     protected UsbMidiDriver(@NonNull Context context) {
-        this.context = context;
+        // Store ApplicationContext to avoid memory leaks
+        this.applicationContext = context.getApplicationContext();
     }
 
     /**
@@ -125,14 +126,14 @@ public abstract class UsbMidiDriver implements OnMidiDeviceDetachedListener, OnM
         midiInputDevices = new HashSet<>();
         midiOutputDevices = new HashSet<>();
 
-        UsbManager usbManager = (UsbManager) context.getApplicationContext().getSystemService(Context.USB_SERVICE);
+        UsbManager usbManager = (UsbManager) applicationContext.getSystemService(Context.USB_SERVICE);
         if (usbManager == null) {
             throw new IllegalStateException("UsbManager is not available");
         }
         deviceAttachedListener = new OnMidiDeviceAttachedListenerImpl();
         deviceDetachedListener = new OnMidiDeviceDetachedListenerImpl();
 
-        deviceConnectionWatcher = new MidiDeviceConnectionWatcher(context.getApplicationContext(), usbManager, deviceAttachedListener, deviceDetachedListener);
+        deviceConnectionWatcher = new MidiDeviceConnectionWatcher(applicationContext, usbManager, deviceAttachedListener, deviceDetachedListener);
     }
 
     /**

@@ -6,6 +6,8 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.os.Build;
+import android.os.Process;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,6 +15,7 @@ import androidx.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import jp.kshoji.driver.midi.util.Constants;
 import jp.kshoji.driver.midi.util.ReusableByteArrayOutputStream;
 import jp.kshoji.driver.midi.util.UsbMidiDeviceUtils;
 
@@ -42,8 +45,9 @@ public final class MidiOutputDevice {
 	 * @param usbDeviceConnection the UsbDeviceConnection
 	 * @param usbInterface the UsbInterface
 	 * @param usbEndpoint the UsbEndpoint
+	 * @throws IllegalArgumentException if interface claim fails
 	 */
-	public MidiOutputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) {
+	public MidiOutputDevice(@NonNull UsbDevice usbDevice, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, @NonNull UsbEndpoint usbEndpoint) throws IllegalArgumentException {
 		this.usbDevice = usbDevice;
 		this.usbDeviceConnection = usbDeviceConnection;
 		this.usbInterface = usbInterface;
@@ -53,7 +57,7 @@ public final class MidiOutputDevice {
         outputEndpoint = usbEndpoint;
 
         if (!this.usbDeviceConnection.claimInterface(this.usbInterface, true)) {
-            return;
+            throw new IllegalArgumentException("Failed to claim interface.");
         }
 
         waiterThread.setName("MidiOutputDevice[" + usbDevice.getDeviceName() + "].WaiterThread");
@@ -65,28 +69,41 @@ public final class MidiOutputDevice {
 	}
 
     /**
-     * stop to use this device.
+     * Stops using this device
+     * <p>
+     * Note: This method may block the calling thread. If called from the main thread,
+     * consider using a background thread or async mechanism to avoid ANR.
+     * </p>
      */
     void stop() {
         if (usbDeviceConnection != null && usbInterface != null) {
             try {
                 usbDeviceConnection.releaseInterface(usbInterface);
             } catch (Exception e) {
-                // ignore exception on release
+                // Ignore exception on release - device may already be disconnected
             }
         }
 
         resume();
         waiterThread.stopFlag = true;
 
-        // blocks while the thread will stop
-        while (waiterThread.isAlive()) {
+        // Wait for thread to stop with timeout to avoid blocking indefinitely
+        long timeout = System.currentTimeMillis() + 2000; // 2 second timeout
+        while (waiterThread.isAlive() && System.currentTimeMillis() < timeout) {
             try {
                 waiterThread.interrupt();
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                // ignore
+                // Restore interrupted status
+                Thread.currentThread().interrupt();
+                break;
             }
+        }
+        
+        if (waiterThread.isAlive()) {
+            // Thread did not stop within timeout - this may indicate a problem
+            // but we continue to avoid blocking the caller indefinitely
+            Log.w(Constants.TAG, "MidiOutputDevice.stop(): Thread did not stop within timeout. Device: " + getDeviceAddress());
         }
     }
 
@@ -183,6 +200,10 @@ public final class MidiOutputDevice {
 
 		@Override
 		public void run() {
+			// Set thread priority using Android's recommended method
+			// This should be done in the thread's run() method, not before start()
+			Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+			
 			byte[] dequedDataBuffer;
             int dequedDataBufferLength;
 			int queueSize;

@@ -55,6 +55,9 @@ public final class MidiDeviceConnectionWatcher {
     Map<UsbDevice, UsbDeviceConnection> deviceConnections = new HashMap<>();
     Map<UsbDevice, Set<MidiInputDevice>> midiInputDevices = new HashMap<>();
     Map<UsbDevice, Set<MidiOutputDevice>> midiOutputDevices = new HashMap<>();
+    
+    // Track registered receivers for proper cleanup
+    private final Set<UsbMidiGrantedReceiver> registeredReceivers = new HashSet<>();
 
     /**
 	 * Constructor
@@ -64,7 +67,8 @@ public final class MidiDeviceConnectionWatcher {
      * @param deviceAttachedListener the OnMidiDeviceAttachedListener
      */
 	public MidiDeviceConnectionWatcher(@NonNull Context context, @NonNull UsbManager usbManager, @NonNull OnMidiDeviceAttachedListener deviceAttachedListener, @NonNull final OnMidiDeviceDetachedListener deviceDetachedListener) {
-		this.context = context;
+		// Use ApplicationContext to avoid memory leaks and lifecycle issues
+		this.context = context.getApplicationContext();
         this.usbManager = usbManager;
 		isGranting = false;
         grantingDevice = null;
@@ -110,10 +114,11 @@ public final class MidiDeviceConnectionWatcher {
             midiOutputDevices.remove(detachedDevice);
         }
 
+        // Close the device connection after all devices have been stopped
+        // This ensures that interfaces are released before closing the connection
         UsbDeviceConnection deviceConnection = deviceConnections.get(detachedDevice);
         if (deviceConnection != null) {
             deviceConnection.close();
-
             deviceConnections.remove(detachedDevice);
         }
     }
@@ -126,22 +131,46 @@ public final class MidiDeviceConnectionWatcher {
 	}
 	
 	/**
-	 * Stops the watching thread <br />
-	 * <br />
-	 * Note: Takes one second until the thread stops.
-	 * The device attached / detached events will be noticed until the thread will completely stops.
+	 * Stops the watching thread
+	 * <p>
+	 * Note: This method should not be called from the main thread to avoid ANR.
+	 * The device attached / detached events will be noticed until the thread completely stops.
+	 * </p>
 	 */
 	public void stop() {
 		thread.stopFlag = true;
         thread.interrupt();
 
-		// blocks while the thread will stop
-		while (thread.isAlive()) {
+		// Unregister all receivers on the main thread
+		deviceDetachedHandler.post(() -> {
+			synchronized (registeredReceivers) {
+				for (UsbMidiGrantedReceiver receiver : registeredReceivers) {
+					try {
+						context.unregisterReceiver(receiver);
+					} catch (IllegalArgumentException e) {
+						// Receiver may have been already unregistered
+						Log.d(TAG, "Receiver already unregistered", e);
+					}
+				}
+				registeredReceivers.clear();
+			}
+		});
+
+		// Wait for thread to stop with timeout to avoid blocking indefinitely
+		// Use a timeout to prevent blocking the calling thread for too long
+		long timeout = System.currentTimeMillis() + 2000; // 2 second timeout
+		while (thread.isAlive() && System.currentTimeMillis() < timeout) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				// ignore
+				// Restore interrupted status
+				Thread.currentThread().interrupt();
+				break;
 			}
+		}
+		
+		if (thread.isAlive()) {
+			Log.w(TAG, "Thread did not stop within timeout period");
 		}
 	}
 	
@@ -176,6 +205,8 @@ public final class MidiDeviceConnectionWatcher {
 
                     UsbDeviceConnection deviceConnection = usbManager.openDevice(device);
                     if (deviceConnection == null) {
+                        // Unregister receiver on main thread after processing
+                        deviceDetachedHandler.post(() -> unregisterReceiverSafely(this));
                         return;
                     }
 
@@ -218,11 +249,33 @@ public final class MidiDeviceConnectionWatcher {
                     Log.d(TAG, "Device " + device.getDeviceName() + " has been attached.");
 				}
 
-                // reset the 'isGranting' to false
+                // Reset the 'isGranting' to false
                 isGranting = false;
                 grantingDevice = null;
+                
+                // Unregister receiver on main thread after processing
+                // Do not call unregisterReceiver directly from onReceive to avoid thread safety issues
+                deviceDetachedHandler.post(() -> unregisterReceiverSafely(this));
 			}
-            context.unregisterReceiver(this);
+		}
+		
+		/**
+		 * Safely unregister a receiver
+		 * @param receiver the receiver to unregister
+		 */
+		private void unregisterReceiverSafely(UsbMidiGrantedReceiver receiver) {
+			synchronized (registeredReceivers) {
+				if (registeredReceivers.contains(receiver)) {
+					try {
+						context.unregisterReceiver(receiver);
+						registeredReceivers.remove(receiver);
+					} catch (IllegalArgumentException e) {
+						// Receiver may have been already unregistered
+						Log.d(TAG, "Receiver already unregistered", e);
+						registeredReceivers.remove(receiver);
+					}
+				}
+			}
 		}
 	}
 	
@@ -271,14 +324,18 @@ public final class MidiDeviceConnectionWatcher {
 						grantingDevice = deviceGrantQueue.remove();
 
 						Intent intent = new Intent(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
-						intent.setPackage(packageName); // make intent explicit
+						intent.setPackage(packageName); // Make intent explicit
 
-						int intentFlags = 0;
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-							intentFlags |= PendingIntent.FLAG_MUTABLE;
-						}
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-							intentFlags |= PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+						// Android 12 (API 31) and above require FLAG_MUTABLE or FLAG_IMMUTABLE
+						int intentFlags;
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+							// Android 12+ requires explicit mutability flag
+							intentFlags = PendingIntent.FLAG_MUTABLE;
+						} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+							// Android 6.0+ supports FLAG_MUTABLE but it's not required
+							intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+						} else {
+							intentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
 						}
 
 						PendingIntent permissionIntent = PendingIntent.getBroadcast(
@@ -288,11 +345,17 @@ public final class MidiDeviceConnectionWatcher {
 						UsbMidiGrantedReceiver receiver = new UsbMidiGrantedReceiver(grantingDevice, deviceAttachedListener);
 						IntentFilter filter = new IntentFilter(UsbMidiGrantedReceiver.USB_PERMISSION_GRANTED_ACTION);
 
+						// Register receiver and track it for proper cleanup
 						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 							context.registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED);
 						} else {
 							// @SuppressLint("UnspecifiedRegisterReceiverFlag")
 							context.registerReceiver(receiver, filter);
+						}
+						
+						// Track registered receiver for cleanup
+						synchronized (registeredReceivers) {
+							registeredReceivers.add(receiver);
 						}
 
 						usbManager.requestPermission(grantingDevice, permissionIntent);
