@@ -71,4 +71,14 @@ public abstract class AbstractMidiFragment extends Fragment implements OnMidiDev
 		
 		return hostActivity.getMidiOutputDevices();
 	}
+	
+	/**
+	 * Called when the fragment is no longer attached to its activity
+	 */
+	@Override
+	public void onDetach() {
+		super.onDetach();
+		// Clear Activity reference to avoid memory leaks
+		hostActivity = null;
+	}
 }

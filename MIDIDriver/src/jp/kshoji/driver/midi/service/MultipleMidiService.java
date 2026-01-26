@@ -63,6 +63,10 @@ public final class MultipleMidiService extends Service {
             Log.d(Constants.TAG, "MIDI service starting.");
 
             UsbManager usbManager = (UsbManager)getSystemService(Context.USB_SERVICE);
+            if (usbManager == null) {
+                Log.e(Constants.TAG, "UsbManager is not available");
+                return START_NOT_STICKY;
+            }
 
             // runs in separate thread
             deviceConnectionWatcher = new MidiDeviceConnectionWatcher(this, usbManager, serviceMidiDeviceAttachedListener, serviceMidiDeviceDetachedListener);
@@ -117,11 +121,15 @@ public final class MultipleMidiService extends Service {
      */
     public void suspend() {
         for (MidiInputDevice midiInputDevice : midiInputDevices) {
-            midiInputDevice.suspend();
+            if (midiInputDevice != null) {
+                midiInputDevice.suspend();
+            }
         }
 
         for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
-            midiOutputDevice.suspend();
+            if (midiOutputDevice != null) {
+                midiOutputDevice.suspend();
+            }
         }
     }
 
@@ -130,11 +138,15 @@ public final class MultipleMidiService extends Service {
      */
     public void resume() {
         for (MidiInputDevice midiInputDevice : midiInputDevices) {
-            midiInputDevice.resume();
+            if (midiInputDevice != null) {
+                midiInputDevice.resume();
+            }
         }
 
         for (MidiOutputDevice midiOutputDevice : midiOutputDevices) {
-            midiOutputDevice.resume();
+            if (midiOutputDevice != null) {
+                midiOutputDevice.resume();
+            }
         }
     }
 
